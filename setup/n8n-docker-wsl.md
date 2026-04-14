@@ -1,69 +1,160 @@
-# 🔄 n8n en WSL con Docker — Setup completo
+# 🔄 n8n self-hosted — Orquestador de automatizaciones (Mayo 2026)
 
-> Orquestador de workflows con IA integrada. Conecta THDORA con Gmail, GitHub, Telegram, y 400+ servicios.
+> n8n es el Zapier/Make open-source. Corre en Docker, se programa con interfaz visual, y conecta THDORA con el mundo.
+> **Fecha objetivo: Mayo 2026.**
 
-## Opción A — Docker simple (más rápido)
+---
+
+## Requisitos previos
+
+- Docker instalado (setup.sh lo instala)
+- WSL2 con Ubuntu 22.04 o Ubuntu nativo
+
+### Instalar Docker en WSL2
 
 ```bash
-# 1. Instalar Docker en WSL Ubuntu-22.04
-sudo apt update
-sudo apt install docker.io -y
-sudo systemctl enable docker
-sudo systemctl start docker
+# Método 1: script oficial Docker
+curl -fsSL https://get.docker.com | sh
 sudo usermod -aG docker $USER
-newgrp docker  # aplicar sin reiniciar
+newgrp docker
 
-# 2. Verificar
+# Verificar
 docker --version
+docker run hello-world
+```
 
-# 3. Arrancar n8n
+---
+
+## Arrancar n8n en 1 comando
+
+```bash
 docker run -d \
   --name n8n \
   --restart unless-stopped \
   -p 5678:5678 \
   -v ~/.n8n:/root/.n8n \
   n8nio/n8n
-
-# 4. Acceder
-# Abrir en navegador: http://localhost:5678
 ```
 
-## Opción B — AI Starter Kit oficial (recomendado)
+**Acceder:** abrir navegador → `http://localhost:5678`
 
-Incluye n8n + Ollama + Qdrant preconfigurados para IA:
+Primer uso: te pide crear usuario y contraseña. Solo para ti, no hay que usar email real.
+
+---
+
+## Comandos de gestión
 
 ```bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
-cd self-hosted-ai-starter-kit
-docker compose up -d
-# http://localhost:5678
+docker start n8n      # arrancar
+docker stop n8n       # parar
+docker restart n8n    # reiniciar
+docker logs n8n       # ver logs
+docker ps             # ver si está corriendo
 ```
 
-## Comandos útiles
+---
+
+## Los 5 workflows que hay que crear
+
+### Workflow 1 — Brief nocturno (prioridad 1)
+
+**Cuándo:** cada noche a las 22:00
+**Qué hace:** mira la agenda de mañana en THDORA → manda mensaje por Telegram
+
+```
+Schedule (22:00) → HTTP Request (THDORA API /citas/manana) → Telegram (mensaje resumen)
+```
+
+**Mensaje que llega:**
+```
+📅 Mañana tienes:
+• 10:00 — Médico
+• 16:00 — Gimnasio
+```
+
+---
+
+### Workflow 2 — Alerta hábitos (prioridad 2)
+
+**Cuándo:** cada noche a las 22:00
+**Qué hace:** comprueba si has marcado todos los hábitos del día → si no, avisa
+
+```
+Schedule (22:00) → HTTP Request (THDORA API /habitos/hoy) → IF (hay pendientes) → Telegram (alerta)
+```
+
+**Mensaje que llega:**
+```
+⚠️ Te quedan hábitos sin marcar:
+• 💧 Agua (4/8 vasos)
+• 🏃 Ejercicio
+```
+
+---
+
+### Workflow 3 — Diario automático (prioridad 3)
+
+**Cuándo:** cada noche a las 23:00
+**Qué hace:** recoge hábitos del día + citas del día → genera texto → commit en repo `personal`
+
+```
+Schedule (23:00) → HTTP Request (THDORA API /resumen/hoy) → Code (generar markdown) → GitHub (commit en personal)
+```
+
+**Fichero que crea:**
+```
+personal/diarios/2026-05-01.md
+```
+
+---
+
+### Workflow 4 — Resumen semanal (prioridad 4)
+
+**Cuándo:** lunes a las 08:00
+**Qué hace:** recoge la semana (hábitos, citas, commits) → resumen → Telegram
+
+```
+Schedule (lunes 08:00) → HTTP Request (varios endpoints) → Merge → Code (generar resumen) → Telegram
+```
+
+---
+
+### Workflow 5 — Commit personal automático (prioridad 5)
+
+**Cuándo:** cada noche a las 23:30
+**Qué hace:** comprueba si has escrito en el diario → si no, crea entrada vacía → commit en `personal`
+
+---
+
+## Variables de entorno para n8n
+
+En el panel de n8n: **Settings → Credentials** → añadir:
+
+| Credencial | Tipo | Valor |
+|---|---|---|
+| Telegram | Telegram API | Tu token de @BotFather |
+| GitHub | GitHub API | Token con permisos `repo` |
+| THDORA API | HTTP Header Auth | `localhost:8000` |
+
+---
+
+## Datos en `~/.n8n`
+
+Todos los workflows, credenciales y configuración se guardan en `~/.n8n`. Para hacer backup:
 
 ```bash
-# Ver estado
-docker ps
-docker logs n8n
+tar -czf n8n-backup-$(date +%Y%m%d).tar.gz ~/.n8n
+```
 
-# Parar / arrancar
+---
+
+## Actualizar n8n
+
+```bash
 docker stop n8n
-docker start n8n
-
-# Actualizar n8n
+docker rm n8n
 docker pull n8nio/n8n
-docker stop n8n && docker rm n8n
-# volver a ejecutar el docker run de arriba
+# Volver a ejecutar el comando de arranque
 ```
 
-## Primeros workflows a crear
-
-1. **Resumen semanal** — agrega citas y hábitos de THDORA + commits de GitHub → genera resumen con Groq → manda por Telegram
-2. **Diario automático** — cada noche crea entrada en `personal` repo
-3. **Alertas hábitos** — si a las 22:00 no has marcado agua, te avisa por Telegram
-4. **Sync calendario** — citas THDORA → Google Calendar
-
-## Referencia
-
-- [n8n.io/docs](https://docs.n8n.io)
-- [github.com/n8n-io/self-hosted-ai-starter-kit](https://github.com/n8n-io/self-hosted-ai-starter-kit)
+Los datos en `~/.n8n` no se pierden.
