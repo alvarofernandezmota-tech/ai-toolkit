@@ -28,9 +28,9 @@ claude --version
 
 ---
 
-## Configuración
+## Configuración definitiva (la que funciona)
 
-En `~/.bashrc` (ya explicado en cuentas-y-keys.md):
+Añade esto a `~/.bashrc`:
 
 ```bash
 export ANTHROPIC_BASE_URL=https://openrouter.ai/api/v1
@@ -41,14 +41,18 @@ export ANTHROPIC_API_KEY=sk-or-tu_key_de_openrouter
 source ~/.bashrc
 ```
 
+⚠️ **NO uses `ccr` (claude-code-router)** — ese proxy hardcodea `claude-sonnet-4-6` internamente
+y OpenRouter no reconoce ese nombre. Te queda en bucle infinito de error de modelo.
+La solución es usar `claude` directamente con `--model`.
+
 ---
 
-## Uso
+## Uso correcto
 
 ```bash
-# Entrar en cualquier repo
+# Entrar en cualquier repo especificando el modelo explicitamente
 cd ~/projects/thdora
-claude
+claude --model openrouter/google/gemini-2.5-pro-exp-03-25
 ```
 
 Claude Code escanea el repo entero solo. Luego le dices qué hacer en lenguaje natural:
@@ -63,18 +67,54 @@ Claude Code escanea el repo entero solo. Luego le dices qué hacer en lenguaje n
 
 ---
 
-## Modelos recomendados en OpenRouter
+## Modelos que funcionan en OpenRouter con Claude Code
 
-| Tarea | Modelo | Por qué |
+> Probado con Claude Code v2.1.108 — 15 abril 2026
+
+| Modelo (nombre exacto para `--model`) | Calidad | Mejor para |
 |---|---|---|
-| Código del día a día | `qwen/qwen3-coder:free` | #1 open-source en SWE-bench |
-| Arquitectura compleja | `deepseek/deepseek-r1:free` | Razonamiento profundo |
-| Rápido y ligero | `google/gemma-3-27b-it:free` | Tareas simples |
-| Razonamiento general | `meta-llama/llama-3.3-70b-instruct:free` | Equilibrio velocidad/calidad |
+| `openrouter/google/gemini-2.5-pro-exp-03-25` | ⭐⭐⭐⭐⭐ | Arquitectura, refactorizaciones grandes |
+| `openrouter/deepseek/deepseek-r1-0528:free` | ⭐⭐⭐⭐ | Razonamiento profundo, bugs complejos |
+| `openrouter/meta-llama/llama-3.3-70b-instruct:free` | ⭐⭐⭐ | Tareas del día a día, rápido |
 
-Para usar un modelo concreto:
+### ❌ Modelos que NO funcionan (nombres incorrectos)
+
+```
+openrouter/mistralai/devstral-2:free          ← no existe
+openrouter/mistralai/devstral-small-2505:free ← no existe en OpenRouter
+openrouter/deepseek/deepseek-r1:free          ← nombre incorrecto (falta -0528)
+openrouter/google/gemma-3-27b-it:free         ← no disponible
+claude-sonnet-4-6                             ← solo en Anthropic directo, no en OpenRouter
+```
+
+---
+
+## Troubleshooting
+
+### Error: "Model not found"
+```
+There's an issue with the selected model (openrouter/xxx). It may not exist
+or you may not have access to it. Run /model to pick a different model.
+```
+**Causa:** El nombre del modelo no existe en OpenRouter o lo escribiste mal.
+**Solución:** Sal con Ctrl+C y relanza con el nombre correcto:
 ```bash
-claude --model openrouter/qwen/qwen3-coder:free
+claude --model openrouter/google/gemini-2.5-pro-exp-03-25
+```
+
+### Error: Claude Code abre pero el `/model` dentro no funciona
+**Causa:** El proxy `ccr` intercepta los comandos `/model` como si fueran prompts.
+**Solución:** No uses `ccr code`. Usa `claude --model <nombre>` directamente.
+
+### Claude Code siempre abre con un modelo incorrecto aunque pongas `--model`
+**Causa:** Hay una sesión OAuth guardada en el keychain del sistema que sobreescribe la configuración.
+**Solución:**
+```bash
+# Ver configuración actual
+cat ~/.claude/settings.json
+
+# Si hay un modelo hardcodeado, bórralo o cámbialo
+# El fichero tiene forma: {"model": "claude-sonnet-4-6", ...}
 ```
 
 ---
@@ -89,3 +129,7 @@ claude --model openrouter/qwen/qwen3-coder:free
 | **Coste** | 0€ | 0€ |
 
 **Regla:** usa Aider para el día a día y Claude Code para decisiones grandes.
+
+---
+
+_Última actualización: 15 abril 2026 — lecciones aprendidas en producción_
