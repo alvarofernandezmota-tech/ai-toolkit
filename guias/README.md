@@ -1,24 +1,35 @@
-# 📖 Guías
+# 📚 Guías y Documentación
 
-Documentación de modelos, benchmarks y comparativas.
+Este directorio contiene documentación verificada sobre modelos LLM, benchmarks y metas técnicas para el ecosistema de IA. 
 
-## Contenido
+## ± Modelos recomendados (Abril 2026)
 
-- **Modelos gratuitos** — qué modelos funcionan, para qué y con qué limitaciones
-- **Benchmarks** — resultados reales en nuestras tareas (no SWE-bench genérico)
-- **Comparativas** — Claude Code vs Aider, Groq vs OpenRouter, etc.
-- **Recetas** — prompts y flujos que funcionan bien
+| Modelo | ID exacto | Características | Uso recomendado |
+|---|---|---|---|
+| Devstral 2 | `openrouter/mistralai/devstral-2:free` | #1 en SWE-bench | Código ésquemático y optimización
+| DeepSeek R1 | `openrouter/deepseek/deepseek-r1:free` | Razonamiento profundo | Arquitectura y depuración
+| Qwen3 Coder | `openrouter/qwen/qwq-32b:free` | Código multi-fichero | Proyectos complejos
+| Llama 3.3 | `groq/llama-3.3-70b-versatile` | Velocidad | Fixes diarios
 
-## Modelos gratuitos recomendados (abril 2026)
+## ´ Benchmarks y Evaluaciones
 
-| Modelo | ID | Mejor para |
-|---|---|---|
-| Auto OpenRouter | `openrouter/free` | Uso general |
-| DeepSeek R1 | `openrouter/deepseek/deepseek-r1:free` | Razonamiento |
-| Llama 4 Maverick | `openrouter/meta-llama/llama-4-maverick:free` | Código |
-| Qwen 3 235B | `openrouter/qwen/qwen3-235b-a22b:free` | Código avanzado |
-| Gemini 2.5 Pro | `openrouter/google/gemini-2.5-pro-exp-03-25` | Arquitectura |
-| Llama 3.3 70B (Groq) | `groq/llama-3.3-70b-versatile` | Velocidad (Aider) |
+- [Rendimiento de Devstral 2](investigacion/benchmarks-devstral.md)
+- [Comparativa de modelos Qwen vs Llama 3.3](investigacion/llama-qwen-v3.md)
+- [Documentación de capacidad de razonamiento DeepSeek R1](investigacion/r1-capacidades.md)
 
----
-_Añade aquí tus propias comparativas con resultados reales._
+## µ Recursos de Formación
+
+- [Guía para trabajar con Claude Code](guias/claude-code.md)
+- [Prompt engineering avanzado](guias/prompt-engineering.md)
+- [Integración de modelos locales (Ollama)](guias/ollama-integration.md)
+
+## µ Repositorios de Referencia
+
+- [CLAIUDE.md plantilla](https://github.com/alvarofernandezmota-tech/ai-toolkit/blob/main/CLAUDE.md)
+- [Estudio THDORA](https://github.com/alvarofernandezmota-tech/ai-toolkit/tree/main/investigacion)
+
+## ¡ Recomendación Inicio
+
+1. Consulta los benchmarks para escoger modelos
+2. Usa el modelo recomendado en cada guía
+3. Documenta siempre en research/experimentos.md los hallazgos
