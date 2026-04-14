@@ -1,7 +1,8 @@
-# 🤔 Alternativas a THDORA — ¿Qué más existe?
+# 🤔 Alternativas a THDORA — Investigación verificada
 
-> Pregunta clave: ¿Con los nuevos modelos de 2026, THDORA queda obsoleta?
+> ¿Con los nuevos modelos de 2026, THDORA queda obsoleta?
 > **Respuesta: No.** Los modelos son el motor. THDORA es la aplicación. Son capas distintas.
+> Última actualización: Abril 2026. Fuentes verificadas con repos reales.
 
 ---
 
@@ -12,74 +13,69 @@ Modelos (Groq, OpenRouter)  →  El motor de IA (intercambiable)
 THDORA                      →  Tu aplicación (tus datos, tu lógica, tu interfaz)
 ```
 
-Cambiar de Llama 3.3 a Devstral es como cambiarle el motor a un coche. El coche sigue siendo tuyo, con tus datos reales (citas, hábitos), tu lógica personalizada y tu interfaz (Telegram).
+Cambiar de Llama a Devstral es como cambiarle el motor a un coche. El coche sigue siendo tuyo, con tus citas reales, tus hábitos reales y tu BBDD SQLite personal.
 
 ---
 
-## Comparativa de alternativas reales (Abril 2026)
+## OpenClaw — La alternativa más seria
 
-| Herramienta | Qué es | Coste | Ventaja vs THDORA | Desventaja |
+**Repo oficial:** [github.com/openclaw/openclaw](https://github.com/openclaw/openclaw)
+
+OpenClaw es un asistente personal self-hosted que responde en Telegram, WhatsApp, Slack, Discord y 20+ canales más. Se instala en Linux/Raspberry Pi y usa cualquier LLM que elijas.
+
+**Lo que tiene OpenClaw que THDORA no tiene (aún):**
+- Gateway local multi-canal (un solo backend para Telegram + WhatsApp + Signal...)
+- Memoria persistente larga entre sesiones
+- Skills (plugins) extensibles sin tocar el core
+- Browser automation integrada
+- Home Assistant + MQTT para domótica
+
+**Lo que tiene THDORA que OpenClaw no tiene:**
+- Gestión real de citas con BBDD propia
+- Tracking de hábitos con datos reales
+- NLP personalizado con contexto propio de API
+- 100% tuyo y personalizable a fondo
+- 0€ (OpenClaw managed cuesta $5-30/mes)
+
+**Veredicto:** OpenClaw es un framework genérico. THDORA es una aplicación de vida real ya construida.
+
+**Tutorial referencia (abril 2026):** [How to Build a Self-Hosted AI Agent with OpenClaw, Telegram & n8n](https://www.youtube.com/watch?v=IkfV6W5lIeE)
+
+---
+
+## Comparativa completa (verificada)
+
+| Herramienta | Repo | Coste | Ventaja real | Desventaja real |
 |---|---|---|---|---|
-| **OpenClaw** | Asistente personal self-hosted, Telegram + memoria larga | Gratis self-host / $5-30/mes managed | Listo en 1 comando, 50K GitHub stars, MCP server | No es personalizable en profundidad, no es tuyo |
-| **n8n** | Orquestador visual 400+ integraciones | Gratis self-hosted | Sin código, conecta cualquier servicio | No es bot de Telegram, es automatizador |
-| **Dify** | Builder de apps IA con RAG | Gratis self-hosted | Bueno para productos con RAG | Pensado para empresas, demasiado complejo |
-| **Langflow** | Prototipado visual de flujos LLM | Gratis | Pruebas rápidas de arquitecturas | No es un asistente personal, es una herramienta de dev |
-| **LocalAI + LocalAGI** | Todo local, sin API, 100% privado | 0€ | Privacidad total, sin rate limits | Necesita GPU, lento sin hardware bueno |
+| **OpenClaw** | [github.com/openclaw/openclaw](https://github.com/openclaw/openclaw) | 0€ self-host | Multi-canal, memoria larga, skills | Framework genérico, sin datos de vida reales |
+| **n8n** | [github.com/n8n-io/n8n](https://github.com/n8n-io/n8n) | 0€ self-host | 400+ integraciones, sin código | No es bot de Telegram, es automatizador |
+| **Dify** | [github.com/langgenius/dify](https://github.com/langgenius/dify) | 0€ self-host | RAG, builder visual, bueno para productos | Pensado para empresas, no para uso personal |
+| **Langflow** | [github.com/langflow-ai/langflow](https://github.com/langflow-ai/langflow) | 0€ | Prototipado visual de flujos LLM | Solo para dev, no es asistente personal |
+| **LocalAI** | [github.com/mudler/LocalAI](https://github.com/mudler/LocalAI) | 0€ | 100% local, privacidad total, sin API | Necesita GPU, lento sin hardware bueno |
 
 ---
 
-## Por qué THDORA gana
+## Lo único que hay que añadir a THDORA: mem0
 
-1. **Es tuya** — tus citas reales, tus hábitos reales, tu BBDD SQLite, tu lógica
-2. **Coste cero** — OpenClaw managed cuesta $5-30/mes, THDORA cuesta 0€
-3. **NLP + datos reales integrados** — ninguna alternativa tiene esto listo
-4. **Extensible con Aider** — cualquier feature se puede añadir en una tarde
-5. **Privacidad total** — tus datos no salen de tu máquina nunca
+**Repo oficial:** [github.com/mem0ai/mem0](https://github.com/mem0ai/mem0)
 
----
+mem0 es una capa de memoria persistente para agentes IA. Guarda conversaciones, preferencias y contexto entre sesiones. Benchmarks reales publicados:
 
-## Lo único que OpenClaw tiene y THDORA no (aún)
+- **+26% de precisión** vs OpenAI Memory
+- **91% menos latencia**
+- **90% menos tokens** consumidos
 
-**Memoria persistente larga** — OpenClaw recuerda conversaciones de semanas atrás. THDORA solo tiene contexto de la sesión actual.
+Esto es lo que hace que OpenClaw “recuerde” conversaciones de semanas atrás. Se puede integrar en THDORA.
 
-Cómo añadirla a THDORA (pendiente, Verano 2026):
-
-```python
-# mem0 — librería de memoria persistente para agentes
-pip install mem0ai
-
-from mem0 import Memory
-
-m = Memory()
-
-# Guardar
-m.add("Al usuario le gusta el café por la mañana", user_id="alvaro")
-
-# Recuperar contexto relevante antes de responder
-resultados = m.search("preferencias de desayuno", user_id="alvaro")
-```
-
-Integración con THDORA:
-```bash
-aider-thdora
-> añade mem0 a THDORA para que Toki recuerde conversaciones pasadas entre sesiones
-```
-
----
-
-## ¿Cuándo sí tendría sentido usar una alternativa?
-
-| Situación | Alternativa recomendada |
-|---|---|
-| Quieres automatizaciones sin código | n8n (ya está en el roadmap de todas formas) |
-| Quieres privacidad total + sin internet | LocalAI + Ollama local |
-| Quieres un prototipo rápido de algo nuevo | Langflow o Dify para testear la idea |
-| Quieres ver cómo implementan memoria larga | Revisar código de OpenClaw como referencia |
+Ver guía de implementación: [investigacion/mem0-memoria-persistente.md](mem0-memoria-persistente.md)
 
 ---
 
 ## Conclusión
 
-THDORA no queda obsoleta con los nuevos modelos. Al contrario: los nuevos modelos la hacen **más potente** porque simplemente cambias el `model=` en una línea. La arquitectura es correcta.
+THDORA no queda obsoleta. Los modelos nuevos (Devstral 2, R1-0528) la hacen más potente porque cambias una línea. La arquitectura es correcta.
 
-Lo único que hay que añadirle es **memoria persistente** (mem0) cuando llegue el momento.
+Hoja de ruta de mejoras basadas en esta investigación:
+1. **Ahora** — cambiar motor a Devstral 2 para coding, R1-0528 para arquitectura
+2. **Verano 2026** — añadir mem0 para memoria persistente entre sesiones
+3. **Futuro** — valorar OpenClaw solo como referencia de arquitectura multi-canal
