@@ -1,14 +1,14 @@
-# 🧠 Claude Code + OpenRouter — Agente de código completo
+# 🧠 Claude Code + OpenRouter — Gratis para siempre
 
-> Claude Code lee tu repo entero automáticamente y razona sobre él. Apuntado a OpenRouter es 100% gratuito.
+> Claude Code escanea tu repo entero y razona sobre él. Apuntado a OpenRouter = 100% gratis.
 
 ---
 
 ## Requisitos previos
 
-- Node.js 20 instalado (setup.sh lo instala)
-- Key de OpenRouter: [openrouter.ai](https://openrouter.ai) → gratis
-- Ver [setup/cuentas-y-keys.md](cuentas-y-keys.md) para cómo meter la key
+- Node.js 20 instalado
+- Key de OpenRouter: [openrouter.ai](https://openrouter.ai) → gratis, sin tarjeta
+- Ver [setup/cuentas-y-keys.md](cuentas-y-keys.md) para cómo conseguirla
 
 ---
 
@@ -30,62 +30,77 @@ claude --version
 
 ## Configuración definitiva (la que funciona)
 
-Añade esto a `~/.bashrc`:
+### Opción A — `~/.claude/settings.json` (recomendada)
+
+Crea o edita el fichero:
+
+```bash
+mkdir -p ~/.claude
+nano ~/.claude/settings.json
+```
+
+Pega esto (con tu key real):
+
+```json
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://openrouter.ai/api",
+    "ANTHROPIC_AUTH_TOKEN": "sk-or-v1-TU_KEY_AQUI",
+    "ANTHROPIC_API_KEY": "",
+    "ANTHROPIC_MODEL": "openrouter/free"
+  }
+}
+```
+
+Con esto basta con escribir `claude` y funciona solo. Sin `--model`, sin nada extra.
+
+### Opción B — Variables en `~/.bashrc`
 
 ```bash
 export ANTHROPIC_BASE_URL=https://openrouter.ai/api/v1
-export ANTHROPIC_API_KEY=sk-or-tu_key_de_openrouter
+export ANTHROPIC_API_KEY=sk-or-v1-TU_KEY_AQUI
 ```
 
 ```bash
 source ~/.bashrc
 ```
 
-⚠️ **NO uses `ccr` (claude-code-router)** — ese proxy hardcodea `claude-sonnet-4-6` internamente
-y OpenRouter no reconoce ese nombre. Te queda en bucle infinito de error de modelo.
-La solución es usar `claude` directamente con `--model`.
-
 ---
 
-## Uso correcto
+## Uso
 
 ```bash
-# Entrar en cualquier repo especificando el modelo explicitamente
-cd ~/projects/thdora
+# Sin especificar modelo (usa openrouter/free automáticamente)
+cd ~/projects/ai-toolkit
+claude
+
+# Especificando modelo concreto
 claude --model openrouter/google/gemini-2.5-pro-exp-03-25
 ```
 
-Claude Code escanea el repo entero solo. Luego le dices qué hacer en lenguaje natural:
+Claude Code escanea el repo entero solo. Luego le dices qué hacer:
 
 ```
 > revisa toda la arquitectura y díme qué mejorarías
-> fix el issue #10: asyncio.wait_for con timeout en _show_hab_configs
 > crea tests para todos los handlers que no tienen test
 > genera ARCHITECTURE.md documentando el patrón actual
-> refactoriza el groq_router para que sea más limpio
+> fix el bug en el módulo X
 ```
 
 ---
 
-## Modelos que funcionan en OpenRouter con Claude Code
+## Modelos gratuitos disponibles (abril 2026)
 
-> Probado con Claude Code v2.1.108 — 15 abril 2026
-
-| Modelo (nombre exacto para `--model`) | Calidad | Mejor para |
+| Modelo | ID exacto para `--model` | Para qué |
 |---|---|---|
-| `openrouter/google/gemini-2.5-pro-exp-03-25` | ⭐⭐⭐⭐⭐ | Arquitectura, refactorizaciones grandes |
-| `openrouter/deepseek/deepseek-r1-0528:free` | ⭐⭐⭐⭐ | Razonamiento profundo, bugs complejos |
-| `openrouter/meta-llama/llama-3.3-70b-instruct:free` | ⭐⭐⭐ | Tareas del día a día, rápido |
+| **Auto (recomendado)** | `openrouter/free` | Elige el mejor disponible automáticamente |
+| DeepSeek R1 | `openrouter/deepseek/deepseek-r1:free` | Razonamiento profundo, bugs complejos |
+| Llama 4 Maverick | `openrouter/meta-llama/llama-4-maverick:free` | Código del día a día |
+| GPT-OSS 20B | `openrouter/openai/gpt-oss-20b:free` | Agente rápido, tareas simples |
+| Qwen 3 235B | `openrouter/qwen/qwen3-235b-a22b:free` | Código avanzado |
+| Gemini 2.5 Pro | `openrouter/google/gemini-2.5-pro-exp-03-25` | Arquitectura, refactorizaciones grandes |
 
-### ❌ Modelos que NO funcionan (nombres incorrectos)
-
-```
-openrouter/mistralai/devstral-2:free          ← no existe
-openrouter/mistralai/devstral-small-2505:free ← no existe en OpenRouter
-openrouter/deepseek/deepseek-r1:free          ← nombre incorrecto (falta -0528)
-openrouter/google/gemma-3-27b-it:free         ← no disponible
-claude-sonnet-4-6                             ← solo en Anthropic directo, no en OpenRouter
-```
+> Límites cuenta gratuita: 20 req/min, 200 req/día.
 
 ---
 
@@ -93,28 +108,22 @@ claude-sonnet-4-6                             ← solo en Anthropic directo, no 
 
 ### Error: "Model not found"
 ```
-There's an issue with the selected model (openrouter/xxx). It may not exist
-or you may not have access to it. Run /model to pick a different model.
+There's an issue with the selected model. It may not exist
+or you may not have access to it.
 ```
-**Causa:** El nombre del modelo no existe en OpenRouter o lo escribiste mal.
-**Solución:** Sal con Ctrl+C y relanza con el nombre correcto:
-```bash
-claude --model openrouter/google/gemini-2.5-pro-exp-03-25
+**Causa:** El nombre del modelo es incorrecto o no está disponible.
+**Solución:** Usa `openrouter/free` que elige automáticamente, o consulta
+[openrouter.ai/models?q=free](https://openrouter.ai/models?q=free) para los nombres exactos.
+
+### ❌ NO uses `ccr` (claude-code-router)
+Ese proxy hardcodea `claude-sonnet-4-6` que OpenRouter no reconoce.
+Usa `claude` directamente.
+
+### Modelos que NO funcionan
 ```
-
-### Error: Claude Code abre pero el `/model` dentro no funciona
-**Causa:** El proxy `ccr` intercepta los comandos `/model` como si fueran prompts.
-**Solución:** No uses `ccr code`. Usa `claude --model <nombre>` directamente.
-
-### Claude Code siempre abre con un modelo incorrecto aunque pongas `--model`
-**Causa:** Hay una sesión OAuth guardada en el keychain del sistema que sobreescribe la configuración.
-**Solución:**
-```bash
-# Ver configuración actual
-cat ~/.claude/settings.json
-
-# Si hay un modelo hardcodeado, bórralo o cámbialo
-# El fichero tiene forma: {"model": "claude-sonnet-4-6", ...}
+openrouter/mistralai/devstral-2:free          ← no existe
+openrouter/google/gemma-3-27b-it:free         ← no disponible
+claude-sonnet-4-6                             ← solo en Anthropic directo
 ```
 
 ---
@@ -132,4 +141,4 @@ cat ~/.claude/settings.json
 
 ---
 
-_Última actualización: 15 abril 2026 — lecciones aprendidas en producción_
+_Última actualización: 15 abril 2026 — configuración con openrouter/free router_
