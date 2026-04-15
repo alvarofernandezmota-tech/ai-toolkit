@@ -7,11 +7,8 @@
 ## 1. Límite de tokens en DeepSeek V3-0324 (OpenRouter free)
 
 - **Error:** `Prompt tokens limit exceeded: 13437 > 8406`
-- **Causa:** El modelo gratuito de DeepSeek en OpenRouter tiene un límite muy bajo de contexto (8406 tokens de prompt)
-- **Solución:** Para tareas largas con mucho contexto, usar modelos con mayor contexto:
-  - `qwen/qwen3-235b-a22b:free` (131K tokens)
-  - `meta-llama/llama-3.3-70b-instruct:free` (131K tokens)
-  - Cerebras API (128K tokens, gratis)
+- **Causa:** El modelo gratuito de DeepSeek en OpenRouter tiene un límite muy bajo de contexto
+- **Solución:** Usar modelos con mayor contexto: Cerebras, Qwen3, Llama 3.3 en OpenRouter
 
 ---
 
@@ -40,46 +37,50 @@
 
 - **Error:** `Request too large for model llama-3.3-70b-versatile. Limit 12000, Requested 32475`
 - **Causa:** Groq tier gratuito tiene límite de 12.000 TPM. OpenCode manda el repo entero (~32K tokens)
-- **Solución:** Groq solo sirve para prompts cortos. Usar Google AI (1M tokens) como principal
 - **Regla:** Nunca poner Groq como primer modelo cuando haya repos con mucho contexto
 
 ---
 
-## 5. Google AI — ID de modelo incorrecto en OpenCode ⚠️
+## 5. Google AI — ID de modelo incorrecto en OpenCode
 
 - **Error:** `models/gemini-2.5-flash-preview-04-17 is not found for API version v1beta`
-- **Causa:** El ID `google/gemini-2.5-flash-preview-04-17` no funciona en OpenCode
-- **IDs que funcionan con OpenCode (verificar uno a uno):**
+- **IDs válidos para OpenCode:**
   ```
-  google/gemini-2.0-flash          ← probar primero
-  google/gemini-2.5-flash          ← probar segundo  
-  google/gemini-1.5-flash          ← fallback seguro
-  google/gemini-1.5-pro            ← alternativa
+  google/gemini-2.0-flash     ← funciona pero rate limit alto
+  google/gemini-1.5-flash     ← más estable en tier gratuito
+  google/gemini-1.5-pro       ← alternativa
   ```
-- **Solución:** Cambiar el config:
+
+---
+
+## 6. Google AI — Rate limit en Gemini 2.0 Flash ⚠️
+
+- **Error:** `gemini is way too hot right now [retrying in 53s attempt #6]`
+- **Causa:** Gemini 2.0 Flash gratuito tiene límites RPM muy bajos en horas pico
+- **Solución:** Cambiar a `google/gemini-1.5-flash` que tiene límites más generosos:
   ```bash
   cat > ~/.config/opencode/opencode.json << 'EOF'
   {
     "$schema": "https://opencode.ai/config.json",
-    "model": "google/gemini-2.0-flash"
+    "model": "google/gemini-1.5-flash"
   }
   EOF
   ```
+- **Orden recomendado Google:** `gemini-1.5-flash` > `gemini-2.0-flash` > `gemini-1.5-pro`
 
 ---
 
-## 6. Bracketed paste mode en terminal
+## 7. Bracketed paste mode en terminal
 
 - **Error:** `^[[200~export: command not found` al pegar comandos
-- **Causa:** La terminal interpreta el bloque pegado como texto literal con caracteres especiales
-- **Solución:** Ejecutar los comandos **línea por línea**, no pegar bloques enteros
+- **Causa:** La terminal interpreta el bloque pegado como texto literal
+- **Solución:** Ejecutar comandos **línea por línea**, no pegar bloques enteros
 
 ---
 
-## 7. Scripts de agentes pendientes
+## 8. Scripts de agentes pendientes
 
-- **Estado:** Los 4 scripts NO fueron creados por agotamiento de tokens/rate limits
-- **Pendiente:**
+- **Pendiente crear:**
   - `scripts/revisor.sh`
   - `scripts/documentador.sh`
   - `scripts/escalado.sh`
@@ -87,15 +88,14 @@
 
 ---
 
-## 8. API keys en el repositorio
+## 9. API keys — nunca en el chat ni en el repo
 
-- **Problema:** Riesgo de exponer API keys subidas accidentalmente al repo
-- **Regla:** NUNCA subir keys al repo ni compartirlas en chats. Siempre variables de entorno.
-- Añadir `.env` al `.gitignore`
+- **Regla:** NUNCA compartir keys en chats ni subirlas al repo
+- Siempre variables de entorno. Añadir `.env` al `.gitignore`
 
 ---
 
-## 9. Tareas duplicadas en cola (OpenCode)
+## 10. Tareas duplicadas en cola (OpenCode)
 
 - **Problema:** Al cambiar de modelo con tareas en cola, OpenCode las duplica
-- **Solución:** Usar `/clear` antes de cambiar de modelo con tareas pendientes
+- **Solución:** Usar `/clear` antes de cambiar de modelo
