@@ -4,6 +4,30 @@ Este fichero proporciona contexto a Claude Code cuando trabaja en este repositor
 
 ---
 
+## ⚡ Comandos rápidos
+
+```bash
+# Claude Code con rotación automática de modelos (RECOMENDADO)
+cc
+
+# Aider con rotación automática de modelos Groq
+bash ~/projects/ai-toolkit/scripts/aider-rotate.sh
+
+# Ver qué modelo está activo ahora
+cat ~/.claude/settings.json
+
+# Ver log de rotaciones de Claude Code
+cat ~/.claude/rotate.log
+
+# Ver log de rotaciones de Aider
+cat ~/.aider/rotate.log
+
+# Forzar un modelo concreto en Claude Code
+claude --model deepseek/deepseek-r1:free
+```
+
+---
+
 ## Comandos de desarrollo habituales
 
 ### 1. Configuración del entorno
@@ -26,26 +50,38 @@ npm install -g @anthropic-ai/claude-code
 ### 2. Lanzar agentes
 
 ```bash
-# Claude Code con modelo automático gratis
-claude
+# Claude Code con rotación automática (alias)
+cc
 
 # Claude Code con modelo específico
-claude --model openrouter/google/gemini-2.5-pro-exp-03-25
+claude --model deepseek/deepseek-r1:free
 
-# Aider con Groq
+# Aider con rotación automática
+bash ~/projects/ai-toolkit/scripts/aider-rotate.sh
+
+# Aider con modelo específico
 aider --model groq/llama-3.3-70b-versatile
 ```
 
-### 3. Modelos disponibles (OpenRouter gratis)
+### 3. Modelos disponibles — OpenRouter (Claude Code)
 
 | Modelo | ID exacto | Para qué |
 |---|---|---|
-| Auto (recomendado) | `openrouter/free` | Elige el mejor disponible |
-| DeepSeek R1 | `openrouter/deepseek/deepseek-r1:free` | Razonamiento profundo |
-| Llama 4 Maverick | `openrouter/meta-llama/llama-4-maverick:free` | Código del día a día |
-| GPT-OSS 20B | `openrouter/openai/gpt-oss-20b:free` | Agente rápido |
-| Qwen 3 235B | `openrouter/qwen/qwen3-235b-a22b:free` | Código avanzado |
-| Gemini 2.5 Pro | `openrouter/google/gemini-2.5-pro-exp-03-25` | Arquitectura y refactorizaciones |
+| DeepSeek R1 | `deepseek/deepseek-r1:free` | Razonamiento profundo |
+| Qwen3 235B | `qwen/qwen3-235b-a22b:free` | Código avanzado |
+| Llama 4 Maverick | `meta-llama/llama-4-maverick:free` | Código del día a día |
+| Gemini 2.5 Pro | `google/gemini-2.5-pro-exp-03-25:free` | Arquitectura |
+| GPT-4o Mini | `openai/gpt-4o-mini:free` | Agente rápido |
+| Llama 3.3 70B | `meta-llama/llama-3.3-70b-instruct:free` | Fallback final |
+
+### 4. Modelos disponibles — Groq (Aider)
+
+| Modelo | ID exacto | Para qué |
+|---|---|---|
+| Llama 3.3 70B | `groq/llama-3.3-70b-versatile` | Código rápido (principal) |
+| Llama 3.1 70B | `groq/llama-3.1-70b-versatile` | Fallback |
+| Mixtral 8x7B | `groq/mixtral-8x7b-32768` | Contexto largo |
+| Gemma2 9B | `groq/gemma2-9b-it` | Ligero y rápido |
 
 ---
 
@@ -55,6 +91,9 @@ aider --model groq/llama-3.3-70b-versatile
 
 ```
 ai-toolkit/
+├── docs/           → Documentación generada y sesiones de trabajo
+│   ├── ecosystem-structure.md      → Estructura ideal del ecosistema
+│   └── sesion-15-abril-2026.md    → Resumen de sesión
 ├── setup/          → Configuraciones y guías de instalación
 │   ├── claude-code-openrouter.md   → Claude Code + OpenRouter
 │   ├── aider-groq.md               → Aider + Groq
@@ -66,6 +105,8 @@ ai-toolkit/
 ├── guias/          → Documentación de modelos y benchmarks
 ├── investigacion/  → Experimentos reproducibles
 ├── scripts/        → Scripts de automatización
+│   ├── claude-rotate.sh           → Rotación de modelos Claude Code
+│   └── aider-rotate.sh            → Rotación de modelos Aider
 ├── CLAUDE.md       → Este fichero
 ├── ECOSISTEMA.md   → Visión general del ecosistema
 └── README.md       → Punto de entrada
@@ -73,30 +114,30 @@ ai-toolkit/
 
 ### Agentes del ecosistema
 
-- **Claude Code** — Agente principal para análisis de repos y commits. Usa OpenRouter gratis.
-- **Aider** — Fixes rápidos y tareas concretas de implementación. Usa Groq (ultra rápido).
+- **Claude Code** — Agente principal para análisis de repos y arquitectura. Usa OpenRouter gratis con rotación.
+- **Aider** — Fixes rápidos y tareas concretas de implementación. Usa Groq con rotación.
 - **n8n** — Orquestación de workflows automáticos.
 - **THDORA** — Bot personal de Telegram para gestión rutinaria.
 
 ### Flujo de trabajo
 
 1. Las keys se guardan en `~/.bashrc` — nunca en GitHub
-2. `~/.claude/settings.json` configura Claude Code con OpenRouter
+2. `~/.claude/settings.json` lo gestiona `claude-rotate.sh` automáticamente
 3. Cada proyecto mantiene aislamiento pero comparte los modelos del ecosistema
 4. Los resultados de investigación alimentan directamente las implementaciones
 
 ---
 
-## Configuración de Claude Code
+## Configuración base de Claude Code
 
-`~/.claude/settings.json`:
+`~/.claude/settings.json` (gestionado por `claude-rotate.sh`):
 ```json
 {
   "env": {
-    "ANTHROPIC_BASE_URL": "https://openrouter.ai/api",
+    "ANTHROPIC_BASE_URL": "https://openrouter.ai/api/v1",
     "ANTHROPIC_AUTH_TOKEN": "sk-or-v1-TU_KEY",
     "ANTHROPIC_API_KEY": "",
-    "ANTHROPIC_MODEL": "openrouter/free"
+    "ANTHROPIC_MODEL": "deepseek/deepseek-r1:free"
   }
 }
 ```
@@ -106,9 +147,10 @@ ai-toolkit/
 ## Reglas importantes
 
 - ⚠️ Las keys NUNCA van en GitHub — solo en `~/.bashrc` o `~/.claude/settings.json` local
+- Usar `cc` siempre en vez de `claude` para aprovechar la rotación
+- Usar `aider-rotate.sh` en vez de `aider` directamente
+- Documentar cada sesión en `docs/sesion-DD-mes-YYYY.md`
 - El primer comando en cualquier repo nuevo es `bash setup.sh`
-- Usar Aider para fixes rápidos, Claude Code para arquitectura y decisiones grandes
-- Documentar todo en `setup/` para que el ecosistema sea reproducible
 
 ---
 
