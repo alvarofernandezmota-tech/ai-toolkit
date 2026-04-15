@@ -1,32 +1,33 @@
 # LiteLLM Proxy Config — Arquitectura Colmena
 # Arrancar: litellm --config litellm-config.yaml --port 8000
 # OpenCode apunta a: http://localhost:8000
-# Última actualización: 2026-04-15 (fix: principal → gemini-flash, fallbacks limpios)
+# Última actualización: 2026-04-15 (fix: principal → deepseek-v3, más estable para agentes)
 #
 # VARIABLES DE ENTORNO NECESARIAS (en ~/.bashrc o .env):
-#   GOOGLE_GENERATIVE_AI_API_KEY → gratis (limitado por RPM)
-#   OPENROUTER_API_KEY        → gratis (modelos :free)
+#   DEEPSEEK_API_KEY          → ⭐ PRINCIPAL — muy barato (~$0.001/1K tokens), 64K contexto
+#   GOOGLE_GENERATIVE_AI_API_KEY → fallback gratuito pero RPM bajo en free tier
+#   OPENROUTER_API_KEY        → modelos :free via OpenRouter
 #   ANTHROPIC_API_KEY         → de pago
 #   OPENAI_API_KEY            → de pago
-#   DEEPSEEK_API_KEY          → muy barato
 #   MISTRAL_API_KEY           → de pago
-#   GROQ_API_KEY              → gratis PERO límite 8K contexto en fallback
-#   CEREBRAS_API_KEY          → gratis PERO límite 8K contexto — NO usar como fallback de tareas largas
+#   GROQ_API_KEY              → gratis PERO límite 8K contexto — solo prompts cortos
+#   CEREBRAS_API_KEY          → gratis PERO límite 8K contexto — solo prompts cortos
 #
-# NOTAS:
-#   - groq-fallback y cerebras-fallback solo sirven para prompts cortos (<6K tokens)
-#   - Para tareas largas (agentes, comparativas) usar gemini-flash o deepseek-v3
-#   - Si Groq da 401: verificar GROQ_API_KEY en ~/.bashrc
+# POR QUÉ DEEPSEEK-V3 COMO PRINCIPAL:
+#   - Gemini free tier: se agota rápido con tareas de agente (múltiples llamadas)
+#   - Groq/Cerebras: 8K tokens max, rompen tareas largas
+#   - DeepSeek V3: $0.27/M tokens input, 64K contexto, sin rate limit agresivo
+#   - Fallback a gemini-flash cuando DeepSeek falla o está lento
 
 model_list:
 
   # ─── PRINCIPAL (default) ────────────────────────────────────────────────────
-  # Gemini 2.0 Flash: gratis, 1M contexto, rápido
-  # ⚠️ Groq fue principal antes pero da 401 cuando la key caduca — no es fiable como default
+  # DeepSeek V3: $0.27/M tokens, 64K contexto, estable para tareas de agente
+  # Historial: Groq (401), Gemini Flash (free tier agotado con agentes) → DeepSeek V3
   - model_name: principal
     litellm_params:
-      model: gemini/gemini-2.0-flash
-      api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
+      model: deepseek/deepseek-chat
+      api_key: os.environ/DEEPSEEK_API_KEY
 
   # ─── GOOGLE ─────────────────────────────────────────────────────────────────
   - model_name: gemini-pro
@@ -110,8 +111,8 @@ model_list:
       model: mistral/codestral-latest
       api_key: os.environ/MISTRAL_API_KEY
 
-  # ─── FALLBACKS VELOCIDAD (contexto corto <6K tokens) ─────────────────────────
-  # ⚠️ Groq y Cerebras tienen límite de 8K tokens — NO usar para tareas de agente largas
+  # ─── FALLBACKS VELOCIDAD (solo prompts cortos <6K tokens) ─────────────────────────
+  # ⚠️ Groq y Cerebras: 8K tokens max — NO usar para tareas de agente largas
   - model_name: groq-fallback
     litellm_params:
       model: groq/llama-3.3-70b-versatile
@@ -124,13 +125,13 @@ model_list:
 
 router_settings:
   routing_strategy: least-busy
-  num_retries: 3
+  num_retries: 2
   retry_after: 5
   cooldown_time: 60
   fallbacks:
-    # principal (gemini-flash) → deepseek-v3 → gemini-flash-lite
-    # ⚠️ Se eliminaron groq/cerebras de fallbacks de principal: límite 8K rompe tareas de agente
-    - {"principal": ["deepseek-v3", "gemini-flash-lite"]}
+    # principal (deepseek-v3) → gemini-flash → gemini-flash-lite
+    - {"principal": ["gemini-flash", "gemini-flash-lite"]}
+    - {"deepseek-v3": ["gemini-flash", "gemini-flash-lite"]}
     - {"gemini-flash": ["gemini-flash-lite", "deepseek-v3"]}
     - {"gemini-pro": ["gemini-flash", "deepseek-v3"]}
     - {"claude-sonnet": ["gpt-4o", "deepseek-v3"]}
