@@ -1,11 +1,11 @@
 # LiteLLM Proxy Config — Arquitectura Colmena
 # Arrancar: bash scripts/start-colmena.sh
 # OpenCode apunta a: http://localhost:8000
-# Última actualización: 2026-04-15 (fix: fallbacks sin Gemini, cerebras como principal-1)
+# Última actualización: 2026-04-15 (fix: nombre correcto modelo cerebras)
 #
 # VARIABLES DE ENTORNO NECESARIAS (en ~/.bashrc o .env):
-#   CEREBRAS_API_KEY          → ⭐ PRINCIPAL-1 — gratis, rápido, 128K contexto (llama3.1-70b)
-#   DEEPSEEK_API_KEY          → ⭐ PRINCIPAL-2 — muy barato, 64K contexto
+#   CEREBRAS_API_KEY          → ⭐ PRINCIPAL — gratis, rápido, 128K contexto
+#   DEEPSEEK_API_KEY          → fallback barato, 64K contexto
 #   GROQ_API_KEY              → fallback rápido gratis
 #   GOOGLE_GENERATIVE_AI_API_KEY → solo usar directamente, NO como fallback
 #   OPENROUTER_API_KEY        → modelos :free via OpenRouter
@@ -17,7 +17,8 @@
 #   Groq llama-3.3-70b → 401 (key caducada)
 #   Gemini Flash → 429 (free tier agotado con agentes)
 #   DeepSeek V3 → fallbacks apuntaban a Gemini — mismo problema
-#   Cerebras llama3.1-70b → gratis, 128K contexto, sin rate limit agresivo ✅
+#   Cerebras llama3.1-70b → 404 nombre incorrecto
+#   Cerebras llama-3.3-70b → nombre correcto ✅
 #
 # REGLA DE ORO: NUNCA poner modelos Gemini en fallbacks automáticos.
 # Gemini free tier tiene límite diario que se agota con agentes.
@@ -26,12 +27,11 @@
 model_list:
 
   # ─── PRINCIPAL (default) ────────────────────────────────────────────────────
-  # Cerebras llama3.1-70b: GRATIS, 128K contexto, muy rápido
+  # Cerebras llama-3.3-70b: GRATIS, 128K contexto, muy rápido
   # Fallback: deepseek-v3 (barato) → groq (gratis)
-  # ⚠️ NUNCA Gemini en fallbacks — su free tier se agota con agentes
   - model_name: principal
     litellm_params:
-      model: cerebras/llama3.1-70b
+      model: cerebras/llama-3.3-70b
       api_key: os.environ/CEREBRAS_API_KEY
 
   # ─── GOOGLE (solo uso manual, NO en fallbacks) ──────────────────────────────
@@ -116,7 +116,7 @@ model_list:
       model: mistral/codestral-latest
       api_key: os.environ/MISTRAL_API_KEY
 
-  # ─── VELOCIDAD GRATIS ───────────────────────────────────────────────────────────
+  # ─── VELOCIDAD GRATIS ────────────────────────────────────────────────────────
   - model_name: groq-fallback
     litellm_params:
       model: groq/llama-3.3-70b-versatile
@@ -124,7 +124,7 @@ model_list:
 
   - model_name: cerebras-fallback
     litellm_params:
-      model: cerebras/llama3.1-70b
+      model: cerebras/llama-3.3-70b
       api_key: os.environ/CEREBRAS_API_KEY
 
 router_settings:
@@ -134,7 +134,6 @@ router_settings:
   cooldown_time: 60
   fallbacks:
     # ⚠️ REGLA: Gemini NUNCA en fallbacks automáticos
-    # principal (cerebras) → deepseek-v3 → groq
     - {"principal": ["deepseek-v3", "groq-fallback"]}
     - {"deepseek-v3": ["cerebras-fallback", "groq-fallback"]}
     - {"deepseek-r1": ["deepseek-v3", "qwen3-235b"]}
