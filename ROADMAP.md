@@ -4,6 +4,19 @@
 
 ---
 
+## ✅ Conseguido (sesión 15-04-2026)
+
+| Logro | Commit |
+|---|---|
+| `prompts/sistema-base.md` creado | `feat: prompt sistema base` |
+| `README.md` con herramientas instaladas | `docs: herramientas instaladas en README` |
+| `investigacion/modelos-gratuitos.md` | `docs: comparativa modelos gratuitos` |
+| `prompts/agente-revisor-codigo.md` | `feat: agente revisor de código` |
+| `prompts/agente-documentador.md` | `feat: agente documentador` |
+| `prompts/agente-escalado.md` | `feat: agente escalado` |
+
+---
+
 ## Estado actual (Abril 2026)
 
 | Bloque | Estado | Detalles |
@@ -11,8 +24,24 @@
 | THDORA v0.14.0 | ✅ Producción | Citas + hábitos + NLP Toki |
 | setup.sh instalador | ✅ Listo | 1 comando instala todo |
 | Documentación base | ✅ Listo | ECOSISTEMA + setup/ + guias/ + agentes/ |
+| Prompts de agentes | ✅ Listo | revisor + documentador + escalado |
+| Scripts de agentes | 🔧 Mañana | revisor.sh + documentador.sh + escalado.sh |
+| Cerebras configurado | 🔧 Mañana | API key + config OpenCode |
 | Aider + Groq | 🔧 Esta semana | `pip install aider-chat` |
 | Claude Code + OpenRouter | 🔧 Esta semana | Crear cuenta OpenRouter |
+
+---
+
+## 🔥 Mañana (16 Abril 2026)
+
+- [ ] Configurar Cerebras API como modelo principal en OpenCode
+- [ ] Crear `scripts/revisor.sh` funcional con API
+- [ ] Crear `scripts/documentador.sh`
+- [ ] Crear `scripts/escalado.sh`
+- [ ] Crear `scripts/run-all.sh` — script maestro
+- [ ] Crear `guias/como-usar-agentes.md`
+- [ ] Probar agentes en repo THDORA
+- [ ] Añadir `.gitignore` con `.env`
 
 ---
 
