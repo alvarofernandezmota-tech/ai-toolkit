@@ -1,27 +1,32 @@
 # LiteLLM Proxy Config — Arquitectura Colmena
 # Arrancar: litellm --config litellm-config.yaml --port 8000
 # OpenCode apunta a: http://localhost:8000
-# Última actualización: 2026-04-15
+# Última actualización: 2026-04-15 (fix: principal → gemini-flash, fallbacks limpios)
 #
 # VARIABLES DE ENTORNO NECESARIAS (en ~/.bashrc o .env):
-#   GROQ_API_KEY              → gratis, principal fallback
-#   CEREBRAS_API_KEY          → gratis, segundo fallback
-#   GOOGLE_GENERATIVE_AI_API_KEY → gratis (limitado)
+#   GOOGLE_GENERATIVE_AI_API_KEY → gratis (limitado por RPM)
 #   OPENROUTER_API_KEY        → gratis (modelos :free)
 #   ANTHROPIC_API_KEY         → de pago
 #   OPENAI_API_KEY            → de pago
 #   DEEPSEEK_API_KEY          → muy barato
 #   MISTRAL_API_KEY           → de pago
+#   GROQ_API_KEY              → gratis PERO límite 8K contexto en fallback
+#   CEREBRAS_API_KEY          → gratis PERO límite 8K contexto — NO usar como fallback de tareas largas
+#
+# NOTAS:
+#   - groq-fallback y cerebras-fallback solo sirven para prompts cortos (<6K tokens)
+#   - Para tareas largas (agentes, comparativas) usar gemini-flash o deepseek-v3
+#   - Si Groq da 401: verificar GROQ_API_KEY en ~/.bashrc
 
 model_list:
 
   # ─── PRINCIPAL (default) ────────────────────────────────────────────────────
-  # Groq Llama 3.3 70B: gratis, 280 tps, 128K contexto
-  # Cambiado de gemini-2.0-flash porque Google free tier se agota rápido
+  # Gemini 2.0 Flash: gratis, 1M contexto, rápido
+  # ⚠️ Groq fue principal antes pero da 401 cuando la key caduca — no es fiable como default
   - model_name: principal
     litellm_params:
-      model: groq/llama-3.3-70b-versatile
-      api_key: os.environ/GROQ_API_KEY
+      model: gemini/gemini-2.0-flash
+      api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
 
   # ─── GOOGLE ─────────────────────────────────────────────────────────────────
   - model_name: gemini-pro
@@ -105,7 +110,8 @@ model_list:
       model: mistral/codestral-latest
       api_key: os.environ/MISTRAL_API_KEY
 
-  # ─── FALLBACKS VELOCIDAD ─────────────────────────────────────────────────────
+  # ─── FALLBACKS VELOCIDAD (contexto corto <6K tokens) ─────────────────────────
+  # ⚠️ Groq y Cerebras tienen límite de 8K tokens — NO usar para tareas de agente largas
   - model_name: groq-fallback
     litellm_params:
       model: groq/llama-3.3-70b-versatile
@@ -122,11 +128,13 @@ router_settings:
   retry_after: 5
   cooldown_time: 60
   fallbacks:
-    - {"principal": ["groq-fallback", "cerebras-fallback", "gemini-flash"]}
-    - {"gemini-flash": ["groq-fallback", "cerebras-fallback"]}
-    - {"gemini-pro": ["gemini-flash", "groq-fallback"]}
-    - {"claude-sonnet": ["gpt-4o", "groq-fallback"]}
-    - {"deepseek-r1": ["qwen3-235b", "groq-fallback"]}
+    # principal (gemini-flash) → deepseek-v3 → gemini-flash-lite
+    # ⚠️ Se eliminaron groq/cerebras de fallbacks de principal: límite 8K rompe tareas de agente
+    - {"principal": ["deepseek-v3", "gemini-flash-lite"]}
+    - {"gemini-flash": ["gemini-flash-lite", "deepseek-v3"]}
+    - {"gemini-pro": ["gemini-flash", "deepseek-v3"]}
+    - {"claude-sonnet": ["gpt-4o", "deepseek-v3"]}
+    - {"deepseek-r1": ["qwen3-235b", "deepseek-v3"]}
     - {"groq-fallback": ["cerebras-fallback"]}
 
 litellm_settings:
