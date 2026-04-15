@@ -4,6 +4,40 @@ Registro conciso de lo que se hace en cada sesión. Para sesiones largas, ver `i
 
 ---
 
+## [2026-04-16] — Sesión madrugada: diagnóstico real de proveedores + fix config
+
+### Corregido
+- `litellm-config.yaml` — Cerebras como principal (confirmado 200 OK)
+- `litellm-config.yaml` — OpenRouter con `max_tokens: 4096` (era 8192 > saldo disponible → 402)
+- `litellm-config.yaml` — qwen3-235b apunta ahora a Cerebras nativo (`qwen-3-235b-a22b-instruct-2507`)
+- `litellm-config.yaml` — Gemini fuera del principal (429 rate limit esta noche)
+- `litellm-config.yaml` — fallbacks actualizados: principal → openrouter-fallback → gemini-fallback
+
+### Añadido
+- `docs/troubleshooting-proveedores.md` — guía diagnóstico rápido con comandos curl reales
+
+### Diagnóstico real 2026-04-16 00:04 (comprobado con curl directo)
+| Proveedor | HTTP | Causa real |
+|---|---|---|
+| Cerebras `gpt-oss-120b` | ✅ 200 | Operativo. Modelos: gpt-oss-120b, llama3.1-8b, qwen-3-235b-a22b-instruct-2507 |
+| OpenRouter `llama-4-maverick` | ✅ 200 | Operativo. Problema era `max_tokens=8192 > 5501` disponibles → limitado a 4096 |
+| Gemini `gemini-2.0-flash` | ❌ 429 | Rate limit free tier (demasiadas peticiones esta noche) |
+| Groq `llama-3.3-70b` | ❌ 401 | API key caducada → renovar en console.groq.com |
+| DeepSeek | ❌ AuthError | API key inválida → renovar en platform.deepseek.com |
+
+### Lección aprendida
+- El error 402 de OpenRouter NO es "sin créditos" — es "request demasiado grande para tu saldo"
+- Siempre verificar con curl directo antes de asumir que un proveedor está caído
+- Cerebras lista sus modelos en `GET /v1/models` con la API key
+- `max_tokens: 4096` en litellm_params limita el output, no el contexto de entrada
+
+### Pendiente
+- Renovar key Groq en console.groq.com
+- Renovar key DeepSeek en platform.deepseek.com
+- Recargar créditos OpenRouter cuando haga falta
+
+---
+
 ## [2026-04-15] — Sesión noche: OpenCode + LiteLLM multi-modelo funcionando
 
 ### Añadido
