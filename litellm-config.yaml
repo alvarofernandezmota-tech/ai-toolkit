@@ -1,11 +1,11 @@
 # LiteLLM Proxy Config — Arquitectura Colmena
 # Arrancar: bash scripts/start-colmena.sh
 # OpenCode apunta a: http://localhost:8000
-# Última actualización: 2026-04-15 (fix: múltiples deployments en principal)
+# Última actualización: 2026-04-15 (fix: context_window_fallbacks)
 #
 # VARIABLES DE ENTORNO NECESARIAS (en ~/.bashrc o .env):
 #   CEREBRAS_API_KEY          → ⭐ PRINCIPAL — gratis, rápido, 128K contexto
-#   DEEPSEEK_API_KEY          → fallback barato, 64K contexto
+#   DEEPSEEK_API_KEY          → fallback contexto largo, 64K
 #   GROQ_API_KEY              → fallback rápido gratis
 #   GOOGLE_GENERATIVE_AI_API_KEY → solo usar directamente, NO como fallback
 #   OPENROUTER_API_KEY        → modelos :free via OpenRouter
@@ -20,6 +20,7 @@
 #   Cerebras llama3.1-70b → 404 nombre incorrecto
 #   Cerebras llama-3.3-70b → nombre correcto ✅
 #   Cerebras 1 deployment → 429 todos en cooldown — fix: 3 deployments ✅
+#   ContextWindowExceeded 13K>8K → fix: context_window_fallbacks → deepseek-v3 ✅
 #
 # REGLA DE ORO: NUNCA poner modelos Gemini en fallbacks automáticos.
 # Gemini free tier tiene límite diario que se agota con agentes.
@@ -28,16 +29,11 @@
 model_list:
 
   # ─── PRINCIPAL (default) ────────────────────────────────────────────────────
-  # 3 deployments de Cerebras: el router least-busy los rota automáticamente
-  # Si todos entran en cooldown → fallback a deepseek-v3 → groq-fallback
+  # Cerebras llama-3.3-70b: 128K contexto, gratis, rápido
+  # context_window_fallback → deepseek-v3 (64K) cuando el contexto supera 8K
   - model_name: principal
     litellm_params:
       model: cerebras/llama-3.3-70b
-      api_key: os.environ/CEREBRAS_API_KEY
-
-  - model_name: principal
-    litellm_params:
-      model: cerebras/llama3.1-8b
       api_key: os.environ/CEREBRAS_API_KEY
 
   - model_name: principal
@@ -151,6 +147,11 @@ router_settings:
     - {"claude-sonnet": ["gpt-4o", "deepseek-v3"]}
     - {"gemini-flash": ["deepseek-v3"]}
     - {"groq-fallback": ["cerebras-fallback"]}
+  context_window_fallbacks:
+    # Cuando el contexto supera el límite del modelo, saltar a uno con ventana mayor
+    - {"principal": ["deepseek-v3"]}    # Cerebras/Groq ~8K → DeepSeek 64K
+    - {"groq-fallback": ["deepseek-v3"]}
+    - {"cerebras-fallback": ["deepseek-v3"]}
 
 litellm_settings:
   drop_params: true
