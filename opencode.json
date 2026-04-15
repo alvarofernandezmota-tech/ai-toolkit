@@ -1,0 +1,36 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "litellm/principal",
+  "provider": {
+    "litellm": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "LiteLLM Colmena",
+      "options": {
+        "baseURL": "http://localhost:8000/v1",
+        "apiKey": "sk-litellm-local"
+      },
+      "models": {
+        "principal":           { "name": "Principal" },
+        "gemini-pro":          { "name": "Gemini 2.5 Pro" },
+        "gemini-flash":        { "name": "Gemini 2.0 Flash" },
+        "gemini-flash-lite":   { "name": "Gemini 2.0 Flash Lite" },
+        "claude-sonnet":       { "name": "Claude Sonnet" },
+        "claude-opus":         { "name": "Claude Opus" },
+        "gpt-4o":              { "name": "GPT-4o" },
+        "gpt-4o-mini":         { "name": "GPT-4o Mini" },
+        "o3-mini":             { "name": "o3-mini" },
+        "llama-4-maverick":    { "name": "Llama 4 Maverick" },
+        "llama-4-scout":       { "name": "Llama 4 Scout" },
+        "qwen3-235b":          { "name": "Qwen3 235B" },
+        "mistral-large":       { "name": "Mistral Large" },
+        "codestral":           { "name": "Codestral" },
+        "cerebras-fallback":   { "name": "Cerebras Fallback (llama3.1-8b)" },
+        "openrouter-fallback": { "name": "OpenRouter Fallback" }
+      }
+    }
+  },
+  "autosave": true,
+  "keybinds": {
+    "leader": "ctrl+x"
+  }
+}
