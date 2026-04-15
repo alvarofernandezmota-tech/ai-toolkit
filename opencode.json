@@ -24,12 +24,13 @@
         "qwen3-235b":          { "name": "Qwen3 235B" },
         "mistral-large":       { "name": "Mistral Large" },
         "codestral":           { "name": "Codestral" },
-        "cerebras-fallback":   { "name": "Cerebras Fallback (llama3.1-8b)" },
-        "openrouter-fallback": { "name": "OpenRouter Fallback" }
+        "cerebras-fallback":   { "name": "Cerebras Fallback" },
+        "groq-fallback":       { "name": "Groq Fallback" },
+        "openrouter-fallback": { "name": "OpenRouter Fallback" },
+        "gemini-fallback":     { "name": "Gemini Fallback" }
       }
     }
   },
-  "autosave": true,
   "keybinds": {
     "leader": "ctrl+x"
   }
