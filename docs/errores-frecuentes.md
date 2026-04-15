@@ -1,200 +1,150 @@
 # 🔥 Errores Frecuentes y Soluciones
 
 > Registro vivo de errores reales encontrados en sesiones de trabajo.  
-> Actualizado: 15 abril 2026 (sesión noche)
+> Actualizado: 15 abril 2026 (sesión noche v2)
 
 ---
 
 ## 1. Puerto 8000 en uso — `[Errno 98] address already in use`
 
-**Error completo:**
-```
-ERROR: [Errno 98] error while attempting to bind on address ('0.0.0.0', 8000): address already in use
-INFO:  Waiting for application shutdown.
-INFO:  Application shutdown complete.
-```
-
 **Causa:** LiteLLM ya está corriendo en background (proceso previo no terminado).
 
-**Solución rápida:**
+**Solución:**
 ```bash
-pkill -f litellm && sleep 2 && litellm --config litellm-config.yaml --port 8000 &
-```
-
-**Solución manual si persiste:**
-```bash
-lsof -i :8000        # Ver qué PID usa el puerto
-kill -9 <PID>        # Matar ese proceso
+pkill -f litellm 2>/dev/null || true
+lsof -ti :8000 | xargs kill -9 2>/dev/null || true
+sleep 2
+bash scripts/start-colmena.sh
 ```
 
 ---
 
 ## 2. Git pull falla por cambios locales — `would be overwritten by merge`
 
-**Error completo:**
-```
-error: Your local changes to the following files would be overwritten by merge:
-        litellm-config.yaml
-Please commit your changes or stash them before you merge.
-Aborting
-```
+**Causa:** Se editó `litellm-config.yaml` localmente sin commit previo.
 
-**Causa:** Se editó `litellm-config.yaml` localmente (o se regenera) sin hacer commit antes del pull.
-
-**Solución — descartar cambios locales y quedarse con el repo:**
+**Solución — descartar cambios locales:**
 ```bash
 git checkout -- litellm-config.yaml && git pull
 ```
 
-**Solución — guardar cambios locales y luego hacer pull:**
+**Solución — guardar cambios locales:**
 ```bash
 git stash && git pull && git stash pop
 ```
 
-> ⚠️ Usa `git checkout -- <archivo>` sólo si los cambios locales son descartables. Si son importantes, haz `git stash`.
+---
+
+## 3. Rate limit — `429 Too Many Requests`
+
+**Causa:** El modelo en fallbacks automáticos tenía Gemini, que se agota rápido con agentes.
+
+**Solución permanente (ya aplicada):**  
+Regla de oro: **Gemini NUNCA en fallbacks automáticos**. Solo usar con `Ctrl+P` manualmente.
+
+**Si aparece ahora:** Esperar 60s o cambiar modelo con `Ctrl+P`.
 
 ---
 
-## 3. Rate limit / No deployments — `429 Too Many Requests`
+## 4. Cerebras 404 — nombre de modelo incorrecto
 
 **Error completo:**
 ```
-litellm.RateLimitError: No deployments available for selected model, Try again in 60 seconds.
-litellm.proxy.proxy_server: Exception occured - No deployments available
+litellm.NotFoundError: CerebrasException - No deployments available
 ```
 
-**Causa:** El modelo `principal` (Gemini Flash) o un fallback alcanzó el rate limit del proveedor. LiteLLM pone en cooldown el deployment por 60 segundos.
+**Causa:** El modelo `cerebras/llama3.1-70b` no existe. El nombre correcto es `cerebras/llama-3.3-70b` (con guiones).
 
-**Soluciones:**
-1. Esperar 60 segundos y reintentar.
-2. Cambiar de modelo en OpenCode: `Ctrl+P` → buscar `model` → seleccionar otro (ej: `deepseek-r1`, `claude-sonnet`).
-3. Reiniciar LiteLLM para limpiar cooldowns:
-   ```bash
-   pkill -f litellm && sleep 2 && litellm --config litellm-config.yaml --port 8000 &
-   ```
+**Modelos Cerebras válidos:**
 
-**Modelos de fallback recomendados cuando `principal` está en cooldown:**
-
-| Modelo | Proveedor | Límite gratuito |
+| Modelo | Contexto | Notas |
 |---|---|---|
-| `deepseek-v3` | DeepSeek | Generoso, contexto largo |
-| `gemini-flash-lite` | Google | Alto RPM |
-| `groq-fallback` | Groq | Rápido pero ⚠️ 8K tokens max |
-| `cerebras-fallback` | Cerebras | Rápido pero ⚠️ 8K tokens max |
+| `cerebras/llama-3.3-70b` | 128K | ⭐ Principal recomendado |
+| `cerebras/llama3.1-8b` | 8K | Solo prompts cortos |
+
+**Ya corregido en `litellm-config.yaml`.**
 
 ---
 
-## 4. Prompt escrito en la terminal en vez de en OpenCode
+## 5. LiteLLM zombie de otro proyecto — `thdora` corriendo en vez de `ai-toolkit`
 
 **Síntoma:**
 ```
-Command 'Lee' not found, did you mean:
-  command 'ree' from deb ree...
+File "/home/alvaro/projects/thdora/.venv/lib/python3.10/..."
+No deployments available for selected model
 ```
 
-**Causa:** Se escribió el prompt de OpenCode directamente en la terminal bash, fuera de la interfaz de OpenCode.
+**Causa:** Hay un proceso LiteLLM arrancado desde `/projects/thdora` con un yaml viejo. `git pull` actualiza el yaml pero el proceso ya está corriendo con la config anterior.
 
-**Solución:** Abrir OpenCode primero:
+**Solución:**
 ```bash
-opencode
+pkill -f litellm 2>/dev/null || true          # mata TODOS los litellm
+lsof -ti :8000 | xargs kill -9 2>/dev/null || true
+sleep 2
+cd ~/projects/ai-toolkit && git pull
+bash scripts/start-colmena.sh
 ```
-Esperar a que cargue la interfaz TUI completa (logo + campo de texto), y **entonces** escribir el prompt.
+
+> ⚠️ `pkill -f litellm` mata cualquier proceso litellm sin importar de qué proyecto venga.
 
 ---
 
-## 5. LiteLLM no arranca — `[7]+ Exit 1` al iniciar en background
+## 6. No puedo ver logs de LiteLLM mientras uso OpenCode
 
-**Síntoma:**
+**Causa:** LiteLLM y OpenCode comparten la misma terminal. Al arrancar OpenCode, los logs quedan ocultos.
+
+**Solución permanente (ya implementada): tmux**
+
+El script `bash scripts/start-colmena.sh` ahora usa tmux con 3 paneles:
+
 ```
-[7]+  Exit 1    sleep 2 && litellm --config litellm-config.yaml --port 8000
-```
-
-**Causas posibles:**
-- El `sleep 2` precedente falló (proceso anterior no terminó)
-- El config YAML tiene errores de sintaxis
-- Las API keys no están exportadas en el entorno
-
-**Diagnóstico:**
-```bash
-# Ver el error real sin background
-litellm --config litellm-config.yaml --port 8000
-
-# Verificar que las keys están disponibles
-echo $GOOGLE_GENERATIVE_AI_API_KEY
-echo $ANTHROPIC_API_KEY
+┌────────────────────┬─────────────────────┐
+│                    │  LOGS LiteLLM       │
+│    OPENCODE        ├─────────────────────┤
+│                    │  BASH LIBRE         │
+└────────────────────┴─────────────────────┘
 ```
 
-**Solución:** Arrancar LiteLLM en primer plano para ver el error completo, corregirlo y luego mandarlo a background con `&`.
+**Atajos tmux:**
+- `Ctrl+B → ←→↑↓` — moverse entre paneles
+- `Ctrl+B → D` — detach (deja todo corriendo, sales de tmux)
+- `tmux attach -t colmena` — volver a la sesión
+- `tmux kill-session -t colmena` — cerrar todo
 
 ---
 
-## 6. `ContextWindowExceededError` en agentes — Groq/Cerebras rompen tareas largas
+## 7. `ContextWindowExceededError` — Groq/Cerebras rompen tareas largas
 
-**Error completo:**
-```
-litellm.exceptions.ContextWindowExceededError: CerebrasException - 
-Please reduce the length of the messages or completion. 
-Current length is 13219 while limit is 8192
-model=cerebras-fallback
-```
-
-**Causa:** Groq y Cerebras tienen un límite de **8192 tokens** de contexto. Las tareas de agente (comparativas, documentación, refactoring) generan fácilmente 10K-20K tokens de contexto y rompen el fallback en cadena.
-
-**Solución permanente (ya aplicada en config):**  
-Groq y Cerebras han sido eliminados de los fallbacks del `principal`. Solo se usan como fallback entre sí para prompts cortos.
-
-**Fallbacks seguros para tareas largas:**
-```yaml
-# litellm-config.yaml (configuración actual)
-fallbacks:
-  - {"principal": ["deepseek-v3", "gemini-flash-lite"]}   # 1M+ tokens
-  - {"gemini-flash": ["gemini-flash-lite", "deepseek-v3"]} # 1M+ tokens
-```
+**Causa:** Groq y Cerebras tienen límite de 8192 tokens. Las tareas de agente generan 10K-20K tokens fácilmente.
 
 **Regla práctica:**
 
 | Tarea | Modelo recomendado |
 |---|---|
 | Chat rápido (<2K tokens) | `groq-fallback`, `cerebras-fallback` |
-| Agente, documentación, refactor | `principal` (gemini-flash), `deepseek-v3` |
-| Razonamiento complejo | `deepseek-r1`, `gemini-pro` |
+| Agente, documentación, refactor | `principal` (cerebras-3.3-70b), `deepseek-v3` |
+| Razonamiento complejo | `deepseek-r1`, `gemini-pro` (manual) |
 
 ---
 
-## 7. `principal` da 401 — Groq API key caducada
+## 8. Prompt escrito en bash en vez de OpenCode
 
-**Error completo:**
+**Síntoma:**
 ```
-litellm.BadRequestError: GroqException - {"error": ...}
-status_code: 401
+Command 'Lee' not found
 ```
 
-**Causa:** El `principal` estaba apuntando a `groq/llama-3.3-70b-versatile` y la `GROQ_API_KEY` había caducado o no estaba exportada.
-
-**Solución permanente (ya aplicada):**  
-`principal` ahora apunta a `gemini/gemini-2.0-flash` (Google), que tiene key más estable y 1M de contexto.
-
-**Verificar key de Groq si la necesitas:**
-```bash
-echo $GROQ_API_KEY          # Ver si está exportada
-grep GROQ ~/.bashrc          # Ver si está en bashrc
-# Si no está: añadir en ~/.bashrc:
-export GROQ_API_KEY="gsk_..."
-source ~/.bashrc
-```
+**Solución:** Abrir `opencode` primero, esperar la interfaz TUI, luego escribir.
 
 ---
 
-## Procedimiento de arranque limpio (referencia rápida)
-
-Para evitar todos estos errores, usar siempre esta secuencia:
+## 🚀 Arranque limpio (referencia rápida)
 
 ```bash
+sudo apt install tmux -y          # solo la primera vez
 cd ~/projects/ai-toolkit
-git pull                                              # 1. Actualizar repo (config más reciente)
-pkill -f litellm 2>/dev/null; sleep 2                # 2. Matar procesos previos
-litellm --config litellm-config.yaml --port 8000 &   # 3. Arrancar proxy
-sleep 3 && opencode                                   # 4. Abrir OpenCode
+git pull
+bash scripts/start-colmena.sh    # abre tmux con 3 paneles
 ```
 
-> Ver `docs/arranque-rapido.md` para la versión completa con todos los modelos disponibles.
+> Ver `scripts/start-colmena.sh` para el script completo con tmux.
