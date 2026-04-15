@@ -11,12 +11,12 @@ LOG="$HOME/.claude/rotate.log"
 # ─── Lista de modelos ordenada por preferencia ────────────────────────────────
 # Formato: "BASE_URL|API_KEY_VAR|MODELO"
 MODELS=(
-  "https://openrouter.ai/api/v1|ANTHROPIC_API_KEY|openrouter/deepseek/deepseek-r1:free"
-  "https://openrouter.ai/api/v1|ANTHROPIC_API_KEY|openrouter/qwen/qwen3-235b-a22b:free"
-  "https://openrouter.ai/api/v1|ANTHROPIC_API_KEY|openrouter/meta-llama/llama-4-maverick:free"
-  "https://openrouter.ai/api/v1|ANTHROPIC_API_KEY|openrouter/google/gemini-2.5-pro-exp-03-25"
-  "https://openrouter.ai/api/v1|ANTHROPIC_API_KEY|openrouter/openai/gpt-oss-20b:free"
-  "https://openrouter.ai/api/v1|ANTHROPIC_API_KEY|openrouter/free"
+  "https://openrouter.ai/api/v1|ANTHROPIC_API_KEY|deepseek/deepseek-r1:free"
+  "https://openrouter.ai/api/v1|ANTHROPIC_API_KEY|qwen/qwen3-235b-a22b:free"
+  "https://openrouter.ai/api/v1|ANTHROPIC_API_KEY|meta-llama/llama-4-maverick:free"
+  "https://openrouter.ai/api/v1|ANTHROPIC_API_KEY|google/gemini-2.5-pro-exp-03-25:free"
+  "https://openrouter.ai/api/v1|ANTHROPIC_API_KEY|openai/gpt-4o-mini:free"
+  "https://openrouter.ai/api/v1|ANTHROPIC_API_KEY|meta-llama/llama-3.3-70b-instruct:free"
 )
 
 # ─── Funciones ────────────────────────────────────────────────────────────────
@@ -61,7 +61,6 @@ test_model() {
     return 1
   fi
 
-  # Ping al endpoint — timeout 5s
   local http_code
   http_code=$(curl -s -o /dev/null -w "%{http_code}" \
     --max-time 5 \
@@ -97,7 +96,6 @@ main() {
   last_index=$(get_last_index)
   local start_index=$(( (last_index + 1) % total ))
 
-  # Rotamos empezando por el siguiente al último usado
   for (( i = 0; i < total; i++ )); do
     local index=$(( (start_index + i) % total ))
     local entry="${MODELS[$index]}"
@@ -117,9 +115,9 @@ main() {
     fi
   done
 
-  log "💀 Todos los modelos fallaron. Usando fallback: openrouter/free"
-  IFS='|' read -r base_url key_var model <<< "${MODELS[-1]}"
-  set_model "$base_url" "$model" "$key_var"
+  # Fallback absoluto
+  log "💀 Todos los modelos fallaron. Usando fallback: meta-llama/llama-3.3-70b-instruct:free"
+  set_model "https://openrouter.ai/api/v1" "meta-llama/llama-3.3-70b-instruct:free" "ANTHROPIC_API_KEY"
   exec claude "$@"
 }
 
