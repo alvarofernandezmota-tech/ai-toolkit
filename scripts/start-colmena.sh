@@ -11,72 +11,93 @@
 #  └────────────────────┴─────────────────────┘
 #
 # Navegar entre paneles: Ctrl+B luego flecha
-# Salir de tmux: Ctrl+B D (detach), luego: tmux attach -t colmena
+# Salir de tmux: Ctrl+B D, luego: tmux attach -t colmena
+#
+# PROBLEMA CONOCIDO: Si sale [exited] inmediatamente, es porque
+# estás dentro de tmux. El script lo detecta y arranca solo el proxy.
 
-# NOTA: NO usar set -e — causa que el script muera si tmux attach falla
 DIR="$(cd "$(dirname "$0")/.." && pwd)"
 CONFIG="$DIR/litellm-config.yaml"
 PUERTO=8000
 SESSION="colmena"
-VENV="$HOME/projects/thdora/.venv"
 
-# ─── Verificar venv con litellm ──────────────────────────────────────────
-if [ ! -f "$VENV/bin/litellm" ]; then
-  echo "❌ No se encuentra litellm en $VENV/bin/litellm"
-  echo "   Instala con: pip install litellm  (dentro del venv correcto)"
+# ─── Buscar litellm (propio repo → thdora → global) ──────────────────
+LITELLM=""
+for CANDIDATE in \
+  "$DIR/.venv/bin/litellm" \
+  "$HOME/projects/thdora/.venv/bin/litellm"; do
+  if [ -f "$CANDIDATE" ]; then
+    LITELLM="$CANDIDATE"
+    break
+  fi
+done
+if [ -z "$LITELLM" ] && command -v litellm &>/dev/null; then
+  LITELLM="litellm"
+fi
+if [ -z "$LITELLM" ]; then
+  echo "❌ No se encuentra litellm."
+  echo "   Instala con: pip install 'litellm[proxy]'"
   exit 1
 fi
-LITELLM="$VENV/bin/litellm"
 echo "✅ litellm encontrado: $LITELLM"
 
-# ─── LIMPIEZA AGRESIVA ───────────────────────────────────────────────────
+# ─── Verificar al menos una key gratuita ─────────────────────────────
+if [ -z "$GOOGLE_GENERATIVE_AI_API_KEY" ] && [ -z "$GROQ_API_KEY" ] && \
+   [ -z "$CEREBRAS_API_KEY" ] && [ -z "$OPENROUTER_API_KEY" ]; then
+  echo "⚠️  ADVERTENCIA: No hay keys de modelos gratuitos en el entorno."
+  echo "   Añade al menos una en ~/.bashrc y haz: source ~/.bashrc"
+fi
+
+# ─── Limpieza agresiva ───────────────────────────────────────────────
 echo "🧹 Limpiando puerto $PUERTO y procesos litellm..."
 pkill -9 -f litellm 2>/dev/null || true
 lsof -ti :$PUERTO | xargs kill -9 2>/dev/null || true
 sleep 2
 echo "✅ Puerto $PUERTO libre"
 
-# ─── Modo --solo-proxy (sin tmux) ───────────────────────────────────
+# ─── Modo --solo-proxy ───────────────────────────────────────────────
 if [ "$1" = "--solo-proxy" ]; then
-  echo "✅ Arrancando LiteLLM..."
-  "$LITELLM" --config "$CONFIG" --port $PUERTO
+  echo "✅ Arrancando LiteLLM en puerto $PUERTO..."
+  "$LITELLM" --config "$CONFIG" --port $PUERTO 2>&1 | tee /tmp/litellm.log
   exit 0
 fi
 
-# ─── Comprobar tmux instalado ──────────────────────────────────
+# ─── Detectar si ya estamos dentro de tmux ───────────────────────────
+if [ -n "$TMUX" ]; then
+  echo ""
+  echo "⚠️  Ya estás dentro de tmux — no puedo crear sesión nueva."
+  echo "   Arrancando solo el proxy (usa Ctrl+B % para abrir OpenCode en otro panel):"
+  echo ""
+  "$LITELLM" --config "$CONFIG" --port $PUERTO 2>&1 | tee /tmp/litellm.log
+  exit 0
+fi
+
+# ─── Comprobar tmux instalado ────────────────────────────────────────
 if ! command -v tmux &>/dev/null; then
   echo "❌ tmux no instalado. Ejecuta: sudo apt install tmux -y"
   exit 1
 fi
 
-# ─── Matar sesión colmena anterior si existe ──────────────────────────
+# ─── Matar sesión anterior ───────────────────────────────────────────
 tmux kill-session -t $SESSION 2>/dev/null || true
 
-# ─── Crear sesión tmux ────────────────────────────────────────────
+# ─── Crear sesión tmux ───────────────────────────────────────────────
 tmux new-session -d -s $SESSION -x 220 -y 50
 tmux rename-window -t $SESSION:0 'colmena'
 
-# Panel 1 (derecha arriba): Logs LiteLLM (ruta absoluta al bin)
+# Panel derecha arriba: Logs LiteLLM
 tmux split-window -t $SESSION:0 -h
-tmux send-keys -t $SESSION:0.1 "cd $DIR && '$LITELLM' --config '$CONFIG' --port $PUERTO" Enter
+tmux send-keys -t $SESSION:0.1 "cd $DIR && '$LITELLM' --config '$CONFIG' --port $PUERTO 2>&1 | tee /tmp/litellm.log" Enter
 
-# Panel 2 (derecha abajo): Bash libre
+# Panel derecha abajo: Bash libre + health check
 tmux split-window -t $SESSION:0.1 -v
-tmux send-keys -t $SESSION:0.2 "cd $DIR && echo '👀 Bash libre. Espera ~8s hasta que LiteLLM arranque, luego Ctrl+B ← para OpenCode'" Enter
-tmux send-keys -t $SESSION:0.2 "for i in \$(seq 1 15); do curl -s http://localhost:$PUERTO/health/liveliness &>/dev/null && echo '✅ LiteLLM listo' && break; echo -n '.'; sleep 1; done" Enter
+tmux send-keys -t $SESSION:0.2 "cd $DIR" Enter
+tmux send-keys -t $SESSION:0.2 "echo '👀 Esperando LiteLLM...' && for i in \$(seq 1 20); do curl -s http://localhost:$PUERTO/health/liveliness &>/dev/null && echo '✅ LiteLLM listo en :$PUERTO' && break; echo -n '.'; sleep 1; done" Enter
 
-# Panel 0 (izquierda): OpenCode
-tmux send-keys -t $SESSION:0.0 "cd $DIR && sleep 9 && opencode" Enter
-
-# Foco en OpenCode
+# Panel izquierdo: OpenCode (espera 10s a LiteLLM)
+tmux send-keys -t $SESSION:0.0 "cd $DIR && sleep 10 && opencode" Enter
 tmux select-pane -t $SESSION:0.0
 
-# ─── Adjuntar ───────────────────────────────────────────────────────────────
-if [ -n "$TMUX" ]; then
-  echo ""
-  echo "✅ Sesión '$SESSION' creada en background."
-  echo "👉 Ahora: Ctrl+B D para salir de esta sesión y luego:"
-  echo "   tmux attach -t $SESSION"
-else
-  tmux attach-session -t $SESSION
-fi
+# ─── Adjuntar ────────────────────────────────────────────────────────
+echo "✅ Sesión '$SESSION' creada. Adjuntando..."
+tmux attach-session -t $SESSION
