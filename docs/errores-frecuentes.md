@@ -1,7 +1,7 @@
 # 🔥 Errores Frecuentes y Soluciones
 
 > Registro vivo de errores reales encontrados en sesiones de trabajo.  
-> Actualizado: 15 abril 2026 (sesión noche v2)
+> Actualizado: 15 abril 2026 (sesión noche v3)
 
 ---
 
@@ -135,6 +135,70 @@ Command 'Lee' not found
 ```
 
 **Solución:** Abrir `opencode` primero, esperar la interfaz TUI, luego escribir.
+
+---
+
+## 9. tmux anidado — `sessions should be nested with care`
+
+**Síntoma:** El script `start-colmena.sh` no abre ventanas nuevas y muestra:
+```
+sessions should be nested with care, unset $TMUX to force
+```
+
+**Causa:** Ya estás dentro de una sesión tmux. No puedes crear otra sesión tmux dentro.
+
+**Solución — salir de tmux primero:**
+```bash
+exit   # o Ctrl+B D para detach
+```
+Luego desde la terminal normal:
+```bash
+cd ~/projects/ai-toolkit && bash scripts/start-colmena.sh
+```
+
+**Solución alternativa — forzar sin salir:**
+```bash
+TMUX="" bash scripts/start-colmena.sh
+```
+
+> ⚠️ Si pegas varios comandos juntos sin saltos de línea (ej. `bash script.shbash script.sh`) bash los interpreta como un solo nombre de archivo. Pegar un comando a la vez.
+
+---
+
+## 10. `RouterRateLimitError` — todos los deployments en cooldown
+
+**Error completo:**
+```
+litellm.types.router.RouterRateLimitError: No deployments available for selected model,
+Try again in 60 seconds. Passed model=principal.
+cooldown_list=['hash1', 'hash2', 'hash3', 'hash4']
+```
+
+**Causa:** El grupo `principal` solo tenía 1 deployment (Cerebras 70b). Cuando Cerebras entra en rate limit, no hay alternativa y todos los hashes del mismo deployment entran en cooldown simultáneamente.
+
+**Solución permanente (aplicada 15-abr-2026):**  
+Añadir múltiples deployments al grupo `principal` en `litellm-config.yaml`:
+
+```yaml
+- model_name: principal
+  litellm_params:
+    model: cerebras/llama-3.3-70b      # deployment 1
+    api_key: os.environ/CEREBRAS_API_KEY
+
+- model_name: principal
+  litellm_params:
+    model: cerebras/llama3.1-8b        # deployment 2 (ligero)
+    api_key: os.environ/CEREBRAS_API_KEY
+
+- model_name: principal
+  litellm_params:
+    model: groq/llama-3.3-70b-versatile  # deployment 3 (groq gratis)
+    api_key: os.environ/GROQ_API_KEY
+```
+
+Además se redujo `cooldown_time: 60` → `30` y `num_retries: 2` → `3`.
+
+**Si aparece el error ahora:** El router automáticamente hace fallback a `deepseek-v3` y `groq-fallback`. Esperar unos segundos o cambiar modelo con `Ctrl+P`.
 
 ---
 
