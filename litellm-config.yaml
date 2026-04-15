@@ -1,52 +1,113 @@
 # LiteLLM Proxy Config — Arquitectura Colmena
-# Arrancar: litellm --config litellm-config.yaml --port 4000
-# OpenCode apunta a: http://localhost:4000
+# Arrancar: litellm --config litellm-config.yaml --port 8000
+# OpenCode apunta a: http://localhost:8000
+# Última actualización: 2026-04-15
 
 model_list:
 
-  # Google AI - 1M tokens contexto
+  # ─── PRINCIPAL (default) ────────────────────────────────────────────────────
   - model_name: principal
+    litellm_params:
+      model: gemini/gemini-2.5-pro-preview-03-25
+      api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
+
+  # ─── GOOGLE ─────────────────────────────────────────────────────────────────
+  - model_name: gemini-pro
+    litellm_params:
+      model: gemini/gemini-2.5-pro-preview-03-25
+      api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
+
+  - model_name: gemini-flash
     litellm_params:
       model: gemini/gemini-2.0-flash
       api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
 
-  # Groq - velocidad maxima
+  # ─── ANTHROPIC ──────────────────────────────────────────────────────────────
+  - model_name: claude-sonnet
+    litellm_params:
+      model: anthropic/claude-sonnet-4-5
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: claude-opus
+    litellm_params:
+      model: anthropic/claude-opus-4-5
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  # ─── OPENAI ─────────────────────────────────────────────────────────────────
+  - model_name: gpt-4o
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: o3-mini
+    litellm_params:
+      model: openai/o3-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  # ─── DEEPSEEK ───────────────────────────────────────────────────────────────
+  - model_name: deepseek-r1
+    litellm_params:
+      model: deepseek/deepseek-reasoner
+      api_key: os.environ/DEEPSEEK_API_KEY
+
+  - model_name: deepseek-v3
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: os.environ/DEEPSEEK_API_KEY
+
+  # ─── META (vía OpenRouter) ───────────────────────────────────────────────────
+  - model_name: llama-4-maverick
+    litellm_params:
+      model: openrouter/meta-llama/llama-4-maverick
+      api_key: os.environ/OPENROUTER_API_KEY
+
+  - model_name: llama-4-scout
+    litellm_params:
+      model: openrouter/meta-llama/llama-4-scout
+      api_key: os.environ/OPENROUTER_API_KEY
+
+  # ─── ALIBABA (vía OpenRouter) ────────────────────────────────────────────────
+  - model_name: qwen3-235b
+    litellm_params:
+      model: openrouter/qwen/qwen3-235b-a22b:free
+      api_key: os.environ/OPENROUTER_API_KEY
+
+  # ─── MISTRAL ─────────────────────────────────────────────────────────────────
+  - model_name: mistral-large
+    litellm_params:
+      model: mistral/mistral-large-latest
+      api_key: os.environ/MISTRAL_API_KEY
+
+  - model_name: codestral
+    litellm_params:
+      model: mistral/codestral-latest
+      api_key: os.environ/MISTRAL_API_KEY
+
+  # ─── FALLBACKS VELOCIDAD ─────────────────────────────────────────────────────
   - model_name: groq-fallback
     litellm_params:
       model: groq/llama-3.3-70b-versatile
       api_key: os.environ/GROQ_API_KEY
 
-  # Cerebras - rapido
   - model_name: cerebras-fallback
     litellm_params:
       model: cerebras/llama3.1-8b
       api_key: os.environ/CEREBRAS_API_KEY
-
-  # OpenRouter - fallback final
-  - model_name: openrouter-fallback
-    litellm_params:
-      model: openrouter/deepseek/deepseek-r1:free
-      api_key: os.environ/OPENROUTER_API_KEY
-
-  # Alias compatibilidad
-  - model_name: gpt-4o
-    litellm_params:
-      model: gemini/gemini-2.0-flash
-      api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
-
-  - model_name: claude-sonnet
-    litellm_params:
-      model: groq/llama-3.3-70b-versatile
-      api_key: os.environ/GROQ_API_KEY
 
 router_settings:
   routing_strategy: least-busy
   num_retries: 3
   retry_after: 5
   cooldown_time: 60
-  # Fallbacks: si "principal" falla, intenta estos en orden
   fallbacks:
-    - {"principal": ["groq-fallback", "cerebras-fallback", "openrouter-fallback"]}
+    - {"principal": ["gemini-flash", "groq-fallback", "cerebras-fallback"]}
+    - {"claude-sonnet": ["gpt-4o", "groq-fallback"]}
+    - {"deepseek-r1": ["qwen3-235b", "groq-fallback"]}
 
 litellm_settings:
   drop_params: true
@@ -54,6 +115,6 @@ litellm_settings:
   request_timeout: 120
 
 general_settings:
-  port: 4000
+  port: 8000
   host: "0.0.0.0"
   master_key: "sk-litellm-local"
