@@ -1,35 +1,40 @@
 # LiteLLM Proxy — Ecosistema IA Alvaro
-# Fallback automático: Cerebras → Groq → OpenRouter → Google
+# Intercepta claude-sonnet-4-6 y lo redirige a modelos gratuitos
 # Uso: litellm --config litellm-config.yaml --port 4000
 
 model_list:
-  - model_name: claude-proxy
-    litellm_params:
-      model: cerebras/llama-3.3-70b
-      api_key: os.environ/CEREBRAS_API_KEY
 
-  - model_name: claude-proxy
+  # Alias exacto que pide Claude Code por defecto
+  - model_name: claude-sonnet-4-6
     litellm_params:
       model: groq/llama-3.3-70b-versatile
       api_key: os.environ/GROQ_API_KEY
 
-  - model_name: claude-proxy
+  - model_name: claude-sonnet-4-6
     litellm_params:
-      model: openrouter/meta-llama/llama-3.3-70b-instruct:free
-      api_key: os.environ/OPENROUTER_API_KEY
+      model: cerebras/llama-3.3-70b
+      api_key: os.environ/CEREBRAS_API_KEY
 
-  - model_name: claude-proxy
+  - model_name: claude-sonnet-4-6
     litellm_params:
       model: gemini/gemini-2.0-flash
       api_key: os.environ/GEMINI_API_KEY
+
+  # Alias para claude-3-5-sonnet por si Claude Code lo pide
+  - model_name: claude-3-5-sonnet-20241022
+    litellm_params:
+      model: groq/llama-3.3-70b-versatile
+      api_key: os.environ/GROQ_API_KEY
+
+  - model_name: claude-3-5-sonnet-20241022
+    litellm_params:
+      model: cerebras/llama-3.3-70b
+      api_key: os.environ/CEREBRAS_API_KEY
 
 router_settings:
   routing_strategy: least-busy
   num_retries: 3
   retry_after: 5
-  fallbacks:
-    - claude-proxy:
-        - claude-proxy
 
 litellm_settings:
   drop_params: true
