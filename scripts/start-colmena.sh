@@ -18,9 +18,18 @@ DIR="$(cd "$(dirname "$0")/.." && pwd)"
 CONFIG="$DIR/litellm-config.yaml"
 PUERTO=8000
 SESSION="colmena"
+VENV="$HOME/projects/thdora/.venv"
+
+# ─── Verificar venv con litellm ──────────────────────────────────────────
+if [ ! -f "$VENV/bin/litellm" ]; then
+  echo "❌ No se encuentra litellm en $VENV/bin/litellm"
+  echo "   Instala con: pip install litellm  (dentro del venv correcto)"
+  exit 1
+fi
+LITELLM="$VENV/bin/litellm"
+echo "✅ litellm encontrado: $LITELLM"
 
 # ─── LIMPIEZA AGRESIVA ───────────────────────────────────────────────────
-# Matar SIEMPRE todo lo que ocupe el puerto 8000, venga de donde venga
 echo "🧹 Limpiando puerto $PUERTO y procesos litellm..."
 pkill -9 -f litellm 2>/dev/null || true
 lsof -ti :$PUERTO | xargs kill -9 2>/dev/null || true
@@ -30,7 +39,7 @@ echo "✅ Puerto $PUERTO libre"
 # ─── Modo --solo-proxy (sin tmux) ───────────────────────────────────
 if [ "$1" = "--solo-proxy" ]; then
   echo "✅ Arrancando LiteLLM..."
-  litellm --config "$CONFIG" --port $PUERTO
+  "$LITELLM" --config "$CONFIG" --port $PUERTO
   exit 0
 fi
 
@@ -47,9 +56,9 @@ tmux kill-session -t $SESSION 2>/dev/null || true
 tmux new-session -d -s $SESSION -x 220 -y 50
 tmux rename-window -t $SESSION:0 'colmena'
 
-# Panel 1 (derecha arriba): Logs LiteLLM
+# Panel 1 (derecha arriba): Logs LiteLLM (ruta absoluta al bin)
 tmux split-window -t $SESSION:0 -h
-tmux send-keys -t $SESSION:0.1 "cd $DIR && litellm --config '$CONFIG' --port $PUERTO" Enter
+tmux send-keys -t $SESSION:0.1 "cd $DIR && '$LITELLM' --config '$CONFIG' --port $PUERTO" Enter
 
 # Panel 2 (derecha abajo): Bash libre
 tmux split-window -t $SESSION:0.1 -v
