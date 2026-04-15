@@ -11,20 +11,24 @@
 #  └────────────────────┴─────────────────────┘
 #
 # Navegar entre paneles: Ctrl+B luego flecha
-# Salir de tmux completamente: Ctrl+B luego D (detach), luego: tmux kill-session -t colmena
+# Salir de tmux: Ctrl+B D (detach), luego: tmux attach -t colmena
 
-# NOTA: NO usar set -e aquí — causa que el script muera si tmux attach falla
+# NOTA: NO usar set -e — causa que el script muera si tmux attach falla
 DIR="$(cd "$(dirname "$0")/.." && pwd)"
 CONFIG="$DIR/litellm-config.yaml"
 PUERTO=8000
 SESSION="colmena"
 
+# ─── LIMPIEZA AGRESIVA ───────────────────────────────────────────────────
+# Matar SIEMPRE todo lo que ocupe el puerto 8000, venga de donde venga
+echo "🧹 Limpiando puerto $PUERTO y procesos litellm..."
+pkill -9 -f litellm 2>/dev/null || true
+lsof -ti :$PUERTO | xargs kill -9 2>/dev/null || true
+sleep 2
+echo "✅ Puerto $PUERTO libre"
+
 # ─── Modo --solo-proxy (sin tmux) ───────────────────────────────────
 if [ "$1" = "--solo-proxy" ]; then
-  echo "🧹 Matando litellm y puerto $PUERTO..."
-  pkill -f litellm 2>/dev/null || true
-  lsof -ti :$PUERTO | xargs kill -9 2>/dev/null || true
-  sleep 1
   echo "✅ Arrancando LiteLLM..."
   litellm --config "$CONFIG" --port $PUERTO
   exit 0
@@ -36,13 +40,8 @@ if ! command -v tmux &>/dev/null; then
   exit 1
 fi
 
-# ─── Matar sesión anterior si existe ─────────────────────────────
+# ─── Matar sesión colmena anterior si existe ──────────────────────────
 tmux kill-session -t $SESSION 2>/dev/null || true
-
-# Matar litellm de cualquier proyecto
-pkill -f litellm 2>/dev/null || true
-lsof -ti :$PUERTO | xargs kill -9 2>/dev/null || true
-sleep 1
 
 # ─── Crear sesión tmux ────────────────────────────────────────────
 tmux new-session -d -s $SESSION -x 220 -y 50
@@ -65,12 +64,10 @@ tmux select-pane -t $SESSION:0.0
 
 # ─── Adjuntar ───────────────────────────────────────────────────────────────
 if [ -n "$TMUX" ]; then
-  # Ya estamos dentro de tmux: no podemos hacer attach directamente
   echo ""
   echo "✅ Sesión '$SESSION' creada en background."
-  echo "👉 Para entrar: Ctrl+B D (detach de esta sesión) y luego ejecuta:"
+  echo "👉 Ahora: Ctrl+B D para salir de esta sesión y luego:"
   echo "   tmux attach -t $SESSION"
 else
-  # Fuera de tmux: attach normal
   tmux attach-session -t $SESSION
 fi
