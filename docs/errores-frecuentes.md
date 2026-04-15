@@ -39,7 +39,7 @@ Please commit your changes or stash them before you merge.
 Aborting
 ```
 
-**Causa:** Se editó `litellm-config.yaml` localmente (o se regeneró) sin hacer commit antes del pull.
+**Causa:** Se editó `litellm-config.yaml` localmente (o se regenera) sin hacer commit antes del pull.
 
 **Solución — descartar cambios locales y quedarse con el repo:**
 ```bash
@@ -77,10 +77,10 @@ litellm.proxy.proxy_server: Exception occured - No deployments available
 
 | Modelo | Proveedor | Límite gratuito |
 |---|---|---|
-| `deepseek-r1` | DeepSeek | Generoso |
-| `gemini-flash-lite` | Google | Alto |
-| `groq-fallback` | Groq | Rápido pero bajo RPM |
-| `cerebras-fallback` | Cerebras | Rápido pero bajo RPM |
+| `deepseek-v3` | DeepSeek | Generoso, contexto largo |
+| `gemini-flash-lite` | Google | Alto RPM |
+| `groq-fallback` | Groq | Rápido pero ⚠️ 8K tokens max |
+| `cerebras-fallback` | Cerebras | Rápido pero ⚠️ 8K tokens max |
 
 ---
 
@@ -128,13 +128,70 @@ echo $ANTHROPIC_API_KEY
 
 ---
 
+## 6. `ContextWindowExceededError` en agentes — Groq/Cerebras rompen tareas largas
+
+**Error completo:**
+```
+litellm.exceptions.ContextWindowExceededError: CerebrasException - 
+Please reduce the length of the messages or completion. 
+Current length is 13219 while limit is 8192
+model=cerebras-fallback
+```
+
+**Causa:** Groq y Cerebras tienen un límite de **8192 tokens** de contexto. Las tareas de agente (comparativas, documentación, refactoring) generan fácilmente 10K-20K tokens de contexto y rompen el fallback en cadena.
+
+**Solución permanente (ya aplicada en config):**  
+Groq y Cerebras han sido eliminados de los fallbacks del `principal`. Solo se usan como fallback entre sí para prompts cortos.
+
+**Fallbacks seguros para tareas largas:**
+```yaml
+# litellm-config.yaml (configuración actual)
+fallbacks:
+  - {"principal": ["deepseek-v3", "gemini-flash-lite"]}   # 1M+ tokens
+  - {"gemini-flash": ["gemini-flash-lite", "deepseek-v3"]} # 1M+ tokens
+```
+
+**Regla práctica:**
+
+| Tarea | Modelo recomendado |
+|---|---|
+| Chat rápido (<2K tokens) | `groq-fallback`, `cerebras-fallback` |
+| Agente, documentación, refactor | `principal` (gemini-flash), `deepseek-v3` |
+| Razonamiento complejo | `deepseek-r1`, `gemini-pro` |
+
+---
+
+## 7. `principal` da 401 — Groq API key caducada
+
+**Error completo:**
+```
+litellm.BadRequestError: GroqException - {"error": ...}
+status_code: 401
+```
+
+**Causa:** El `principal` estaba apuntando a `groq/llama-3.3-70b-versatile` y la `GROQ_API_KEY` había caducado o no estaba exportada.
+
+**Solución permanente (ya aplicada):**  
+`principal` ahora apunta a `gemini/gemini-2.0-flash` (Google), que tiene key más estable y 1M de contexto.
+
+**Verificar key de Groq si la necesitas:**
+```bash
+echo $GROQ_API_KEY          # Ver si está exportada
+grep GROQ ~/.bashrc          # Ver si está en bashrc
+# Si no está: añadir en ~/.bashrc:
+export GROQ_API_KEY="gsk_..."
+source ~/.bashrc
+```
+
+---
+
 ## Procedimiento de arranque limpio (referencia rápida)
 
 Para evitar todos estos errores, usar siempre esta secuencia:
 
 ```bash
 cd ~/projects/ai-toolkit
-git pull                                              # 1. Actualizar repo
+git pull                                              # 1. Actualizar repo (config más reciente)
 pkill -f litellm 2>/dev/null; sleep 2                # 2. Matar procesos previos
 litellm --config litellm-config.yaml --port 8000 &   # 3. Arrancar proxy
 sleep 3 && opencode                                   # 4. Abrir OpenCode
