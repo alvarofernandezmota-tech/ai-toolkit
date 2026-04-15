@@ -1,19 +1,19 @@
 # LiteLLM Proxy Config — Arquitectura Colmena
 # Arrancar: bash scripts/start-colmena.sh
 # OpenCode apunta a: http://localhost:8000
-# Última actualización: 2026-04-16 (fix: OpenRouter y Cerebras confirmados 200)
+# Última actualización: 2026-04-16 (fix: gemini-fallback desactivado — 429 rate limit)
 #
-# ESTADO REAL 2026-04-16 00:04:
+# ESTADO REAL 2026-04-16 00:20:
 #   Cerebras  → ✅ 200 (gpt-oss-120b, llama3.1-8b, qwen-3-235b-a22b-instruct-2507)
-#   OpenRouter → ✅ 200 (problema era max_tokens=8192 > saldo — limitado a 4096)
-#   Gemini    → ❌ 429 rate limit (demasiadas peticiones esta noche)
+#   OpenRouter → ✅ 200 (max_tokens <= 4096)
+#   Gemini    → ❌ 429 rate limit (demasiadas peticiones esta noche — reactivar mañana)
 #   Groq      → ❌ 401 key caducada
 #   DeepSeek  → ❌ AuthenticationError
 #
 # VARIABLES DE ENTORNO:
 #   CEREBRAS_API_KEY             → ✅ operativo
 #   GOOGLE_GENERATIVE_AI_API_KEY → ⚠️  429 esta noche, mañana ok
-#   OPENROUTER_API_KEY           → ✅ operativo (max_tokens <= 5501)
+#   OPENROUTER_API_KEY           → ✅ operativo (max_tokens <= 4096)
 #   DEEPSEEK_API_KEY             → ⚠️  renovar en platform.deepseek.com
 #   GROQ_API_KEY                 → ⚠️  renovar en console.groq.com
 #   ANTHROPIC_API_KEY            → de pago
@@ -110,7 +110,6 @@ model_list:
       max_tokens: 4096
 
   # ─── ALIBABA ─────────────────────────────────────────────────────────
-  # Cerebras tiene qwen-3-235b nativo (más rápido que OpenRouter)
   - model_name: qwen3-235b
     litellm_params:
       model: cerebras/qwen-3-235b-a22b-instruct-2507
@@ -147,10 +146,11 @@ model_list:
       api_key: os.environ/OPENROUTER_API_KEY
       max_tokens: 4096
 
-  - model_name: gemini-fallback
-    litellm_params:
-      model: gemini/gemini-2.0-flash
-      api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
+  # gemini-fallback: DESACTIVADO temporalmente (429 esta noche)
+  # - model_name: gemini-fallback
+  #   litellm_params:
+  #     model: gemini/gemini-2.0-flash
+  #     api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
 
 router_settings:
   routing_strategy: least-busy
@@ -158,9 +158,9 @@ router_settings:
   retry_after: 3
   cooldown_time: 30
   fallbacks:
-    - {"principal": ["openrouter-fallback", "gemini-fallback"]}
-    - {"openrouter-fallback": ["cerebras-fallback", "gemini-fallback"]}
-    - {"cerebras-fallback": ["openrouter-fallback", "gemini-fallback"]}
+    - {"principal": ["openrouter-fallback", "cerebras-fallback"]}
+    - {"openrouter-fallback": ["cerebras-fallback"]}
+    - {"cerebras-fallback": ["openrouter-fallback"]}
     - {"deepseek-r1": ["qwen3-235b", "llama-4-maverick"]}
     - {"deepseek-v3": ["openrouter-fallback", "cerebras-fallback"]}
     - {"claude-sonnet": ["gpt-4o", "openrouter-fallback"]}
