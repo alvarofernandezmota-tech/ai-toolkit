@@ -24,6 +24,8 @@
 | **Fichas comparativa 14 LLMs** | 15-04-2026 |
 | **Diario de sesiones estructurado** | 15-04-2026 |
 | **Dependencias documentadas por capa** | 15-04-2026 |
+| **Script arranque rápido: LiteLLM + OpenCode en una sola línea** | 15-04-2026 |
+| **`docs/errores-frecuentes.md` — 5 errores reales documentados** | 15-04-2026 |
 
 ---
 
@@ -34,7 +36,7 @@
 - [ ] `scripts/ai-menu.sh` muestra estado de APIs (rate limit restante)
 - [ ] Rotación automática si un modelo está caído
 - [ ] Muestra última sesión de OpenCode para continuar
-- [ ] Script arranque rápido: LiteLLM + OpenCode en una sola línea
+- [x] Script arranque rápido: LiteLLM + OpenCode en una sola línea → ver `docs/arranque-rapido.md`
 
 ### Experimento comparativa LLMs
 - [ ] Lanzar prompt estándar en cada modelo y rellenar `investigacion/comparativa-llms.md`
