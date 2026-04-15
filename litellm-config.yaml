@@ -1,35 +1,40 @@
 # LiteLLM Proxy Config — Arquitectura Colmena
-# Arrancar: litellm --config litellm-config.yaml --port 8000
+# Arrancar: bash scripts/start-colmena.sh
 # OpenCode apunta a: http://localhost:8000
-# Última actualización: 2026-04-15 (fix: principal → deepseek-v3, más estable para agentes)
+# Última actualización: 2026-04-15 (fix: fallbacks sin Gemini, cerebras como principal-1)
 #
 # VARIABLES DE ENTORNO NECESARIAS (en ~/.bashrc o .env):
-#   DEEPSEEK_API_KEY          → ⭐ PRINCIPAL — muy barato (~$0.001/1K tokens), 64K contexto
-#   GOOGLE_GENERATIVE_AI_API_KEY → fallback gratuito pero RPM bajo en free tier
+#   CEREBRAS_API_KEY          → ⭐ PRINCIPAL-1 — gratis, rápido, 128K contexto (llama3.1-70b)
+#   DEEPSEEK_API_KEY          → ⭐ PRINCIPAL-2 — muy barato, 64K contexto
+#   GROQ_API_KEY              → fallback rápido gratis
+#   GOOGLE_GENERATIVE_AI_API_KEY → solo usar directamente, NO como fallback
 #   OPENROUTER_API_KEY        → modelos :free via OpenRouter
 #   ANTHROPIC_API_KEY         → de pago
 #   OPENAI_API_KEY            → de pago
 #   MISTRAL_API_KEY           → de pago
-#   GROQ_API_KEY              → gratis PERO límite 8K contexto — solo prompts cortos
-#   CEREBRAS_API_KEY          → gratis PERO límite 8K contexto — solo prompts cortos
 #
-# POR QUÉ DEEPSEEK-V3 COMO PRINCIPAL:
-#   - Gemini free tier: se agota rápido con tareas de agente (múltiples llamadas)
-#   - Groq/Cerebras: 8K tokens max, rompen tareas largas
-#   - DeepSeek V3: $0.27/M tokens input, 64K contexto, sin rate limit agresivo
-#   - Fallback a gemini-flash cuando DeepSeek falla o está lento
+# HISTORIAL PRINCIPAL:
+#   Groq llama-3.3-70b → 401 (key caducada)
+#   Gemini Flash → 429 (free tier agotado con agentes)
+#   DeepSeek V3 → fallbacks apuntaban a Gemini — mismo problema
+#   Cerebras llama3.1-70b → gratis, 128K contexto, sin rate limit agresivo ✅
+#
+# REGLA DE ORO: NUNCA poner modelos Gemini en fallbacks automáticos.
+# Gemini free tier tiene límite diario que se agota con agentes.
+# Usarlo solo de forma manual con Ctrl+P.
 
 model_list:
 
   # ─── PRINCIPAL (default) ────────────────────────────────────────────────────
-  # DeepSeek V3: $0.27/M tokens, 64K contexto, estable para tareas de agente
-  # Historial: Groq (401), Gemini Flash (free tier agotado con agentes) → DeepSeek V3
+  # Cerebras llama3.1-70b: GRATIS, 128K contexto, muy rápido
+  # Fallback: deepseek-v3 (barato) → groq (gratis)
+  # ⚠️ NUNCA Gemini en fallbacks — su free tier se agota con agentes
   - model_name: principal
     litellm_params:
-      model: deepseek/deepseek-chat
-      api_key: os.environ/DEEPSEEK_API_KEY
+      model: cerebras/llama3.1-70b
+      api_key: os.environ/CEREBRAS_API_KEY
 
-  # ─── GOOGLE ─────────────────────────────────────────────────────────────────
+  # ─── GOOGLE (solo uso manual, NO en fallbacks) ──────────────────────────────
   - model_name: gemini-pro
     litellm_params:
       model: gemini/gemini-2.5-pro-exp-03-25
@@ -111,8 +116,7 @@ model_list:
       model: mistral/codestral-latest
       api_key: os.environ/MISTRAL_API_KEY
 
-  # ─── FALLBACKS VELOCIDAD (solo prompts cortos <6K tokens) ─────────────────────────
-  # ⚠️ Groq y Cerebras: 8K tokens max — NO usar para tareas de agente largas
+  # ─── VELOCIDAD GRATIS ───────────────────────────────────────────────────────────
   - model_name: groq-fallback
     litellm_params:
       model: groq/llama-3.3-70b-versatile
@@ -120,7 +124,7 @@ model_list:
 
   - model_name: cerebras-fallback
     litellm_params:
-      model: cerebras/llama3.1-8b
+      model: cerebras/llama3.1-70b
       api_key: os.environ/CEREBRAS_API_KEY
 
 router_settings:
@@ -129,13 +133,13 @@ router_settings:
   retry_after: 5
   cooldown_time: 60
   fallbacks:
-    # principal (deepseek-v3) → gemini-flash → gemini-flash-lite
-    - {"principal": ["gemini-flash", "gemini-flash-lite"]}
-    - {"deepseek-v3": ["gemini-flash", "gemini-flash-lite"]}
-    - {"gemini-flash": ["gemini-flash-lite", "deepseek-v3"]}
-    - {"gemini-pro": ["gemini-flash", "deepseek-v3"]}
+    # ⚠️ REGLA: Gemini NUNCA en fallbacks automáticos
+    # principal (cerebras) → deepseek-v3 → groq
+    - {"principal": ["deepseek-v3", "groq-fallback"]}
+    - {"deepseek-v3": ["cerebras-fallback", "groq-fallback"]}
+    - {"deepseek-r1": ["deepseek-v3", "qwen3-235b"]}
     - {"claude-sonnet": ["gpt-4o", "deepseek-v3"]}
-    - {"deepseek-r1": ["qwen3-235b", "deepseek-v3"]}
+    - {"gemini-flash": ["deepseek-v3"]}
     - {"groq-fallback": ["cerebras-fallback"]}
 
 litellm_settings:
