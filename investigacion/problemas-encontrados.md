@@ -45,15 +45,13 @@
 ## 5. Google AI — IDs de modelo incorrectos en OpenCode
 
 - **Error:** `models/gemini-X is not found for API version v1beta`
-- **Causa:** Los IDs de Gemini en OpenCode no son los mismos que en la documentación
 - **IDs probados:**
   - `google/gemini-2.5-flash-preview-04-17` ❌ No existe en v1beta
   - `google/gemini-1.5-flash` ❌ No existe en v1beta
   - `google/gemini-2.0-flash` ⚠️ Existe pero rate limit en horas pico
-- **Solución pendiente:** Ejecutar ListModels para ver IDs exactos:
+- **Solución pendiente:** Verificar IDs con curl:
   ```bash
-  curl "https://generativelanguage.googleapis.com/v1beta/models?key=$GOOGLE_GENERATIVE_AI_API_KEY" \
-    | python3 -m json.tool | grep '"name"'
+  curl "https://generativelanguage.googleapis.com/v1beta/models?key=$GOOGLE_GENERATIVE_AI_API_KEY" | python3 -m json.tool | grep '"name"'
   ```
 
 ---
@@ -61,17 +59,16 @@
 ## 6. Google AI — Rate limit Gemini 2.0 Flash en horas pico
 
 - **Error:** `gemini is way too hot right now [retrying attempt #6/#7]`
-- **Causa:** Gemini 2.0 Flash gratuito tiene RPM muy bajos. A las 7pm está saturado.
-- **Solución:** Probar fuera de horas pico (mañana temprano)
+- **Causa:** Gemini 2.0 Flash gratuito saturado a las 7pm
+- **Solución:** Probar fuera de horas pico o dejar que LiteLLM haga fallback
 
 ---
 
 ## 7. Cerebras — Compaction en bucle con contexto grande
 
-- **Error:** Cerebras compacta repetidamente sin poder responder
+- **Error:** Compacta repetidamente sin poder responder
 - **Causa:** llama3.1-8b tiene 8192 tokens. El repo completo lo supera.
-- **Comportamiento:** compacta → intenta → sigue grande → compacta → bucle infinito
-- **Solución:** Cerebras solo para prompts cortos sin contexto de repo
+- **Solución:** Cerebras solo para prompts cortos. Usar como fallback, no como principal.
 
 ---
 
@@ -79,21 +76,20 @@
 
 - **Error:** `^[[200~export: command not found`
 - **Causa:** Al pegar bloques, la terminal los interpreta como texto literal
-- **Solución:** Ejecutar línea por línea, no pegar bloques enteros
+- **Solución:** Escribir comandos **uno por uno a mano**, no pegar bloques
 
 ---
 
 ## 9. OpenRouter Qwen3 235B — requiere créditos de pago
 
 - **Error:** `This request requires more credits`
-- **Causa:** Qwen3 235B no es gratuito para contexto largo
 - **Solución:** Usar modelos `:free` de OpenRouter
 
 ---
 
 ## 10. API keys — NUNCA en el chat ni en el repo
 
-- **Regla de oro:** Solo variables de entorno. `.env` en `.gitignore`.
+- Solo variables de entorno. `.env` en `.gitignore`.
 - Si se expone una key → revocarla inmediatamente
 
 ---
@@ -105,66 +101,92 @@
 
 ---
 
-## 12. OpenCode — configuración LiteLLM con sintaxis incorrecta ⚠️
+## 12. OpenCode — `baseURL` y `apiKey` no son claves válidas en raíz
 
-- **Error:** `Configuration is invalid: Unrecognized keys: "baseURL", "apiKey"`
-- **Causa:** OpenCode NO acepta `baseURL` ni `apiKey` directamente en el JSON raíz
-- **Solución:** Usar el bloque `providers` con nombre `openai` para apuntar a LiteLLM:
+- **Error:** `Unrecognized keys: "baseURL", "apiKey"`
+- **Solución:** Usar bloque `provider` con `@ai-sdk/openai-compatible`:
   ```json
   {
-    "$schema": "https://opencode.ai/config.json",
-    "model": "openai/principal",
-    "providers": {
-      "openai": {
-        "api": "http://localhost:PUERTO",
-        "apiKey": "sk-litellm-local"
+    "model": "litellm/principal",
+    "provider": {
+      "litellm": {
+        "npm": "@ai-sdk/openai-compatible",
+        "name": "LiteLLM Colmena",
+        "options": {
+          "baseURL": "http://localhost:PUERTO/v1",
+          "apiKey": "sk-litellm-local"
+        }
       }
     }
   }
   ```
-- **Importante:** Sustituir `PUERTO` por el que aparezca en el log de LiteLLM al arrancar
 
 ---
 
-## 13. LiteLLM — puerto dinámico al arrancar ⚠️
+## 13. OpenCode — `providers` (plural) tampoco es válido
 
-- **Problema:** LiteLLM no siempre usa el puerto 4000 aunque se le indique. Asigna puerto aleatorio.
-- **Ejemplo:** `Uvicorn running on http://0.0.0.0:44195` en vez de 4000
-- **Causa:** Conflicto con otro proceso usando el puerto 4000, o permisos
-- **Solución:** Leer el puerto real en el log de arranque y usarlo en opencode.json
+- **Error:** `Unrecognized key: "providers"`
+- **Causa:** La clave correcta es `provider` (singular)
+- **Solución:** Ver problema 12 para la sintaxis correcta
+
+---
+
+## 14. LiteLLM — corre en puerto 8000, no en 4000 ⚠️
+
+- **Problema:** LiteLLM arranca con `--port 4000` pero escucha en `127.0.0.1:8000`
+- **Causa:** Hay otro proceso usando el 4000, LiteLLM coge el siguiente libre
+- **Diagnóstico:**
   ```bash
-  # Ver qué puerto usa realmente LiteLLM:
-  litellm --config litellm-config.yaml --port 4000 2>&1 | grep 'Uvicorn running'
+  ss -tlnp | grep python  # ver puerto real
   ```
-- **Fix definitivo:** Matar procesos en puerto 4000 antes de arrancar:
+- **Solución:** Usar el puerto real en opencode.json:
+  ```bash
+  # Ver puerto real antes de abrir OpenCode
+  ss -tlnp | grep python
+  # Resultado: LISTEN 127.0.0.1:8000 <- este es el puerto real
+  ```
+- **Fix definitivo — forzar puerto libre:**
   ```bash
   pkill -f litellm
+  pkill -f uvicorn
+  sleep 2
   litellm --config litellm-config.yaml --port 4000 &
+  sleep 5
+  ss -tlnp | grep python  # confirmar puerto
+  ```
+
+---
+
+## 15. LiteLLM fallback no salta entre modelos
+
+- **Problema:** Gemini falla con rate limit pero LiteLLM no intenta Groq/Cerebras
+- **Causa:** Todos los modelos tenían el mismo nombre `principal` — LiteLLM no sabe a cuál hacer fallback
+- **Solución:** Dar nombres distintos a cada modelo:
+  ```yaml
+  - model_name: principal        # Gemini - primario
+  - model_name: groq-fallback    # Groq
+  - model_name: cerebras-fallback # Cerebras
+  - model_name: openrouter-fallback # OpenRouter
+  ```
+  Y en router_settings:
+  ```yaml
+  fallbacks:
+    - {"principal": ["groq-fallback", "cerebras-fallback", "openrouter-fallback"]}
   ```
 
 ---
 
 ## 💡 Conclusión general
 
-**Todos los modelos gratuitos tienen límites que se activan en horas pico.**
-La solución definitiva es **LiteLLM como proxy local** con rotación automática:
-
-```
-OpenCode → LiteLLM (localhost:4000) → Google AI / Groq / Cerebras / OpenRouter
-```
-
-Config correcta de OpenCode para LiteLLM:
+**Flujo correcto para arrancar la colmena:**
 ```bash
-cat > ~/.config/opencode/opencode.json << 'EOF'
-{
-  "$schema": "https://opencode.ai/config.json",
-  "model": "openai/principal",
-  "providers": {
-    "openai": {
-      "api": "http://localhost:4000",
-      "apiKey": "sk-litellm-local"
-    }
-  }
-}
-EOF
+cd ~/projects/ai-toolkit
+git pull
+pkill -f litellm; pkill -f uvicorn; sleep 2
+litellm --config litellm-config.yaml --port 4000 &
+sleep 5
+ss -tlnp | grep python  # apuntar el puerto real
+# Actualizar opencode.json con el puerto real
+# Luego:
+opencode
 ```
