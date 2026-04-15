@@ -23,39 +23,57 @@
 
 ---
 
-## 3. Gemini requiere API key propia
+## 3. Google AI — nombre de variable de entorno incorrecto ⚠️
 
-- **Error:** `Google Generative AI API key is missing`
-- **Causa:** Gemini no va por OpenRouter — requiere key propia de Google AI Studio
-- **Solución:** Registrarse en [aistudio.google.com](https://aistudio.google.com) para obtener key gratuita
+- **Error:** `Google Generative AI API key is missing. Pass it using the 'apiKey' parameter or the GOOGLE_GENERATIVE_AI_API_KEY environment variable.`
+- **Causa 1:** OpenCode espera `GOOGLE_GENERATIVE_AI_API_KEY`, NO `GOOGLE_API_KEY`
+- **Causa 2:** Aunque tengas la key guardada en la repo, hay que exportarla con el nombre exacto
+- **Solución:**
+  ```bash
+  export GOOGLE_GENERATIVE_AI_API_KEY="tu-key-aqui"
+  echo 'export GOOGLE_GENERATIVE_AI_API_KEY="tu-key-aqui"' >> ~/.bashrc
+  source ~/.bashrc
+  ```
+- **Nombre correcto del modelo en OpenCode:** `google/gemini-2.5-flash-preview-04-17`
+- **Registrarse en:** [aistudio.google.com](https://aistudio.google.com) para obtener key gratuita
 
 ---
 
-## 4. Scripts de agentes pendientes
+## 4. Groq — límite de contexto con repos grandes
+
+- **Error:** `Request too large for model llama-3.3-70b-versatile. Limit 12000, Requested 32475`
+- **Causa:** Groq tier gratuito tiene límite de 12.000 TPM. OpenCode manda el repo entero (~32K tokens)
+- **Solución:** Groq solo sirve para prompts cortos. Usar Google AI (1M tokens) o DeepSeek como principal
+- **Regla:** Nunca poner Groq como primer modelo cuando haya repos con mucho contexto
+
+---
+
+## 5. Scripts de agentes pendientes
 
 - **Estado:** Los 4 scripts NO fueron creados por agotamiento de tokens/rate limits
-- **Pendiente para mañana:**
+- **Pendiente:**
   - `scripts/revisor.sh`
   - `scripts/documentador.sh`
   - `scripts/escalado.sh`
   - `scripts/run-all.sh`
-- **Solución:** Usar Cerebras API o Qwen3 con tarea más corta
+- **Solución:** Usar Google AI (Gemini) o Cerebras con tarea más corta
 
 ---
 
-## 5. API keys en el repositorio
+## 6. API keys en el repositorio
 
 - **Problema:** Riesgo de exponer API keys subidas accidentalmente al repo
 - **Regla:** NUNCA subir keys al repo. Siempre usar variables de entorno:
   ```bash
   export OPENROUTER_API_KEY="tu-key"
   export CEREBRAS_API_KEY="tu-key"
+  export GOOGLE_GENERATIVE_AI_API_KEY="tu-key"
   ```
 - Añadir `.env` al `.gitignore`
 
 ---
 
-## 6. Tareas duplicadas en cola (OpenCode)
+## 7. Tareas duplicadas en cola (OpenCode)
 
 - **Problema:** Al cambiar de modelo con tareas en cola, OpenCode las duplica
 - **Solución:** Usar `/clear` antes de cambiar de modelo con tareas pendientes
