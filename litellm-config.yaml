@@ -1,7 +1,7 @@
 # LiteLLM Proxy Config — Arquitectura Colmena
 # Arrancar: bash scripts/start-colmena.sh
 # OpenCode apunta a: http://localhost:8000
-# Última actualización: 2026-04-15 (fix: context_window_fallbacks)
+# Última actualización: 2026-04-15 (fix: cerebras llama-3.3-70b deprecado)
 #
 # VARIABLES DE ENTORNO NECESARIAS (en ~/.bashrc o .env):
 #   CEREBRAS_API_KEY          → ⭐ PRINCIPAL — gratis, rápido, 128K contexto
@@ -18,30 +18,38 @@
 #   Gemini Flash → 429 (free tier agotado con agentes)
 #   DeepSeek V3 → fallbacks apuntaban a Gemini — mismo problema
 #   Cerebras llama3.1-70b → 404 nombre incorrecto
-#   Cerebras llama-3.3-70b → nombre correcto ✅
-#   Cerebras 1 deployment → 429 todos en cooldown — fix: 3 deployments ✅
+#   Cerebras llama-3.3-70b → 404 DEPRECADO (ya no es modelo de producción)
+#   Cerebras gpt-oss-120b → modelo de producción actual ✅
 #   ContextWindowExceeded 13K>8K → fix: context_window_fallbacks → deepseek-v3 ✅
 #
+# MODELOS PRODUCCIÓN CEREBRAS (docs: inference-docs.cerebras.ai/models/overview):
+#   llama3.1-8b   → 8B,  ~2200 tok/s
+#   gpt-oss-120b  → 120B, ~3000 tok/s  ⭐ MEJOR OPCIÓN
+#
 # REGLA DE ORO: NUNCA poner modelos Gemini en fallbacks automáticos.
-# Gemini free tier tiene límite diario que se agota con agentes.
-# Usarlo solo de forma manual con Ctrl+P.
 
 model_list:
 
-  # ─── PRINCIPAL (default) ────────────────────────────────────────────────────
-  # Cerebras llama-3.3-70b: 128K contexto, gratis, rápido
-  # context_window_fallback → deepseek-v3 (64K) cuando el contexto supera 8K
+  # ─── PRINCIPAL (default) ───────────────────────────────────────────────
+  # Cerebras gpt-oss-120b: 120B, ~3000 tok/s, modelo de producción actual
   - model_name: principal
     litellm_params:
-      model: cerebras/llama-3.3-70b
+      model: cerebras/gpt-oss-120b
       api_key: os.environ/CEREBRAS_API_KEY
 
+  # Cerebras llama3.1-8b: 8B ligero, ~2200 tok/s, fallback rápido
+  - model_name: principal
+    litellm_params:
+      model: cerebras/llama3.1-8b
+      api_key: os.environ/CEREBRAS_API_KEY
+
+  # Groq llama-3.3-70b: fallback si Cerebras cae
   - model_name: principal
     litellm_params:
       model: groq/llama-3.3-70b-versatile
       api_key: os.environ/GROQ_API_KEY
 
-  # ─── GOOGLE (solo uso manual, NO en fallbacks) ──────────────────────────────
+  # ─── GOOGLE (solo uso manual, NO en fallbacks) ────────────────────────
   - model_name: gemini-pro
     litellm_params:
       model: gemini/gemini-2.5-pro-exp-03-25
@@ -57,7 +65,7 @@ model_list:
       model: gemini/gemini-2.0-flash-lite
       api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
 
-  # ─── ANTHROPIC ──────────────────────────────────────────────────────────────
+  # ─── ANTHROPIC ──────────────────────────────────────────────────
   - model_name: claude-sonnet
     litellm_params:
       model: anthropic/claude-3-5-sonnet-20241022
@@ -68,7 +76,7 @@ model_list:
       model: anthropic/claude-3-opus-20240229
       api_key: os.environ/ANTHROPIC_API_KEY
 
-  # ─── OPENAI ─────────────────────────────────────────────────────────────────
+  # ─── OPENAI ─────────────────────────────────────────────────────
   - model_name: gpt-4o
     litellm_params:
       model: openai/gpt-4o
@@ -84,7 +92,7 @@ model_list:
       model: openai/o3-mini
       api_key: os.environ/OPENAI_API_KEY
 
-  # ─── DEEPSEEK ───────────────────────────────────────────────────────────────
+  # ─── DEEPSEEK ───────────────────────────────────────────────────
   - model_name: deepseek-r1
     litellm_params:
       model: deepseek/deepseek-reasoner
@@ -95,7 +103,7 @@ model_list:
       model: deepseek/deepseek-chat
       api_key: os.environ/DEEPSEEK_API_KEY
 
-  # ─── META (vía OpenRouter) ───────────────────────────────────────────────────
+  # ─── META (vía OpenRouter) ──────────────────────────────────────
   - model_name: llama-4-maverick
     litellm_params:
       model: openrouter/meta-llama/llama-4-maverick
@@ -106,13 +114,13 @@ model_list:
       model: openrouter/meta-llama/llama-4-scout
       api_key: os.environ/OPENROUTER_API_KEY
 
-  # ─── ALIBABA (vía OpenRouter) ────────────────────────────────────────────────
+  # ─── ALIBABA (vía OpenRouter) ───────────────────────────────────
   - model_name: qwen3-235b
     litellm_params:
       model: openrouter/qwen/qwen3-235b-a22b:free
       api_key: os.environ/OPENROUTER_API_KEY
 
-  # ─── MISTRAL ─────────────────────────────────────────────────────────────────
+  # ─── MISTRAL ─────────────────────────────────────────────────────
   - model_name: mistral-large
     litellm_params:
       model: mistral/mistral-large-latest
@@ -123,7 +131,7 @@ model_list:
       model: mistral/codestral-latest
       api_key: os.environ/MISTRAL_API_KEY
 
-  # ─── VELOCIDAD GRATIS ────────────────────────────────────────────────────────
+  # ─── VELOCIDAD GRATIS ─────────────────────────────────────────────
   - model_name: groq-fallback
     litellm_params:
       model: groq/llama-3.3-70b-versatile
@@ -131,7 +139,7 @@ model_list:
 
   - model_name: cerebras-fallback
     litellm_params:
-      model: cerebras/llama-3.3-70b
+      model: cerebras/llama3.1-8b
       api_key: os.environ/CEREBRAS_API_KEY
 
 router_settings:
@@ -148,8 +156,7 @@ router_settings:
     - {"gemini-flash": ["deepseek-v3"]}
     - {"groq-fallback": ["cerebras-fallback"]}
   context_window_fallbacks:
-    # Cuando el contexto supera el límite del modelo, saltar a uno con ventana mayor
-    - {"principal": ["deepseek-v3"]}    # Cerebras/Groq ~8K → DeepSeek 64K
+    - {"principal": ["deepseek-v3"]}
     - {"groq-fallback": ["deepseek-v3"]}
     - {"cerebras-fallback": ["deepseek-v3"]}
 
