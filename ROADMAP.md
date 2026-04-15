@@ -1,7 +1,7 @@
 # 🗺️ Roadmap — Ecosistema de Agentes IA
 
 > Registro de todo lo que hay que construir, en orden de prioridad.
-> Actualizado: 15 abril 2026 (sesión tarde).
+> Actualizado: 15 abril 2026 (sesión noche).
 
 ---
 
@@ -19,20 +19,33 @@
 | `docs/VISION-SISTEMA.md` — norte del sistema | 15-04-2026 |
 | `agentes/PENDIENTES.md` — lista viva de agentes | 15-04-2026 |
 | `guias/opencode-deepseek.md` — guia personal | 15-04-2026 |
+| **OpenCode + LiteLLM proxy multi-modelo** | 15-04-2026 |
+| **18 modelos en LiteLLM config** | 15-04-2026 |
+| **Fichas comparativa 14 LLMs** | 15-04-2026 |
+| **Diario de sesiones estructurado** | 15-04-2026 |
+| **Dependencias documentadas por capa** | 15-04-2026 |
 
 ---
 
 ## 🔧 Esta semana (15-20 abril 2026)
 
 ### Capa 2 — Menú inteligente
+- [ ] Integrar `opencode-rotate.sh` al menú principal (`ai-menu.sh`)
 - [ ] `scripts/ai-menu.sh` muestra estado de APIs (rate limit restante)
 - [ ] Rotación automática si un modelo está caído
 - [ ] Muestra última sesión de OpenCode para continuar
+- [ ] Script arranque rápido: LiteLLM + OpenCode en una sola línea
+
+### Experimento comparativa LLMs
+- [ ] Lanzar prompt estándar en cada modelo y rellenar `investigacion/comparativa-llms.md`
+- [ ] Documentar resultados reales con puntuaciones
+- [ ] Actualizar ranking de `principal` con el mejor modelo verificado
+- [ ] Probar Groq, Cerebras, DeepSeek, OpenRouter en orden
 
 ### Capa 3 — Primer agente real
-- [ ] `scripts/generar-diario.sh` — genera docs/diario/ con git log + OpenRouter API
+- [ ] `scripts/generar-diario.sh` — genera docs/diario/ con git log + API
 - [ ] Probar con OpenCode como constructor: darle PENDIENTES y que construya
-- [ ] Primer uso real de Claude Code sobre THDORA (bugs en `agentes/thdora-primera-sesion.md`)
+- [ ] Primer uso real de Claude Code sobre THDORA
 
 ---
 
@@ -43,6 +56,9 @@
 - [ ] Agente revisor de código probado en THDORA
 - [ ] `prompts/` — prompts que funcionan bien guardados para reutilizar
 - [ ] Alias en `.bashrc`: `aitoolkit` lanza el menú desde cualquier directorio
+- [ ] tmux config guardada en repo para reproducir setup de terminales
+- [ ] Investigar arquitectura ensemble (múltiples LLMs en paralelo)
+- [ ] Añadir Ollama al proxy para modelos 100% locales
 
 ---
 
@@ -83,6 +99,7 @@
 - [ ] Agente escritor de tests (Qwen3 Coder)
 - [ ] Agente generador de docs (Llama 3.3)
 - [ ] Integración: trigger desde n8n cuando hay PR nuevo
+- [ ] Arquitectura ensemble: misma tarea → varios LLMs → fusionar respuestas
 
 ---
 
@@ -93,10 +110,10 @@ Cuando todo esté montado, esto pasa solo cada día:
 ```
 08:00  → Brief del día llega por Telegram
 día    → THDORA responde en lenguaje natural
-día    → Claude Code + OpenCode disponibles en terminal
+día    → OpenCode disponible en terminal con 18 LLMs vía LiteLLM
 22:00  → Alerta hábitos si quedan pendientes
 23:00  → Diario del día se escribe solo en GitHub
 lunes  → Resumen de la semana llega por Telegram
 ```
 
-**Consumo total: <1% CPU, ~370 MB RAM, 0€/mes.**
+**Consumo total: <1% CPU, ~370 MB RAM, coste mínimo.**

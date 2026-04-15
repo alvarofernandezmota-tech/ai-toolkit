@@ -1,6 +1,38 @@
 # CHANGELOG — ai-toolkit
 
-Registro conciso de lo que se hace en cada sesión. Para sesiones largas, ver `docs/diario/`.
+Registro conciso de lo que se hace en cada sesión. Para sesiones largas, ver `investigacion/diario/`.
+
+---
+
+## [2026-04-15] — Sesión noche: OpenCode + LiteLLM multi-modelo funcionando
+
+### Añadido
+- `docs/opencode-setup.md` — setup completo OpenCode + LiteLLM con problemas y soluciones
+- `docs/arranque-rapido.md` — comando único para levantar todo el stack
+- `investigacion/comparativa-llms.md` — fichas de 14 modelos + plantilla de prueba estándar
+- `investigacion/diario/2026-04-15-sesion-opencode-litellm.md` — diario completo de la sesión
+- `docs/dependencias.md` — todas las dependencias del ecosistema documentadas por capa
+
+### Corregido
+- `litellm-config.yaml` — puerto unificado a 8000 (antes 4000 en config, 8000 en OpenCode)
+- `litellm-config.yaml` — 18 modelos añadidos organizados por familia
+- `litellm-config.yaml` — nombre modelo Gemini 2.5 Pro corregido (daba 404)
+- `litellm-config.yaml` — `principal` cambiado a `groq/llama-3.3-70b-versatile` (Google free tier agotado)
+- `scripts/opencode-rotate.sh` — permisos de ejecución (chmod +x)
+
+### Problemas encontrados
+- OpenCode ignoraba LiteLLM porque faltaba campo `models` en el provider → solucionado
+- `opencode auth login` no encuentra litellm (no es provider nativo) → no usar auth, key en config
+- Puerto 8000 ocupado por servidor uvicorn de THDORA → `kill -9 PID`
+- Gemini 2.5 Pro Preview da 404 (nombre incorrecto o sin acceso) → usar gemini-2.0-flash
+- Google free tier agotado (429) → cambiar principal a Groq
+
+### Decisiones tomadas
+- **`principal` = Groq Llama 3.3 70B** mientras se agota free tier de Google
+- **LiteLLM en background** con `&` permite usar misma terminal para OpenCode
+- **tmux** como gestor de terminales para separar LiteLLM / OpenCode / trabajo
+- Arquitectura objetivo: Perplexity (estrategia) + OpenCode (ejecución) + Agentes (tareas)
+- Documentar dependencias por capa es prioritario para reproducibilidad
 
 ---
 
