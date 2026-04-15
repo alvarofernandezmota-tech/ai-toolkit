@@ -1,57 +1,56 @@
 # LiteLLM Proxy Config — Arquitectura Colmena
 # Arrancar: bash scripts/start-colmena.sh
 # OpenCode apunta a: http://localhost:8000
-# Última actualización: 2026-04-15 (fix: fallbacks robustos, DeepSeek desactivado)
+# Última actualización: 2026-04-15 (fix: llama-4-maverick sin :free, groq desactivado)
 #
 # VARIABLES DE ENTORNO NECESARIAS (en ~/.bashrc o .env):
 #   CEREBRAS_API_KEY          → ⭐ PRINCIPAL — gratis, rápido, 128K contexto
 #   DEEPSEEK_API_KEY          → ⚠️  DESACTIVADO — AuthenticationError, renovar key
-#   GROQ_API_KEY              → fallback rápido gratis (límite 12K TPM — NO usar con contextos grandes)
+#   GROQ_API_KEY              → ⚠️  DESACTIVADO — 401 key caducada, renovar key
 #   GOOGLE_GENERATIVE_AI_API_KEY → solo usar directamente, NO como fallback
-#   OPENROUTER_API_KEY        → ⭐ FALLBACK PRINCIPAL — llama-4-maverick:free, sin límite diario conocido
+#   OPENROUTER_API_KEY        → ⭐ FALLBACK PRINCIPAL — llama-4-maverick, contexto 128K
 #   ANTHROPIC_API_KEY         → de pago
 #   OPENAI_API_KEY            → de pago
 #   MISTRAL_API_KEY           → de pago
 #
 # HISTORIAL PRINCIPAL:
-#   Groq llama-3.3-70b → 401 (key caducada)
+#   Groq llama-3.3-70b → 401 (key caducada) ⚠️  DESACTIVADO
 #   Gemini Flash → 429 (free tier agotado con agentes)
-#   DeepSeek V3 → fallbacks apuntaban a Gemini — mismo problema
+#   DeepSeek V3 → AuthenticationError (2026-04-15) ⚠️  DESACTIVADO
 #   Cerebras llama3.1-70b → 404 nombre incorrecto
-#   Cerebras llama-3.3-70b → 404 DEPRECADO (ya no es modelo de producción)
+#   Cerebras llama-3.3-70b → 404 DEPRECADO
 #   Cerebras gpt-oss-120b → modelo de producción actual ✅
-#   ContextWindowExceeded 13K>8K → fix: context_window_fallbacks → deepseek-v3 ✅
-#   DeepSeek → AuthenticationError (2026-04-15) ⚠️  DESACTIVADO en fallbacks
-#   Groq → RateLimitError 32K>12K TPM (2026-04-15) — solo válido para contextos pequeños
-#   Cerebras → daily token limit (2026-04-15) — fix: OpenRouter como fallback principal
+#   ContextWindowExceeded 13K>8K → fix: context_window_fallbacks ✅
+#   Cerebras → daily token limit (2026-04-15)
+#   llama-4-maverick:free → 404 OpenRouter (no existe con sufijo :free) ⚠️  fix: sin :free
 #
-# MODELOS PRODUCCIÓN CEREBRAS (docs: inference-docs.cerebras.ai/models/overview):
+# MODELOS PRODUCCIÓN CEREBRAS:
 #   llama3.1-8b   → 8B,  ~2200 tok/s
 #   gpt-oss-120b  → 120B, ~3000 tok/s  ⭐ MEJOR OPCIÓN
 #
-# REGLA DE ORO: NUNCA poner modelos Gemini en fallbacks automáticos.
-# REGLA 2: Groq solo para contextos < 8K tokens (TPM limit 12K).
-# REGLA 3: DeepSeek desactivado en fallbacks hasta renovar API key.
+# REGLAS:
+#   1. NUNCA poner Gemini en fallbacks automáticos
+#   2. Groq DESACTIVADO hasta renovar key
+#   3. DeepSeek DESACTIVADO hasta renovar key
+#   4. OpenRouter llama-4-maverick es el fallback principal ahora
 
 model_list:
 
   # ─── PRINCIPAL (default) ───────────────────────────────────────────────
-  # Cerebras gpt-oss-120b: 120B, ~3000 tok/s, modelo de producción actual
   - model_name: principal
     litellm_params:
       model: cerebras/gpt-oss-120b
       api_key: os.environ/CEREBRAS_API_KEY
 
-  # Cerebras llama3.1-8b: 8B ligero, ~2200 tok/s, fallback rápido
   - model_name: principal
     litellm_params:
       model: cerebras/llama3.1-8b
       api_key: os.environ/CEREBRAS_API_KEY
 
-  # Llama 4 Maverick vía OpenRouter (gratis): fallback si Cerebras cae
+  # Llama 4 Maverick vía OpenRouter: fallback si Cerebras cae
   - model_name: principal
     litellm_params:
-      model: openrouter/meta-llama/llama-4-maverick:free
+      model: openrouter/meta-llama/llama-4-maverick
       api_key: os.environ/OPENROUTER_API_KEY
 
   # ─── GOOGLE (solo uso manual, NO en fallbacks) ────────────────────────
@@ -98,7 +97,6 @@ model_list:
       api_key: os.environ/OPENAI_API_KEY
 
   # ─── DEEPSEEK ⚠️  DESACTIVADO — AuthenticationError ────────────────
-  # Reactivar cuando se renueve DEEPSEEK_API_KEY
   # - model_name: deepseek-r1
   #   litellm_params:
   #     model: deepseek/deepseek-reasoner
@@ -112,12 +110,12 @@ model_list:
   # ─── META (vía OpenRouter) ──────────────────────────────────────
   - model_name: llama-4-maverick
     litellm_params:
-      model: openrouter/meta-llama/llama-4-maverick:free
+      model: openrouter/meta-llama/llama-4-maverick
       api_key: os.environ/OPENROUTER_API_KEY
 
   - model_name: llama-4-scout
     litellm_params:
-      model: openrouter/meta-llama/llama-4-scout:free
+      model: openrouter/meta-llama/llama-4-scout
       api_key: os.environ/OPENROUTER_API_KEY
 
   # ─── ALIBABA (vía OpenRouter) ───────────────────────────────────
@@ -138,11 +136,11 @@ model_list:
       api_key: os.environ/MISTRAL_API_KEY
 
   # ─── VELOCIDAD GRATIS ─────────────────────────────────────────────
-  # ⚠️  groq-fallback: solo para contextos < 8K tokens (TPM limit: 12K)
-  - model_name: groq-fallback
-    litellm_params:
-      model: groq/llama-3.3-70b-versatile
-      api_key: os.environ/GROQ_API_KEY
+  # ⚠️  groq-fallback DESACTIVADO — key 401 caducada
+  # - model_name: groq-fallback
+  #   litellm_params:
+  #     model: groq/llama-3.3-70b-versatile
+  #     api_key: os.environ/GROQ_API_KEY
 
   - model_name: cerebras-fallback
     litellm_params:
@@ -151,7 +149,7 @@ model_list:
 
   - model_name: openrouter-fallback
     litellm_params:
-      model: openrouter/meta-llama/llama-4-maverick:free
+      model: openrouter/meta-llama/llama-4-maverick
       api_key: os.environ/OPENROUTER_API_KEY
 
 router_settings:
@@ -160,19 +158,14 @@ router_settings:
   retry_after: 3
   cooldown_time: 30
   fallbacks:
-    # ⚠️  REGLA: Gemini NUNCA en fallbacks automáticos
-    # ⚠️  REGLA: Groq solo contextos < 8K tokens
-    # ⚠️  REGLA: DeepSeek desactivado hasta renovar key
-    - {"principal": ["openrouter-fallback", "groq-fallback"]}
+    - {"principal": ["openrouter-fallback"]}
     - {"deepseek-r1": ["qwen3-235b", "llama-4-maverick"]}
     - {"deepseek-v3": ["openrouter-fallback", "cerebras-fallback"]}
     - {"claude-sonnet": ["gpt-4o", "openrouter-fallback"]}
     - {"gemini-flash": ["openrouter-fallback"]}
-    - {"groq-fallback": ["cerebras-fallback", "openrouter-fallback"]}
     - {"cerebras-fallback": ["openrouter-fallback"]}
   context_window_fallbacks:
     - {"principal": ["llama-4-maverick"]}
-    - {"groq-fallback": ["llama-4-maverick"]}
     - {"cerebras-fallback": ["llama-4-maverick"]}
 
 litellm_settings:
