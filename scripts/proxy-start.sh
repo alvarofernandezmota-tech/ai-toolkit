@@ -27,10 +27,16 @@ echo "==> Arrancando LiteLLM proxy en :$PORT ..."
 nohup litellm --config "$CONFIG" --port $PORT > "$LOG" 2>&1 &
 LITELLM_PID=$!
 
-for i in $(seq 1 15); do
-  curl -s http://localhost:$PORT/health > /dev/null 2>&1 && echo "    Proxy OK" && break
+echo -n "    Esperando"
+for i in $(seq 1 30); do
+  if curl -s http://localhost:$PORT/health > /dev/null 2>&1; then
+    echo " OK!"
+    break
+  fi
+  echo -n "."
   sleep 1
 done
+echo ""
 
 export OPENAI_API_KEY="fake-key"
 export OPENAI_BASE_URL="http://localhost:$PORT"
