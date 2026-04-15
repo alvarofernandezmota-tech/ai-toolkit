@@ -1,46 +1,70 @@
 #!/bin/bash
-# start-colmena.sh — Arranque limpio de LiteLLM + OpenCode
+# start-colmena.sh — Arranque completo con tmux
 # Uso: bash scripts/start-colmena.sh
-# Uso (solo proxy): bash scripts/start-colmena.sh --solo-proxy
+# Uso (solo proxy, sin tmux): bash scripts/start-colmena.sh --solo-proxy
 #
-# PROBLEMA RESUELTO: si hay un litellm arrancado desde otro proyecto (ej: thdora)
-# pkill -f litellm no basta porque el proceso pertenece a otro venv.
-# Este script mata TODOS los procesos litellm por PID antes de arrancar.
+# Layout tmux:
+#  ┌────────────────────┬─────────────────────┐
+#  │                    │  LOGS LiteLLM       │
+#  │    OPENCODE        ├─────────────────────┤
+#  │                    │  BASH LIBRE         │
+#  └────────────────────┴─────────────────────┘
+#
+# Navegar entre paneles: Ctrl+B luego flecha
+# Salir de tmux completamente: Ctrl+B luego D (detach), luego: tmux kill-session -t colmena
 
 set -e
-CONFIG="$(cd "$(dirname "$0")/.." && pwd)/litellm-config.yaml"
+DIR="$(cd "$(dirname "$0")/.." && pwd)"
+CONFIG="$DIR/litellm-config.yaml"
 PUERTO=8000
+SESSION="colmena"
 
-echo "🧹 Matando TODOS los procesos litellm activos..."
-# Mata por nombre de binario (cualquier venv, cualquier proyecto)
-pkill -f litellm 2>/dev/null || true
-sleep 1
-
-# Comprobación extra: si el puerto sigue ocupado, matar el proceso que lo usa
-if lsof -ti :$PUERTO &>/dev/null; then
-  echo "⚠️  Puerto $PUERTO ocupado. Matando proceso..."
+# ─── Modo --solo-proxy (sin tmux) ─────────────────────────────────────
+if [ "$1" = "--solo-proxy" ]; then
+  echo "🧹 Matando litellm y puerto $PUERTO..."
+  pkill -f litellm 2>/dev/null || true
   lsof -ti :$PUERTO | xargs kill -9 2>/dev/null || true
   sleep 1
+  echo "✅ Arrancando LiteLLM..."
+  litellm --config "$CONFIG" --port $PUERTO
+  exit 0
 fi
 
-echo "✅ LiteLLM limpio. Arrancando con config: $CONFIG"
-litellm --config "$CONFIG" --port $PUERTO &
-LITELLM_PID=$!
-echo "🔧 PID: $LITELLM_PID"
-
-# Esperar a que arranque
-for i in $(seq 1 15); do
-  if curl -s http://localhost:$PUERTO/health/liveliness &>/dev/null; then
-    echo "✅ LiteLLM listo en http://localhost:$PUERTO"
-    break
-  fi
-  echo -n "."
-  sleep 1
-done
-echo ""
-
-# Abrir OpenCode salvo que se pase --solo-proxy
-if [ "$1" != "--solo-proxy" ]; then
-  echo "🚀 Abriendo OpenCode..."
-  opencode
+# ─── Comprobar tmux instalado ──────────────────────────────────────────
+if ! command -v tmux &>/dev/null; then
+  echo "❌ tmux no instalado. Ejecuta: sudo apt install tmux -y"
+  exit 1
 fi
+
+# ─── Matar sesión anterior si existe ───────────────────────────────────
+tmux kill-session -t $SESSION 2>/dev/null || true
+
+# Matar litellm de cualquier proyecto
+pkill -f litellm 2>/dev/null || true
+lsof -ti :$PUERTO | xargs kill -9 2>/dev/null || true
+sleep 1
+
+# ─── Crear sesión tmux ──────────────────────────────────────────────────
+# Panel 0 (izquierda): OpenCode — arranca después de que LiteLLM esté listo
+tmux new-session -d -s $SESSION -x 220 -y 50
+tmux rename-window -t $SESSION:0 'colmena'
+
+# Panel 1 (derecha arriba): Logs LiteLLM
+tmux split-window -t $SESSION:0 -h
+tmux send-keys -t $SESSION:0.1 "cd $DIR && litellm --config '$CONFIG' --port $PUERTO" Enter
+
+# Panel 2 (derecha abajo): Bash libre
+tmux split-window -t $SESSION:0.1 -v
+tmux send-keys -t $SESSION:0.2 "cd $DIR && echo '👀 Bash libre. Espera ~8s hasta que LiteLLM arranque, luego Ctrl+B ← para OpenCode'" Enter
+
+# Esperar a que LiteLLM esté listo antes de lanzar OpenCode
+tmux send-keys -t $SESSION:0.2 "for i in \$(seq 1 15); do curl -s http://localhost:$PUERTO/health/liveliness &>/dev/null && echo '✅ LiteLLM listo' && break; echo -n '.'; sleep 1; done" Enter
+
+# Panel 0 (izquierda): OpenCode
+tmux send-keys -t $SESSION:0.0 "cd $DIR && sleep 9 && opencode" Enter
+
+# Foco en OpenCode
+tmux select-pane -t $SESSION:0.0
+
+# Adjuntar a la sesión
+tmux attach-session -t $SESSION
