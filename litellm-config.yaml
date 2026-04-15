@@ -1,51 +1,34 @@
 # LiteLLM Proxy Config — Arquitectura Colmena
-# Todos los modelos comparten el mismo nombre "principal"
-# LiteLLM distribuye carga automáticamente entre ellos (least-busy)
-# Si uno falla o tiene rate limit -> pasa al siguiente sin intervención manual
-#
 # Arrancar: litellm --config litellm-config.yaml --port 4000
 # OpenCode apunta a: http://localhost:4000
 
 model_list:
 
-  # --- POOL PRINCIPAL (contexto largo) ---
-  # Google AI - 1M tokens contexto - mejor para repos grandes
+  # Google AI - 1M tokens contexto
   - model_name: principal
     litellm_params:
       model: gemini/gemini-2.0-flash
       api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
-    model_info:
-      max_tokens: 1000000
-      description: "Google Gemini 2.0 Flash - contexto largo"
 
-  # Groq - velocidad maxima - contexto corto
-  - model_name: principal
+  # Groq - velocidad maxima
+  - model_name: groq-fallback
     litellm_params:
       model: groq/llama-3.3-70b-versatile
       api_key: os.environ/GROQ_API_KEY
-    model_info:
-      max_tokens: 12000
-      description: "Groq Llama 3.3 - muy rapido, prompts cortos"
 
-  # Cerebras - velocidad alta - contexto medio
-  - model_name: principal
+  # Cerebras - rapido
+  - model_name: cerebras-fallback
     litellm_params:
       model: cerebras/llama3.1-8b
       api_key: os.environ/CEREBRAS_API_KEY
-    model_info:
-      max_tokens: 8192
-      description: "Cerebras Llama 3.1 - rapido, prompts medios"
 
-  # OpenRouter DeepSeek - fallback gratuito
-  - model_name: principal
+  # OpenRouter - fallback final
+  - model_name: openrouter-fallback
     litellm_params:
       model: openrouter/deepseek/deepseek-r1:free
       api_key: os.environ/OPENROUTER_API_KEY
-    model_info:
-      max_tokens: 164000
-      description: "DeepSeek R1 via OpenRouter - fallback"
 
-  # --- ALIAS COMPATIBILIDAD (para herramientas que piden modelos especificos) ---
+  # Alias compatibilidad
   - model_name: gpt-4o
     litellm_params:
       model: gemini/gemini-2.0-flash
@@ -57,23 +40,20 @@ model_list:
       api_key: os.environ/GROQ_API_KEY
 
 router_settings:
-  routing_strategy: least-busy       # distribuye carga automaticamente
-  num_retries: 3                      # reintenta 3 veces antes de fallar
-  retry_after: 5                      # espera 5s entre reintentos
-  cooldown_time: 60                   # si un modelo falla, descansalo 60s
-  fallbacks:                          # orden de fallback explicito
-    - principal:
-        - gemini/gemini-2.0-flash
-        - groq/llama-3.3-70b-versatile
-        - cerebras/llama3.1-8b
-        - openrouter/deepseek/deepseek-r1:free
+  routing_strategy: least-busy
+  num_retries: 3
+  retry_after: 5
+  cooldown_time: 60
+  # Fallbacks: si "principal" falla, intenta estos en orden
+  fallbacks:
+    - {"principal": ["groq-fallback", "cerebras-fallback", "openrouter-fallback"]}
 
 litellm_settings:
   drop_params: true
   set_verbose: false
-  request_timeout: 120               # timeout 2 minutos por request
+  request_timeout: 120
 
 general_settings:
   port: 4000
   host: "0.0.0.0"
-  master_key: "sk-litellm-local"     # clave local para OpenCode
+  master_key: "sk-litellm-local"
