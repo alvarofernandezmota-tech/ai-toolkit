@@ -1,49 +1,47 @@
 # LiteLLM Proxy Config — Arquitectura Colmena
 # Arrancar: bash scripts/start-colmena.sh
 # OpenCode apunta a: http://localhost:8000
-# Última actualización: 2026-04-15 (fix: gemini-flash principal emergencia nocturna)
+# Última actualización: 2026-04-16 (fix: OpenRouter y Cerebras confirmados 200)
 #
-# ⚠️  ESTADO 2026-04-15 NOCHE:
-#   Cerebras  → daily limit agotado (se resetea mañana) 
-#   OpenRouter → 402 sin créditos suficientes
-#   Groq      → 401 key caducada
-#   DeepSeek  → AuthenticationError
-#   Gemini    → ✅ OPERATIVO — principal esta noche
+# ESTADO REAL 2026-04-16 00:04:
+#   Cerebras  → ✅ 200 (gpt-oss-120b, llama3.1-8b, qwen-3-235b-a22b-instruct-2507)
+#   OpenRouter → ✅ 200 (problema era max_tokens=8192 > saldo — limitado a 4096)
+#   Gemini    → ❌ 429 rate limit (demasiadas peticiones esta noche)
+#   Groq      → ❌ 401 key caducada
+#   DeepSeek  → ❌ AuthenticationError
 #
 # VARIABLES DE ENTORNO:
-#   CEREBRAS_API_KEY             → ⭐ PRINCIPAL normal (mañana se resetea)
-#   DEEPSEEK_API_KEY             → ⚠️  renovar key en platform.deepseek.com
-#   GROQ_API_KEY                 → ⚠️  renovar key en console.groq.com
-#   GOOGLE_GENERATIVE_AI_API_KEY → ✅ operativo
-#   OPENROUTER_API_KEY           → ⚠️  recargar en openrouter.ai/settings/credits
+#   CEREBRAS_API_KEY             → ✅ operativo
+#   GOOGLE_GENERATIVE_AI_API_KEY → ⚠️  429 esta noche, mañana ok
+#   OPENROUTER_API_KEY           → ✅ operativo (max_tokens <= 5501)
+#   DEEPSEEK_API_KEY             → ⚠️  renovar en platform.deepseek.com
+#   GROQ_API_KEY                 → ⚠️  renovar en console.groq.com
 #   ANTHROPIC_API_KEY            → de pago
 #   OPENAI_API_KEY               → de pago
 #   MISTRAL_API_KEY              → de pago
-#
-# REGLAS:
-#   1. Gemini NUNCA en fallbacks automáticos con agentes (429) — OK para chat normal
-#   2. Groq DESACTIVADO hasta renovar key
-#   3. DeepSeek DESACTIVADO hasta renovar key
-#   4. Mañana: restaurar Cerebras como principal y Gemini como fallback
 
 model_list:
 
-  # ─── PRINCIPAL (esta noche: Gemini) ───────────────────────────────────
-  - model_name: principal
-    litellm_params:
-      model: gemini/gemini-2.0-flash
-      api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
-
-  # Cerebras: vuelve mañana cuando se resetee el daily limit
+  # ─── PRINCIPAL ───────────────────────────────────────────────────────
+  # Cerebras primero: gratis, rápido, 128K contexto
   - model_name: principal
     litellm_params:
       model: cerebras/gpt-oss-120b
       api_key: os.environ/CEREBRAS_API_KEY
+      max_tokens: 4096
 
   - model_name: principal
     litellm_params:
       model: cerebras/llama3.1-8b
       api_key: os.environ/CEREBRAS_API_KEY
+      max_tokens: 4096
+
+  # OpenRouter: 200 confirmado, limitado a 4096 para no exceder saldo
+  - model_name: principal
+    litellm_params:
+      model: openrouter/meta-llama/llama-4-maverick
+      api_key: os.environ/OPENROUTER_API_KEY
+      max_tokens: 4096
 
   # ─── GOOGLE ──────────────────────────────────────────────────────────
   - model_name: gemini-pro
@@ -103,17 +101,21 @@ model_list:
     litellm_params:
       model: openrouter/meta-llama/llama-4-maverick
       api_key: os.environ/OPENROUTER_API_KEY
+      max_tokens: 4096
 
   - model_name: llama-4-scout
     litellm_params:
       model: openrouter/meta-llama/llama-4-scout
       api_key: os.environ/OPENROUTER_API_KEY
+      max_tokens: 4096
 
-  # ─── ALIBABA (vía OpenRouter) ────────────────────────────────────────
+  # ─── ALIBABA ─────────────────────────────────────────────────────────
+  # Cerebras tiene qwen-3-235b nativo (más rápido que OpenRouter)
   - model_name: qwen3-235b
     litellm_params:
-      model: openrouter/qwen/qwen3-235b-a22b:free
-      api_key: os.environ/OPENROUTER_API_KEY
+      model: cerebras/qwen-3-235b-a22b-instruct-2507
+      api_key: os.environ/CEREBRAS_API_KEY
+      max_tokens: 4096
 
   # ─── MISTRAL ─────────────────────────────────────────────────────────
   - model_name: mistral-large
@@ -126,7 +128,7 @@ model_list:
       model: mistral/codestral-latest
       api_key: os.environ/MISTRAL_API_KEY
 
-  # ─── GROQ ⚠️  DESACTIVADO ────────────────────────────────────────────
+  # ─── GROQ ⚠️  DESACTIVADO (401 key caducada) ─────────────────────────
   # - model_name: groq-fallback
   #   litellm_params:
   #     model: groq/llama-3.3-70b-versatile
@@ -137,11 +139,13 @@ model_list:
     litellm_params:
       model: cerebras/llama3.1-8b
       api_key: os.environ/CEREBRAS_API_KEY
+      max_tokens: 4096
 
   - model_name: openrouter-fallback
     litellm_params:
       model: openrouter/meta-llama/llama-4-maverick
       api_key: os.environ/OPENROUTER_API_KEY
+      max_tokens: 4096
 
   - model_name: gemini-fallback
     litellm_params:
@@ -154,16 +158,16 @@ router_settings:
   retry_after: 3
   cooldown_time: 30
   fallbacks:
-    - {"principal": ["gemini-fallback", "openrouter-fallback"]}
-    - {"openrouter-fallback": ["gemini-fallback"]}
-    - {"cerebras-fallback": ["gemini-fallback", "openrouter-fallback"]}
+    - {"principal": ["openrouter-fallback", "gemini-fallback"]}
+    - {"openrouter-fallback": ["cerebras-fallback", "gemini-fallback"]}
+    - {"cerebras-fallback": ["openrouter-fallback", "gemini-fallback"]}
     - {"deepseek-r1": ["qwen3-235b", "llama-4-maverick"]}
-    - {"deepseek-v3": ["gemini-fallback", "openrouter-fallback"]}
-    - {"claude-sonnet": ["gpt-4o", "gemini-fallback"]}
-    - {"gemini-flash": ["openrouter-fallback"]}
+    - {"deepseek-v3": ["openrouter-fallback", "cerebras-fallback"]}
+    - {"claude-sonnet": ["gpt-4o", "openrouter-fallback"]}
+    - {"gemini-flash": ["openrouter-fallback", "cerebras-fallback"]}
   context_window_fallbacks:
-    - {"principal": ["gemini-fallback"]}
-    - {"cerebras-fallback": ["gemini-fallback"]}
+    - {"principal": ["openrouter-fallback"]}
+    - {"cerebras-fallback": ["openrouter-fallback"]}
 
 litellm_settings:
   drop_params: true
