@@ -1,7 +1,7 @@
 # LiteLLM Proxy Config — Arquitectura Colmena
 # Arrancar: bash scripts/start-colmena.sh
 # OpenCode apunta a: http://localhost:8000
-# Última actualización: 2026-04-15 (fix: nombre correcto modelo cerebras)
+# Última actualización: 2026-04-15 (fix: múltiples deployments en principal)
 #
 # VARIABLES DE ENTORNO NECESARIAS (en ~/.bashrc o .env):
 #   CEREBRAS_API_KEY          → ⭐ PRINCIPAL — gratis, rápido, 128K contexto
@@ -19,6 +19,7 @@
 #   DeepSeek V3 → fallbacks apuntaban a Gemini — mismo problema
 #   Cerebras llama3.1-70b → 404 nombre incorrecto
 #   Cerebras llama-3.3-70b → nombre correcto ✅
+#   Cerebras 1 deployment → 429 todos en cooldown — fix: 3 deployments ✅
 #
 # REGLA DE ORO: NUNCA poner modelos Gemini en fallbacks automáticos.
 # Gemini free tier tiene límite diario que se agota con agentes.
@@ -27,12 +28,22 @@
 model_list:
 
   # ─── PRINCIPAL (default) ────────────────────────────────────────────────────
-  # Cerebras llama-3.3-70b: GRATIS, 128K contexto, muy rápido
-  # Fallback: deepseek-v3 (barato) → groq (gratis)
+  # 3 deployments de Cerebras: el router least-busy los rota automáticamente
+  # Si todos entran en cooldown → fallback a deepseek-v3 → groq-fallback
   - model_name: principal
     litellm_params:
       model: cerebras/llama-3.3-70b
       api_key: os.environ/CEREBRAS_API_KEY
+
+  - model_name: principal
+    litellm_params:
+      model: cerebras/llama3.1-8b
+      api_key: os.environ/CEREBRAS_API_KEY
+
+  - model_name: principal
+    litellm_params:
+      model: groq/llama-3.3-70b-versatile
+      api_key: os.environ/GROQ_API_KEY
 
   # ─── GOOGLE (solo uso manual, NO en fallbacks) ──────────────────────────────
   - model_name: gemini-pro
@@ -129,9 +140,9 @@ model_list:
 
 router_settings:
   routing_strategy: least-busy
-  num_retries: 2
-  retry_after: 5
-  cooldown_time: 60
+  num_retries: 3
+  retry_after: 3
+  cooldown_time: 30
   fallbacks:
     # ⚠️ REGLA: Gemini NUNCA en fallbacks automáticos
     - {"principal": ["deepseek-v3", "groq-fallback"]}
