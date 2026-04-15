@@ -8,19 +8,20 @@
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m'
 
+# Modelo por defecto para OpenCode (gratuito, verificado)
+OPENCODE_MODEL="openrouter/deepseek/deepseek-r1:free"
+
 # --- Verificar keys ---
 check_keys() {
   if [ -z "$OPENROUTER_API_KEY" ] && [ -z "$OPENAI_API_KEY" ]; then
-    echo -e "${RED}ERROR: No hay OPENROUTER_API_KEY ni OPENAI_API_KEY exportadas.${NC}"
-    echo -e "Ejecuta: ${YELLOW}source ~/.bashrc${NC}  o añade la key a tu .bashrc"
+    echo -e "${RED}ERROR: No hay OPENROUTER_API_KEY exportada.${NC}"
+    echo -e "Ejecuta: ${YELLOW}source ~/.bashrc${NC}"
     exit 1
   fi
-  # Usar OPENROUTER_API_KEY como base si existe
   if [ -n "$OPENROUTER_API_KEY" ]; then
     export OPENAI_API_KEY="$OPENROUTER_API_KEY"
     export OPENAI_BASE_URL="https://openrouter.ai/api/v1"
@@ -43,7 +44,7 @@ show_menu() {
   echo -e "     Modelo: claude-3.5-sonnet via OpenRouter"
   echo ""
   echo -e "  ${GREEN}2)${NC} OpenCode        — agente open source (investigacion + docs)"
-  echo -e "     Modelo: DeepSeek R1 / Qwen3 via OpenRouter"
+  echo -e "     Modelo: ${YELLOW}deepseek-r1:free${NC} (forzado via --model flag)"
   echo ""
   echo -e "  ${GREEN}3)${NC} Aider           — edicion rapida de archivos"
   echo -e "     Modelo: rotacion automatica (Groq + OpenRouter)"
@@ -71,17 +72,19 @@ show_menu() {
 # --- Lanzar agentes ---
 launch_claude_code() {
   echo -e "\n${GREEN}Lanzando Claude Code...${NC}"
-  echo -e "${YELLOW}Tip: dentro de Claude Code escribe el prompt directamente${NC}\n"
+  echo -e "${YELLOW}Tip: escribe el prompt directamente dentro de Claude Code${NC}\n"
   sleep 1
   claude --model anthropic/claude-3.5-sonnet
 }
 
 launch_opencode() {
-  echo -e "\n${GREEN}Lanzando OpenCode + DeepSeek R1...${NC}"
-  echo -e "${YELLOW}Tip: el prompt lo escribes dentro de OpenCode, no lo pegues desde fuera${NC}"
+  echo -e "\n${GREEN}Lanzando OpenCode con ${OPENCODE_MODEL}...${NC}"
+  echo -e "${YELLOW}IMPORTANTE: escribe el prompt A MANO dentro de OpenCode${NC}"
+  echo -e "${YELLOW}No copies con Ctrl+V desde fuera — usa el raton para pegar${NC}"
   echo -e "${YELLOW}Para continuar sesion anterior: opencode -s <session-id>${NC}\n"
-  sleep 1
-  opencode
+  sleep 2
+  # Flag --model fuerza el modelo e ignora opencode.json
+  opencode --model "$OPENCODE_MODEL"
 }
 
 launch_aider() {
