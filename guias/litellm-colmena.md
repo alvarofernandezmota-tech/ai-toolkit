@@ -10,7 +10,7 @@
 ```
 OpenCode
     ↓
-LiteLLM Proxy (localhost:4000 o 7090)
+LiteLLM Proxy (localhost:4000)
     ↓
 ┌─────────────────────────────────────┐
 │     Router — least-busy strategy    │
@@ -21,15 +21,11 @@ LiteLLM Proxy (localhost:4000 o 7090)
 └──────────┴──────────┴───────┴───────┘
 ```
 
-Todos los modelos comparten el nombre `principal`.
-LiteLLM distribuye cada request al modelo con menos carga en ese momento.
-
 ---
 
 ## Instalación (solo primera vez)
 
 ```bash
-# Dentro del venv de thdora o ai-toolkit
 pip install litellm[proxy]
 ```
 
@@ -40,34 +36,41 @@ pip install litellm[proxy]
 ```bash
 cd ~/projects/ai-toolkit
 
-# 1. Arrancar LiteLLM en background (& lo manda al fondo)
+# Matar instancias previas
+pkill -f litellm 2>/dev/null; sleep 1
+
+# Arrancar LiteLLM en background
 litellm --config litellm-config.yaml --port 4000 &
 
-# 2. Esperar 3 segundos
-sleep 3
+# Esperar a que arranque
+sleep 4
 
-# 3. Arrancar OpenCode en la misma terminal
+# Abrir OpenCode
 opencode
 ```
 
-El `&` es la clave — LiteLLM corre detrás sin ocupar la terminal.
-
 ---
 
-## Configuración OpenCode para usar LiteLLM
+## Configuración OpenCode para LiteLLM — SINTAXIS CORRECTA
 
 ```bash
 cat > ~/.config/opencode/opencode.json << 'EOF'
 {
   "$schema": "https://opencode.ai/config.json",
   "model": "openai/principal",
-  "baseURL": "http://localhost:4000",
-  "apiKey": "sk-litellm-local"
+  "providers": {
+    "openai": {
+      "api": "http://localhost:4000",
+      "apiKey": "sk-litellm-local"
+    }
+  }
 }
 EOF
 ```
 
-> ⚠️ El puerto puede variar (4000 o 7090) — usar el que aparezca en el log de arranque de LiteLLM.
+> ⚠️ `baseURL` y `apiKey` en raíz NO funcionan — usar siempre bloque `providers.openai`
+
+> ⚠️ Verificar el puerto en el log de LiteLLM: `Uvicorn running on http://0.0.0.0:XXXX`
 
 ---
 
@@ -75,7 +78,7 @@ EOF
 
 ```bash
 # En ~/.bashrc
-export GOOGLE_GENERATIVE_AI_API_KEY="tu-key"
+export GOOGLE_GENERATIVE_AI_API_KEY="tu-key"  # OJO: no GOOGLE_API_KEY
 export GROQ_API_KEY="tu-key"
 export CEREBRAS_API_KEY="tu-key"
 export OPENROUTER_API_KEY="tu-key"
@@ -86,96 +89,43 @@ export OPENROUTER_API_KEY="tu-key"
 ## Gestionar procesos en background
 
 ```bash
-# Ver procesos corriendo en background
-jobs
-
-# Traer LiteLLM al frente (si necesitas verlo)
-fg %1
-
-# Mandarlo de nuevo al fondo
-# Ctrl+Z luego:
-bg %1
-
-# Matar LiteLLM si necesitas reiniciarlo
-kill %1
-# o
-pkill -f litellm
+jobs              # ver procesos background
+fg %1             # traer LiteLLM al frente
+bg %1             # mandarlo de nuevo al fondo
+pkill -f litellm  # matar LiteLLM
 ```
 
 ---
 
-## Uso con tmux (para ver ambos a la vez)
+## Uso con tmux (pantalla dividida)
 
 ```bash
-# Crear nueva sesión tmux
-tmux new -s ai
-
-# Dividir pantalla horizontalmente
-Ctrl+B luego "
-
-# Moverse entre paneles
-Ctrl+B luego flecha arriba/abajo
-
-# Panel superior: LiteLLM
-litellm --config litellm-config.yaml --port 4000
-
-# Panel inferior: OpenCode
-opencode
+tmux new -s ai    # nueva sesión
+Ctrl+B "          # dividir horizontalmente
+# Panel arriba: litellm --config litellm-config.yaml --port 4000
+# Panel abajo: opencode
 ```
 
-Atajos tmux útiles:
-- `Ctrl+B C` → nueva ventana
-- `Ctrl+B 0` → ir a ventana 0
-- `Ctrl+B 1` → ir a ventana 1
-- `Ctrl+B "` → dividir horizontalmente
-- `Ctrl+B %` → dividir verticalmente
-- `Ctrl+B D` → desconectar sesión (sigue corriendo)
+Atajos tmux:
+- `Ctrl+B C` → nueva ventana (NO cierra la actual)
+- `Ctrl+B 0/1` → cambiar ventana
+- `Ctrl+B "` → dividir horizontal
+- `Ctrl+B %` → dividir vertical
+- `Ctrl+B D` → desconectar (sigue corriendo)
 - `tmux attach -t ai` → reconectar
 
-> ⚠️ IMPORTANTE: `Ctrl+B C` NO es para cerrar — es para crear ventana nueva.
-> Para cerrar una ventana: `Ctrl+B &` o escribir `exit`
-
 ---
 
-## Script de arranque rápido
-
-Guardado en `scripts/start-colmena.sh`:
+## Diagnóstico
 
 ```bash
-#!/bin/bash
-cd ~/projects/ai-toolkit
-git pull  # siempre actualizar antes
-litellm --config litellm-config.yaml --port 4000 &
-echo "⏳ Esperando que LiteLLM arranque..."
-sleep 4
-echo "✅ LiteLLM corriendo en background"
-echo "🚀 Abriendo OpenCode..."
-opencode
-```
-
----
-
-## Modelos del pool principal
-
-| Modelo | Proveedor | Contexto | Mejor para |
-|---|---|---|---|
-| `gemini/gemini-2.0-flash` | Google AI | 1M tokens | Repos grandes, tareas largas |
-| `groq/llama-3.3-70b-versatile` | Groq | 12K | Velocidad máxima, prompts cortos |
-| `cerebras/llama3.1-8b` | Cerebras | 8K | Velocidad alta, prompts medios |
-| `openrouter/deepseek-r1:free` | OpenRouter | 164K | Fallback gratuito |
-
----
-
-## Logs y diagnóstico
-
-```bash
-# Ver si LiteLLM está corriendo
+# Verificar que LiteLLM responde
 curl http://localhost:4000/health
 
 # Ver modelos disponibles
 curl http://localhost:4000/v1/models
 
-# Test manual de una request
+# Test rápido
 curl http://localhost:4000/v1/chat/completions \
   -H "Authorization: Bearer sk-litellm-local" \
   -H "Content-Type: application/json" \
@@ -188,7 +138,8 @@ curl http://localhost:4000/v1/chat/completions \
 
 | Problema | Causa | Solución |
 |---|---|---|
-| Puerto 4000 ocupado | Otra instancia corriendo | `pkill -f litellm` y reiniciar |
-| `command not found: litellm` | No está en PATH | `python3 -m litellm --config ...` |
-| Modelos no aparecen | Config no actualizado | `git pull` antes de arrancar |
-| OpenCode no conecta | Puerto incorrecto | Verificar puerto en log de LiteLLM |
+| Puerto 4000 ocupado | Otra instancia | `pkill -f litellm` |
+| Puerto aleatorio en log | Conflicto de puertos | Leer puerto real en log |
+| `command not found: litellm` | No en PATH | `python3 -m litellm --config ...` |
+| `Unrecognized keys: baseURL` | Sintaxis incorrecta | Usar bloque `providers.openai` |
+| Modelos no aparecen | Config desactualizado | `git pull` antes de arrancar |

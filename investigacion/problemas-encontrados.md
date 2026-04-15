@@ -48,9 +48,9 @@
 - **Causa:** Los IDs de Gemini en OpenCode no son los mismos que en la documentación
 - **IDs probados:**
   - `google/gemini-2.5-flash-preview-04-17` ❌ No existe en v1beta
-  - `google/gemini-1.5-flash` ❌ No existe en v1beta  
+  - `google/gemini-1.5-flash` ❌ No existe en v1beta
   - `google/gemini-2.0-flash` ⚠️ Existe pero rate limit en horas pico
-- **Solución pendiente:** Ejecutar ListModels para ver IDs exactos disponibles:
+- **Solución pendiente:** Ejecutar ListModels para ver IDs exactos:
   ```bash
   curl "https://generativelanguage.googleapis.com/v1beta/models?key=$GOOGLE_GENERATIVE_AI_API_KEY" \
     | python3 -m json.tool | grep '"name"'
@@ -62,41 +62,39 @@
 
 - **Error:** `gemini is way too hot right now [retrying attempt #6/#7]`
 - **Causa:** Gemini 2.0 Flash gratuito tiene RPM muy bajos. A las 7pm está saturado.
-- **Solución:** Probar fuera de horas pico (mañana temprano) o usar otro modelo
+- **Solución:** Probar fuera de horas pico (mañana temprano)
 
 ---
 
 ## 7. Cerebras — Compaction en bucle con contexto grande
 
-- **Error:** Cerebras compacta repetidamente sin poder responder: `Session too large to compact - context exceeds model limit`
-- **Causa:** Cerebras llama3.1-8b tiene límite de 8192 tokens. El repo completo lo supera.
-- **Comportamiento:** OpenCode compacta → intenta → sigue siendo grande → compacta de nuevo → bucle
-- **Solución:** Cerebras solo para tareas con archivos pequeños o prompts sin contexto de repo
-- **Conclusión:** Cerebras = fallback rápido para prompts cortos, NO para leer repos
+- **Error:** Cerebras compacta repetidamente sin poder responder
+- **Causa:** llama3.1-8b tiene 8192 tokens. El repo completo lo supera.
+- **Comportamiento:** compacta → intenta → sigue grande → compacta → bucle infinito
+- **Solución:** Cerebras solo para prompts cortos sin contexto de repo
 
 ---
 
 ## 8. Bracketed paste mode en terminal
 
 - **Error:** `^[[200~export: command not found`
-- **Causa:** Al pegar bloques de comandos, la terminal los interpreta como texto literal
-- **Solución:** Ejecutar **línea por línea**, no pegar bloques enteros de una vez
+- **Causa:** Al pegar bloques, la terminal los interpreta como texto literal
+- **Solución:** Ejecutar línea por línea, no pegar bloques enteros
 
 ---
 
 ## 9. OpenRouter Qwen3 235B — requiere créditos de pago
 
-- **Error:** `This request requires more credits. You requested 32000 tokens, but can only afford 2109`
-- **Causa:** Qwen3 235B en OpenRouter no es gratuito para contexto largo
-- **Solución:** Usar modelos `:free` de OpenRouter o cambiar de proveedor
+- **Error:** `This request requires more credits`
+- **Causa:** Qwen3 235B no es gratuito para contexto largo
+- **Solución:** Usar modelos `:free` de OpenRouter
 
 ---
 
 ## 10. API keys — NUNCA en el chat ni en el repo
 
-- **Regla de oro:** Nunca compartir keys en chats ni subirlas al repo
-- Siempre variables de entorno. Añadir `.env` al `.gitignore`
-- Si se expone una key → revocarla inmediatamente en el panel del proveedor
+- **Regla de oro:** Solo variables de entorno. `.env` en `.gitignore`.
+- Si se expone una key → revocarla inmediatamente
 
 ---
 
@@ -104,6 +102,45 @@
 
 - **Problema:** Al cambiar de modelo con tareas en cola, OpenCode las duplica
 - **Solución:** Usar `/clear` antes de cambiar de modelo
+
+---
+
+## 12. OpenCode — configuración LiteLLM con sintaxis incorrecta ⚠️
+
+- **Error:** `Configuration is invalid: Unrecognized keys: "baseURL", "apiKey"`
+- **Causa:** OpenCode NO acepta `baseURL` ni `apiKey` directamente en el JSON raíz
+- **Solución:** Usar el bloque `providers` con nombre `openai` para apuntar a LiteLLM:
+  ```json
+  {
+    "$schema": "https://opencode.ai/config.json",
+    "model": "openai/principal",
+    "providers": {
+      "openai": {
+        "api": "http://localhost:PUERTO",
+        "apiKey": "sk-litellm-local"
+      }
+    }
+  }
+  ```
+- **Importante:** Sustituir `PUERTO` por el que aparezca en el log de LiteLLM al arrancar
+
+---
+
+## 13. LiteLLM — puerto dinámico al arrancar ⚠️
+
+- **Problema:** LiteLLM no siempre usa el puerto 4000 aunque se le indique. Asigna puerto aleatorio.
+- **Ejemplo:** `Uvicorn running on http://0.0.0.0:44195` en vez de 4000
+- **Causa:** Conflicto con otro proceso usando el puerto 4000, o permisos
+- **Solución:** Leer el puerto real en el log de arranque y usarlo en opencode.json
+  ```bash
+  # Ver qué puerto usa realmente LiteLLM:
+  litellm --config litellm-config.yaml --port 4000 2>&1 | grep 'Uvicorn running'
+  ```
+- **Fix definitivo:** Matar procesos en puerto 4000 antes de arrancar:
+  ```bash
+  pkill -f litellm
+  litellm --config litellm-config.yaml --port 4000 &
+  ```
 
 ---
 
@@ -116,5 +153,18 @@ La solución definitiva es **LiteLLM como proxy local** con rotación automátic
 OpenCode → LiteLLM (localhost:4000) → Google AI / Groq / Cerebras / OpenRouter
 ```
 
-LiteLLM gestiona fallbacks automáticos: si un modelo falla, pasa al siguiente sin intervención manual.
-Ya existe `litellm-config.yaml` en la repo — pendiente de configurar y activar.
+Config correcta de OpenCode para LiteLLM:
+```bash
+cat > ~/.config/opencode/opencode.json << 'EOF'
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "openai/principal",
+  "providers": {
+    "openai": {
+      "api": "http://localhost:4000",
+      "apiKey": "sk-litellm-local"
+    }
+  }
+}
+EOF
+```
