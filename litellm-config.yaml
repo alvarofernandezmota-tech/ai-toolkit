@@ -2,19 +2,28 @@
 # Arrancar: litellm --config litellm-config.yaml --port 8000
 # OpenCode apunta a: http://localhost:8000
 # Última actualización: 2026-04-15
+#
+# VARIABLES DE ENTORNO NECESARIAS (en ~/.bashrc o .env):
+#   GROQ_API_KEY              → gratis, principal fallback
+#   CEREBRAS_API_KEY          → gratis, segundo fallback
+#   GOOGLE_GENERATIVE_AI_API_KEY → gratis (limitado)
+#   OPENROUTER_API_KEY        → gratis (modelos :free)
+#   ANTHROPIC_API_KEY         → de pago
+#   OPENAI_API_KEY            → de pago
+#   DEEPSEEK_API_KEY          → muy barato
+#   MISTRAL_API_KEY           → de pago
 
 model_list:
 
   # ─── PRINCIPAL (default) ────────────────────────────────────────────────────
-  # gemini-2.0-flash: estable, rápido, 1M contexto, casi gratuito
+  # Groq Llama 3.3 70B: gratis, 280 tps, 128K contexto
+  # Cambiado de gemini-2.0-flash porque Google free tier se agota rápido
   - model_name: principal
     litellm_params:
-      model: gemini/gemini-2.0-flash
-      api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
+      model: groq/llama-3.3-70b-versatile
+      api_key: os.environ/GROQ_API_KEY
 
   # ─── GOOGLE ─────────────────────────────────────────────────────────────────
-  # Nota: gemini-2.5-pro puede requerir acceso especial en la API key
-  # Si da 404, usar gemini-2.5-pro-exp-03-25 o gemini-2.0-flash
   - model_name: gemini-pro
     litellm_params:
       model: gemini/gemini-2.5-pro-exp-03-25
@@ -113,10 +122,12 @@ router_settings:
   retry_after: 5
   cooldown_time: 60
   fallbacks:
-    - {"principal": ["gemini-flash", "groq-fallback", "cerebras-fallback"]}
+    - {"principal": ["groq-fallback", "cerebras-fallback", "gemini-flash"]}
+    - {"gemini-flash": ["groq-fallback", "cerebras-fallback"]}
     - {"gemini-pro": ["gemini-flash", "groq-fallback"]}
     - {"claude-sonnet": ["gpt-4o", "groq-fallback"]}
     - {"deepseek-r1": ["qwen3-235b", "groq-fallback"]}
+    - {"groq-fallback": ["cerebras-fallback"]}
 
 litellm_settings:
   drop_params: true
@@ -127,3 +138,4 @@ general_settings:
   port: 8000
   host: "0.0.0.0"
   master_key: "sk-litellm-local"
+  env_file: .env
