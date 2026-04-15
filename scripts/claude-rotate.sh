@@ -1,124 +1,117 @@
 #!/usr/bin/env bash
-# claude-rotate.sh — Lanza Claude Code con rotación de modelos y fallback automático
-# Uso: bash scripts/claude-rotate.sh [argumentos de claude]
-# Ejemplo: bash scripts/claude-rotate.sh --dangerously-skip-permissions
+# claude-rotate.sh — Lanza Claude Code con modelos gratuitos mapeados por clase
+# y rotación de keys de OpenRouter para evitar límites de rate
+# Uso: cc [argumentos de claude]
 
 set -euo pipefail
 
 SETTINGS="$HOME/.claude/settings.json"
 LOG="$HOME/.claude/rotate.log"
+INDEX_FILE="$HOME/.claude/rotate-index"
 
-# ─── Lista de modelos ordenada por preferencia ────────────────────────────────
-# Formato: "BASE_URL|API_KEY_VAR|MODELO"
-MODELS=(
-  "https://openrouter.ai/api/v1|ANTHROPIC_API_KEY|deepseek/deepseek-r1:free"
-  "https://openrouter.ai/api/v1|ANTHROPIC_API_KEY|qwen/qwen3-235b-a22b:free"
-  "https://openrouter.ai/api/v1|ANTHROPIC_API_KEY|meta-llama/llama-4-maverick:free"
-  "https://openrouter.ai/api/v1|ANTHROPIC_API_KEY|google/gemini-2.5-pro-exp-03-25:free"
-  "https://openrouter.ai/api/v1|ANTHROPIC_API_KEY|openai/gpt-4o-mini:free"
-  "https://openrouter.ai/api/v1|ANTHROPIC_API_KEY|meta-llama/llama-3.3-70b-instruct:free"
+# ─── Keys de OpenRouter ───────────────────────────────────────────────
+# Añade más keys aquí — se rotan automáticamente
+# Variables en ~/.bashrc: OPENROUTER_KEY_1, OPENROUTER_KEY_2...
+KEYS=(
+  "${OPENROUTER_KEY_1:-${ANTHROPIC_API_KEY:-}}"
+  "${OPENROUTER_KEY_2:-}"
+  "${OPENROUTER_KEY_3:-}"
 )
 
-# ─── Funciones ────────────────────────────────────────────────────────────────
+# ─── Modelos por clase (con prefijo openrouter/) ───────────────────────
+# Claude Code usa 3 clases: Opus (complejo), Sonnet (general), Haiku (rápido)
+# Mapeamos cada clase a los mejores modelos gratuitos disponibles
+OPUS_MODEL="openrouter/deepseek/deepseek-r1:free"        # Razonamiento profundo
+SONNET_MODEL="openrouter/qwen/qwen3-235b-a22b:free"      # Código general
+HAIKU_MODEL="openrouter/meta-llama/llama-3.3-70b-instruct:free"  # Completions rápidas
+
+# ─── Funciones ─────────────────────────────────────────────────────
 
 log() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG"
 }
 
-# Guarda el modelo en settings.json
-set_model() {
-  local base_url="$1"
-  local model="$2"
-  local key_var="$3"
-  local api_key="${!key_var:-}"
+get_last_index() {
+  [[ -f "$INDEX_FILE" ]] && cat "$INDEX_FILE" || echo "0"
+}
 
-  if [[ -z "$api_key" ]]; then
-    log "⚠️  Variable $key_var no definida — saltando"
-    return 1
-  fi
+save_index() {
+  echo "$1" > "$INDEX_FILE"
+}
 
+test_key() {
+  local key="$1"
+  [[ -z "$key" ]] && return 1
+  local code
+  code=$(curl -s -o /dev/null -w "%{http_code}" \
+    --max-time 5 \
+    -H "Authorization: Bearer $key" \
+    "https://openrouter.ai/api/v1/models" 2>/dev/null || echo "000")
+  [[ "$code" == "200" ]]
+}
+
+write_settings() {
+  local key="$1"
   mkdir -p "$(dirname "$SETTINGS")"
   cat > "$SETTINGS" <<EOF
 {
   "env": {
-    "ANTHROPIC_BASE_URL": "$base_url",
-    "ANTHROPIC_AUTH_TOKEN": "$api_key",
+    "ANTHROPIC_BASE_URL": "https://openrouter.ai/api",
+    "ANTHROPIC_AUTH_TOKEN": "$key",
     "ANTHROPIC_API_KEY": "",
-    "ANTHROPIC_MODEL": "$model"
+    "ANTHROPIC_MODEL": "openrouter/free",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "$OPUS_MODEL",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "$SONNET_MODEL",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "$HAIKU_MODEL"
   }
 }
 EOF
-  log "✅ Modelo activo: $model"
 }
 
-# Test rápido de conectividad al endpoint
-test_model() {
-  local base_url="$1"
-  local key_var="$2"
-  local api_key="${!key_var:-}"
-
-  if [[ -z "$api_key" ]]; then
-    return 1
-  fi
-
-  local http_code
-  http_code=$(curl -s -o /dev/null -w "%{http_code}" \
-    --max-time 5 \
-    -H "Authorization: Bearer $api_key" \
-    -H "Content-Type: application/json" \
-    "${base_url}/models" 2>/dev/null || echo "000")
-
-  [[ "$http_code" == "200" ]]
-}
-
-# Obtiene el índice del último modelo usado
-get_last_index() {
-  local index_file="$HOME/.claude/rotate-index"
-  if [[ -f "$index_file" ]]; then
-    cat "$index_file"
-  else
-    echo "0"
-  fi
-}
-
-# Guarda el índice del modelo actual
-save_index() {
-  echo "$1" > "$HOME/.claude/rotate-index"
-}
-
-# ─── Lógica principal ─────────────────────────────────────────────────────────
+# ─── Main ──────────────────────────────────────────────────────────────
 
 main() {
-  log "🔄 Iniciando rotación de modelos..."
+  log "🔄 Iniciando Claude Code con rotación de keys..."
+  log "   Opus   → $OPUS_MODEL"
+  log "   Sonnet → $SONNET_MODEL"
+  log "   Haiku  → $HAIKU_MODEL"
 
-  local total=${#MODELS[@]}
+  local total=${#KEYS[@]}
   local last_index
   last_index=$(get_last_index)
   local start_index=$(( (last_index + 1) % total ))
 
   for (( i = 0; i < total; i++ )); do
-    local index=$(( (start_index + i) % total ))
-    local entry="${MODELS[$index]}"
-    local base_url key_var model
-    IFS='|' read -r base_url key_var model <<< "$entry"
+    local idx=$(( (start_index + i) % total ))
+    local key="${KEYS[$idx]}"
 
-    log "🧪 Probando [$((index+1))/$total]: $model"
+    [[ -z "$key" ]] && continue
 
-    if test_model "$base_url" "$key_var"; then
-      set_model "$base_url" "$model" "$key_var"
-      save_index "$index"
-      log "🚀 Lanzando Claude Code con: $model"
+    log "🧪 Probando key [$((idx+1))/$total]..."
+
+    if test_key "$key"; then
+      write_settings "$key"
+      save_index "$idx"
+      log "✅ Key activa [$((idx+1))/$total]"
+      log "🚀 Lanzando Claude Code..."
       exec claude "$@"
       return
     else
-      log "❌ No disponible: $model"
+      log "❌ Key [$((idx+1))/$total] no disponible"
     fi
   done
 
-  # Fallback absoluto
-  log "💀 Todos los modelos fallaron. Usando fallback: meta-llama/llama-3.3-70b-instruct:free"
-  set_model "https://openrouter.ai/api/v1" "meta-llama/llama-3.3-70b-instruct:free" "ANTHROPIC_API_KEY"
-  exec claude "$@"
+  # Fallback: usar la primera key disponible sin test
+  local fallback_key="${KEYS[0]}"
+  if [[ -n "$fallback_key" ]]; then
+    log "⚠️  Todas las keys fallaron el test. Intentando igualmente con key 1..."
+    write_settings "$fallback_key"
+    exec claude "$@"
+  else
+    log "💀 No hay ninguna key configurada."
+    log "   Añade en ~/.bashrc: export OPENROUTER_KEY_1=sk-or-v1-..."
+    exit 1
+  fi
 }
 
 main "$@"
