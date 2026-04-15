@@ -1,38 +1,32 @@
 #!/usr/bin/env bash
 # =============================================================================
-# PROXY START — LiteLLM + Claude Code
-# Camufla Claude Code con modelos gratuitos via LiteLLM
+# CLAUDE CODE GRATIS — OpenRouter directo (método principal)
 # Uso: bash scripts/proxy-start.sh
 # =============================================================================
 
-set -e
-
-CONFIG="$(dirname "$0")/../litellm-config.yaml"
-PORT=4000
-
-echo "🔑 Verificando keys..."
-[ -z "$CEREBRAS_API_KEY" ] && echo "⚠️  CEREBRAS_API_KEY no configurada"
-[ -z "$GROQ_API_KEY" ]     && echo "⚠️  GROQ_API_KEY no configurada"
-[ -z "$OPENROUTER_API_KEY" ] && echo "⚠️  OPENROUTER_API_KEY no configurada"
-[ -z "$GEMINI_API_KEY" ]   && echo "⚠️  GEMINI_API_KEY no configurada"
+# Limpiar sesión corrupta si existe
+rm -rf ~/.claude/ 2>/dev/null || true
 
 # Matar instancias anteriores
 pkill -f 'litellm' 2>/dev/null || true
+pkill -f 'claude' 2>/dev/null || true
 sleep 1
 
-echo "🚀 Arrancando LiteLLM proxy en puerto $PORT..."
-litellm --config "$CONFIG" --port $PORT &
-LITELLM_PID=$!
-echo "   PID: $LITELLM_PID"
+echo "🚀 Arrancando Claude Code → OpenRouter (gratis)..."
 
-echo "⏳ Esperando que arranque..."
-sleep 5
-
-echo "🤖 Lanzando Claude Code → proxy..."
-ANTHROPIC_API_KEY="fake-key" \
-ANTHROPIC_BASE_URL="http://localhost:$PORT" \
+ANTHROPIC_API_KEY="${OPENROUTER_API_KEY}" \
+ANTHROPIC_BASE_URL="https://openrouter.ai/api/v1" \
 claude
 
-# Limpiar al salir
-kill $LITELLM_PID 2>/dev/null || true
-echo "🛑 Proxy detenido."
+# Si falla OpenRouter, fallback a LiteLLM con todas las APIs
+if [ $? -ne 0 ]; then
+  echo "⚠️  OpenRouter falló, intentando LiteLLM con fallbacks..."
+  CONFIG="$(dirname "$0")/../litellm-config.yaml"
+  litellm --config "$CONFIG" --port 4000 &
+  LITELLM_PID=$!
+  sleep 5
+  ANTHROPIC_API_KEY="fake-key" \
+  ANTHROPIC_BASE_URL="http://localhost:4000" \
+  claude
+  kill $LITELLM_PID 2>/dev/null || true
+fi
