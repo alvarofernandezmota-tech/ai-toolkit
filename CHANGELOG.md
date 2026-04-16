@@ -2,6 +2,66 @@
 
 ---
 
+## 2026-04-16 — Sesión tarde: Gemini cuota agotada, proxy corriendo desde madrugada
+
+### Contexto
+Al despertar, la sesión tmux `colmena` seguía corriendo desde la madrugada sin interrupciones.
+Gemini sigue con cuota diaria agotada (free tier, reset a las 00:00 UTC).
+El proxy está activo con el config nuevo (timeout 15s, retries 1).
+
+### Estado actual
+
+| Componente | Estado |
+|------------|--------|
+| tmux colmena | ✅ corriendo desde las ~05:00 |
+| LiteLLM proxy :8000 | ✅ activo |
+| Groq Llama 70B | ✅ operativo |
+| SambaNova Llama-4 | ✅ operativo |
+| Together AI Llama-4 | ✅ operativo |
+| OpenRouter llama-4-scout | ✅ operativo |
+| Cerebras llama3.1-8b | ⚠️ límite diario variable |
+| Gemini Flash | ❌ cuota diaria agotada (reset ~02:00 CEST) |
+| Gemini Flash-Lite | ❌ cuota diaria agotada |
+
+### Pendiente
+- [ ] Instalar litellm en venv propio de ai-toolkit (independizar de thdora)
+- [ ] Renovar `DEEPSEEK_API_KEY` en platform.deepseek.com
+- [ ] Arreglar `.openclaw` completions (error en .bashrc línea 122)
+- [ ] Considerar añadir segunda GOOGLE_API_KEY para doblar cuota diaria
+- [ ] Tracking repo personal actualizado
+
+---
+
+## 2026-04-16 — Cierre sesión madrugada: Fix timeout + retries
+
+### Contexto
+Tras el fix del slug OpenRouter, OpenCode seguía bloqueándose (`⬝⬝⬝⬝⬝⬝⬝⬝`) porque
+el timeout por defecto era 60s y retries 3 — con 7 modelos en cadena todos saturados
+a las 5AM, tardaba hasta 21 minutos en fallar completamente.
+
+### Cambios aplicados
+
+**litellm-config.yaml:**
+- `request_timeout: 15` en `litellm_settings` (era 60s por defecto)
+- `num_retries: 1` (era 3) → falla rápido y pasa al siguiente modelo
+- `retry_after: 0` → sin espera entre reintentos
+
+**scripts/start-colmena.sh:**
+- `sleep 10` → reducido a `sleep 3` para que OpenCode arranque más rápido
+  (el health check ya verifica que LiteLLM está listo antes)
+
+### Estado final madrugada
+
+| Fix | Resultado |
+|-----|-----------|
+| Timeout 15s | ✅ OpenCode responde en <15s por modelo |
+| Retries 1 | ✅ No pierde tiempo reintentando el mismo modelo caído |
+| Config subido a GitHub | ✅ commit 246fc8c |
+| Proxy relanzado con nuevo config | ✅ PID 4913 |
+| tmux corriendo al irse a dormir | ✅ quedó activo toda la noche |
+
+---
+
 ## 2026-04-16 — Sesión madrugada 2: Fix OpenRouter slug + Gemini al final
 
 ### Contexto
