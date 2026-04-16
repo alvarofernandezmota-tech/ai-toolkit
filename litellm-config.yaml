@@ -1,31 +1,31 @@
 # LiteLLM Proxy Config — Arquitectura Colmena
 # Arrancar: bash scripts/start-colmena.sh
 # OpenCode apunta a: http://localhost:8000
-# Última actualización: 2026-04-16 02:35 (Sambanova + Together AI, fallback rápido)
+# Última actualización: 2026-04-16 03:07 (nombres modelos corregidos, DeepSeek-V3 añadido)
 #
 # ORDEN DE PRIORIDAD (principal):
 #   1. Groq          → llama-3.3-70b-versatile   ✅ 6000 req/día
-#   2. Sambanova     → llama-4-maverick           ✅ gratis
-#   3. Together AI   → llama-4-maverick           ✅ $1 crédito
-#   4. Cerebras      → llama3.1-70b              ⚠️  límite diario
+#   2. Sambanova     → Llama-4-Maverick           ✅ gratis
+#   3. Together AI   → Llama-4-Maverick           ✅ $1 crédito
+#   4. Cerebras      → llama3.3-70b               ⚠️  límite diario
 #   5. OpenRouter    → llama-4-scout:free         ✅ fallback
 #   6. Gemini Flash  → gemini-2.0-flash           ⚠️  1500 req/día
 #
 # ESTADO 2026-04-16:
-#   Groq             → ✅ operativo (gsk_KQduif...)
-#   Sambanova        → ✅ nueva key (7fe869f3...)
-#   Together AI      → ✅ nueva key (key_Ca6WMQ...)
+#   Groq             → ✅ operativo
+#   Sambanova        → ✅ key activa
+#   Together AI      → ✅ key activa
 #   Gemini           → ⚠️  rate limit frecuente (free tier)
-#   Cerebras         → ⚠️  tokens/día agotados esta noche
+#   Cerebras         → ⚠️  límite diario variable
 #   OpenRouter       → ✅ fallback gratis
 #   DeepSeek         → ❌ AuthenticationError
 #
 # VARIABLES DE ENTORNO REQUERIDAS (~/.bashrc):
 #   GROQ_API_KEY                 → ✅ gsk_KQduif...
-#   SAMBANOVA_API_KEY            → ✅ 7fe869f3-40c1-4aae-b1e3-798352ca091d
-#   TOGETHER_API_KEY             → ✅ key_Ca6WMQijkpTd86WQnzVCA
-#   GOOGLE_GENERATIVE_AI_API_KEY → ⚠️  AIzaSyCqr... (rate limit frecuente)
-#   CEREBRAS_API_KEY             → ⚠️  agotado hoy
+#   SAMBANOVA_API_KEY            → ✅ 7fe869f3-...
+#   TOGETHER_API_KEY             → ✅ key_Ca6WMQ... (no TOGETHERAI_API_KEY)
+#   GOOGLE_GENERATIVE_AI_API_KEY → ⚠️  rate limit frecuente
+#   CEREBRAS_API_KEY             → ⚠️  límite diario
 #   OPENROUTER_API_KEY           → ✅ fallback
 #   ANTHROPIC_API_KEY            → de pago
 #   OPENAI_API_KEY               → de pago
@@ -44,7 +44,7 @@ model_list:
   # 2. Sambanova: llama-4 gratis, alta calidad
   - model_name: principal
     litellm_params:
-      model: sambanova/Meta-Llama-4-Maverick-17B-128E-Instruct
+      model: sambanova/Llama-4-Maverick-17B-128E-Instruct
       api_key: os.environ/SAMBANOVA_API_KEY
       max_tokens: 8192
 
@@ -58,7 +58,7 @@ model_list:
   # 4. Cerebras: rápido pero límite diario
   - model_name: principal
     litellm_params:
-      model: cerebras/llama-3.3-70b
+      model: cerebras/llama3.3-70b
       api_key: os.environ/CEREBRAS_API_KEY
       max_tokens: 4096
 
@@ -118,20 +118,26 @@ model_list:
       model: openai/o3-mini
       api_key: os.environ/OPENAI_API_KEY
 
-  # ─── SAMBANOVA ✅ NUEVO ───────────────────────────────────────────────
+  # ─── SAMBANOVA ✅ ─────────────────────────────────────────────────────
   - model_name: sambanova-llama4
     litellm_params:
-      model: sambanova/Meta-Llama-4-Maverick-17B-128E-Instruct
+      model: sambanova/Llama-4-Maverick-17B-128E-Instruct
       api_key: os.environ/SAMBANOVA_API_KEY
       max_tokens: 8192
 
   - model_name: sambanova-deepseek
     litellm_params:
-      model: sambanova/DeepSeek-R1-671B
+      model: sambanova/DeepSeek-R1-0528
       api_key: os.environ/SAMBANOVA_API_KEY
       max_tokens: 8192
 
-  # ─── TOGETHER AI ✅ NUEVO ─────────────────────────────────────────────
+  - model_name: sambanova-deepseek-v3
+    litellm_params:
+      model: sambanova/DeepSeek-V3-0324
+      api_key: os.environ/SAMBANOVA_API_KEY
+      max_tokens: 8192
+
+  # ─── TOGETHER AI ✅ ───────────────────────────────────────────────────
   - model_name: together-llama4
     litellm_params:
       model: together_ai/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8
@@ -157,7 +163,7 @@ model_list:
       api_key: os.environ/OPENROUTER_API_KEY
       max_tokens: 4096
 
-  # ─── ALIBABA ─────────────────────────────────────────────────────────
+  # ─── ALIBABA (vía Cerebras) ──────────────────────────────────────────
   - model_name: qwen3-235b
     litellm_params:
       model: cerebras/qwen-3-235b-a22b-instruct-2507
@@ -222,7 +228,7 @@ router_settings:
 litellm_settings:
   drop_params: true
   set_verbose: false
-  request_timeout: 60     # Reducido a 60s para fallar más rápido
+  request_timeout: 60
 
 general_settings:
   port: 8000
