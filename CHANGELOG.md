@@ -1,24 +1,33 @@
-# CHANGELOG — ai-toolkit
+# Changelog
 
-## 2026-04-17 — Ollama primero + fix timeout
+Todos los cambios importantes del proyecto ai-toolkit.
 
-- `litellm-config.yaml`: `request_timeout` 15s → 120s (Ollama necesita tiempo)
-- Ollama añadido como primera opción en fallback chain (coste 0, privado)
-- Nuevos modelos locales: `ollama-coder`, `ollama-qwen3`, `ollama-coder-7b`
-- Documentación sesión: `docs/SESION-2026-04-17.md`
-- OpenCode ✅ instalado y verificado respondiendo
+## [2026-04-17] — Fix timeout Ollama + Agentes hoja de ruta
 
-## 2026-04-16 04:52 — Fix timeouts y orden Gemini
+### 🔧 Fix crítico
+- **`litellm-config.yaml`**: `request_timeout` subido de `15s` a `120s`
+  - **Causa del bug**: Ollama tarda ~30-60s en cargar modelo en RAM la primera petición
+  - **Síntoma**: LiteLLM agotaba timeout → caía a Groq → Groq petaba con 429 (contexto >12000 tokens) → todo fallaba
+  - **Fix**: Con 120s Ollama siempre responde. Confirmado con curl manual: respuesta correcta en ~45s primera carga
 
-- `request_timeout`: 60s → 15s para fallar rápido entre modelos cloud
-- `num_retries`: 3 → 1
-- Gemini siempre al final de los fallbacks
-- OpenRouter slug corregido (sin `:free`)
-- `cooldown_time`: 30s, `allowed_fails`: 3
+### 📚 Documentación
+- **`AGENTES.md`**: Nuevo fichero con hoja de ruta de agentes auto-configuradores
+  - Stack actual confirmado con estados
+  - Fases 1-3 de agentes (repo-setup, mantenimiento, onboarding)
+  - Tarea concreta para OpenCode
+  - Arquitectura objetivo visual
 
-## 2026-04-15 — Arquitectura Colmena
+## [2026-04-17 01:30] — Ollama local PRIMERO en la Colmena
 
-- LiteLLM Proxy como hub central en `:8000`
-- Modelo `principal` con auto-fallback entre proveedores
-- Integración Groq, Sambanova, Together AI, OpenRouter, Cerebras, Gemini
-- Script `scripts/start-colmena.sh` para arranque en tmux
+### Cambios
+- Ollama `qwen2.5-coder:14b` movido al inicio del `model_list` bajo `principal`
+- Añadidos `deepseek-r1:14b` y `qwen3:8b-q4_K_M` al grupo `principal`
+- Comentarios de estado actualizados (Gemini cuota agotada, Groq límite TPM)
+
+## [2026-04-16] — Arquitectura Colmena inicial
+
+### Añadido
+- `litellm-config.yaml` con router multi-proveedor
+- `opencode.json` apuntando a LiteLLM local
+- `scripts/start-colmena.sh` para arranque
+- Documentación: ECOSISTEMA.md, CEREBRO.md, INICIO-AQUI.md
