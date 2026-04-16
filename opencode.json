@@ -43,9 +43,11 @@
         "apiKey": "ollama"
       },
       "models": {
-        "qwen3:8b-q4_K_M":              { "name": "Qwen3 8B 🧠 Thinking LOCAL" },
-        "qwen2.5-coder:7b-instruct-q4_K_M": { "name": "Qwen2.5 Coder 7B LOCAL" },
-        "deepseek-r1:7b":               { "name": "DeepSeek R1 7B Thinking LOCAL" }
+        "qwen3:8b-q4_K_M":                   { "name": "Qwen3 8B 🧠 Thinking LOCAL" },
+        "qwen2.5-coder:7b":                  { "name": "Qwen2.5 Coder 7B LOCAL" },
+        "qwen2.5-coder:14b":                 { "name": "Qwen2.5 Coder 14B 🚀 LOCAL (VRAM+RAM)" },
+        "deepseek-r1:14b":                   { "name": "DeepSeek R1 14B 🤔 Thinking LOCAL (VRAM+RAM)" },
+        "nomic-embed-text":                  { "name": "Nomic Embed Text (RAG/Embeddings)" }
       }
     }
   },
