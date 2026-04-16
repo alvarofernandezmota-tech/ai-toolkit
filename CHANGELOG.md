@@ -1,230 +1,53 @@
 # CHANGELOG — ai-toolkit
 
+Historial de cambios importantes del proyecto.
+
 ---
 
-## 2026-04-16 — Sesión tarde: Gemini cuota agotada, proxy corriendo desde madrugada
-
-### Contexto
-Al despertar, la sesión tmux `colmena` seguía corriendo desde la madrugada sin interrupciones.
-Gemini sigue con cuota diaria agotada (free tier, reset a las 00:00 UTC).
-El proxy está activo con el config nuevo (timeout 15s, retries 1).
-
-### Estado actual
-
-| Componente | Estado |
-|------------|--------|
-| tmux colmena | ✅ corriendo desde las ~05:00 |
-| LiteLLM proxy :8000 | ✅ activo |
-| Groq Llama 70B | ✅ operativo |
-| SambaNova Llama-4 | ✅ operativo |
-| Together AI Llama-4 | ✅ operativo |
-| OpenRouter llama-4-scout | ✅ operativo |
-| Cerebras llama3.1-8b | ⚠️ límite diario variable |
-| Gemini Flash | ❌ cuota diaria agotada (reset ~02:00 CEST) |
-| Gemini Flash-Lite | ❌ cuota diaria agotada |
+## [Unreleased]
 
 ### Pendiente
-- [ ] Instalar litellm en venv propio de ai-toolkit (independizar de thdora)
-- [ ] Renovar `DEEPSEEK_API_KEY` en platform.deepseek.com
-- [ ] Arreglar `.openclaw` completions (error en .bashrc línea 122)
-- [ ] Considerar añadir segunda GOOGLE_API_KEY para doblar cuota diaria
-- [ ] Tracking repo personal actualizado
+- [ ] Conectar VSCode del Acer via SSH puerto 2222
+- [ ] Verificar modelos 14b con `ollama list` tras descarga
+- [ ] Añadir modelos 14b a opencode.json como proveedores ollama local
+- [ ] Arreglar error openclaw en `.bashrc`
 
 ---
 
-## 2026-04-16 — Cierre sesión madrugada: Fix timeout + retries
+## 2026-04-16 — Sesión servidor + Ollama local
 
-### Contexto
-Tras el fix del slug OpenRouter, OpenCode seguía bloqueándose (`⬝⬝⬝⬝⬝⬝⬝⬝`) porque
-el timeout por defecto era 60s y retries 3 — con 7 modelos en cadena todos saturados
-a las 5AM, tardaba hasta 21 minutos en fallar completamente.
+### ✅ Añadido
+- **OpenSSH Server** instalado en Windows (PC grande) — sshd corriendo en Automatic
+- **Port forwarding** configurado: puerto 2222 → WSL 172.25.139.192
+- **OpenSSH Server** instalado en WSL Ubuntu, configurado en puerto 2222
+- **Ollama local** funcionando en WSL con GPU GTX 1060 6GB:
+  - `qwen3:8b-q4_K_M` (5.2 GB) — chat general y razonamiento
+  - `qwen2.5-coder:7b` (4.7 GB) — código rápido
+  - `qwen2.5-coder:14b` (9.0 GB) — código potente (VRAM+RAM offload)
+  - `deepseek-r1:14b` (9.0 GB) — razonamiento profundo (VRAM+RAM offload)
+  - `nomic-embed-text` (274 MB) — embeddings / RAG
+- **OpenCode v1.4.6** instalado en WSL, apuntando a LiteLLM Colmena + Ollama local
+- **Guía completa** `guias/setup-servidor-ssh-wsl.md` documentada
+- **Regla de oro** `git pull` antes de arrancar añadida a `docs/arranque-rapido.md`
 
-### Cambios aplicados
+### ❌ Errores encontrados
+- `qwen2.5-coder:14b-q4_K_M` — nombre incorrecto para Ollama, el correcto es `qwen2.5-coder:14b`
+- `deepseek-r1:14b-q4_K_M` — ídem, usar `deepseek-r1:14b`
+- Error `openclaw.bash: No such file or directory` en `.bashrc` — workaround: `mkdir -p ~/.openclaw/completions && touch ~/.openclaw/completions/openclaw.bash`
+- OpenCode no arranca automáticamente desde `tmux send-keys` — requiere lanzarlo manualmente o desde fuera de tmux
+- `git pull` bloqueado por `opencode.json` modificado localmente — fix: `git checkout -- opencode.json`
+- Descarga `qwen2.5-coder:14b` falló primera vez por timeout DNS de Cloudflare R2 — solución: reintentar
 
-**litellm-config.yaml:**
-- `request_timeout: 15` en `litellm_settings` (era 60s por defecto)
-- `num_retries: 1` (era 3) → falla rápido y pasa al siguiente modelo
-- `retry_after: 0` → sin espera entre reintentos
-
-**scripts/start-colmena.sh:**
-- `sleep 10` → reducido a `sleep 3` para que OpenCode arranque más rápido
-  (el health check ya verifica que LiteLLM está listo antes)
-
-### Estado final madrugada
-
-| Fix | Resultado |
-|-----|-----------|
-| Timeout 15s | ✅ OpenCode responde en <15s por modelo |
-| Retries 1 | ✅ No pierde tiempo reintentando el mismo modelo caído |
-| Config subido a GitHub | ✅ commit 246fc8c |
-| Proxy relanzado con nuevo config | ✅ PID 4913 |
-| tmux corriendo al irse a dormir | ✅ quedó activo toda la noche |
-
----
-
-## 2026-04-16 — Sesión madrugada 2: Fix OpenRouter slug + Gemini al final
-
-### Contexto
-OpenCode se bloqueaba con cascada de errores porque:
-1. `openrouter/meta-llama/llama-4-scout:free` devolvía 404 (slug no existe en OpenRouter)
-2. Gemini cuota diaria agotada a las 4AM (free tier)
-3. Groq + SambaNova en cooldown simultáneo → todos los fallbacks caídos
-
-### Cambios aplicados
-
-**litellm-config.yaml:**
-- ❌ `openrouter/meta-llama/llama-4-scout:free` → ✅ `openrouter/meta-llama/llama-4-scout` (quitado `:free` que daba 404)
-- Gemini movido al **final** de todos los fallbacks (cuota diaria agotable con free tier)
-- Orden `principal`: Groq → Sambanova → Together → OpenRouter → Cerebras → Gemini → Gemini-Lite
-- `cooldown_time: 30s` (era 60s) para recuperación más rápida
-- `allowed_fails: 3` (era 2) para más tolerancia antes de cooldown
-- Todos los fallbacks reordenados: Gemini siempre al final
-
-### Estado final
-
-| Componente | Estado |
-|------------|--------|
-| OpenCode v1.4.6 | ✅ corriendo |
-| LiteLLM proxy :8000 | ✅ corriendo |
-| Groq Llama 70B | ✅ primero en cadena |
-| SambaNova Llama-4 | ✅ segundo |
-| Together AI Llama-4 | ✅ tercero |
-| OpenRouter llama-4-scout | ✅ slug CORREGIDO (sin :free) |
-| Cerebras llama3.1-8b | ✅ quinto |
-| Gemini Flash | ⚠️ cuota diaria agotable — último |
-| Gemini Flash-Lite | ⚠️ cuota diaria agotable — último |
-| Fallback automático | ✅ cooldown 30s, 3 fallos permitidos |
-
-### Pendiente
-- [ ] Instalar litellm en venv propio de ai-toolkit (independizar de thdora)
-- [ ] Renovar `DEEPSEEK_API_KEY` en platform.deepseek.com
-- [ ] Arreglar `.openclaw` completions (error en .bashrc línea 122)
-- [ ] Considerar añadir segunda GOOGLE_API_KEY para doblar cuota diaria
+### ⚠️ Pendiente de esa sesión
+- Clave SSH del Acer NO copiada (se quedó sin batería)
+- VSCode Remote-SSH NO conectado aún
 
 ---
 
-## 2026-04-16 — Sesión madrugada: Gemini 429 resuelto, SambaNova + Together AI añadidos
+## 2026-04-15 — Setup inicial LiteLLM + OpenCode
 
-### Contexto
-OpenCode se quedaba bloqueado porque `cerebras/llama3.3-70b` no existe en Cerebras
-(causa cascada de cooldowns). Gemini en rate limit diario del free tier.
-Solución: reordenar cadena con Groq primero, añadir SambaNova y Together AI,
-corregir nombre modelo Cerebras.
-
-### Cambios aplicados
-
-**litellm-config.yaml — fix crítico:**
-- ❌ `cerebras/llama3.3-70b` → ✅ `cerebras/llama3.1-8b` (modelo que realmente existe)
-- Reordenado grupo `principal`: Groq → SambaNova → Together → OpenRouter → Gemini → Gemini-Lite → Cerebras
-- Añadido `gemini/gemini-2.0-flash-lite` al grupo principal y como `gemini-lite-fallback`
-- `allowed_fails: 1` + `cooldown_time: 300` → fallback inmediato sin bucle de reintentos
-- Fallbacks actualizados para incluir `gemini-lite-fallback`
-
-**Modelos verificados (nombres exactos para LiteLLM):**
-| Proveedor | Nombre en config | Estado |
-|-----------|-----------------|--------|
-| Groq | `groq/llama-3.3-70b-versatile` | ✅ |
-| SambaNova | `sambanova/Llama-4-Maverick-17B-128E-Instruct` | ✅ |
-| SambaNova | `sambanova/DeepSeek-R1-0528` | ✅ |
-| SambaNova | `sambanova/DeepSeek-V3-0324` | ✅ |
-| Together | `together_ai/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8` | ✅ |
-| Together | `together_ai/deepseek-ai/DeepSeek-R1` | ✅ |
-| OpenRouter | `openrouter/meta-llama/llama-4-scout` | ✅ (corregido) |
-| Gemini | `gemini/gemini-2.0-flash` | ⚠️ cuota diaria |
-| Gemini Lite | `gemini/gemini-2.0-flash-lite` | ⚠️ cuota diaria |
-| Cerebras | `cerebras/llama3.1-8b` | ✅ CORREGIDO |
-
-**opencode.json — modelos añadidos al selector Ctrl+P:**
-- `sambanova-llama4`, `sambanova-deepseek`, `sambanova-deepseek-v3`
-- `together-llama4`, `together-deepseek`
-
-**scripts/ai-menu.sh:**
-- Opción 2: descripción actualizada → Groq→SambaNova→Together→OpenRouter→Gemini→Cerebras
-- Opción 5 nueva: solo proxy `start-colmena.sh --solo-proxy`
-- Checks de keys: SAMBANOVA_API_KEY, TOGETHER_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY
-
-**scripts/aider-rotate.sh — pool ampliado:**
-- Groq (×3) → SambaNova (×2) → Together (×2) → OpenRouter fallback final
-
-**setup.sh — bootstrap actualizado:**
-- Instala: tmux, litellm[proxy], opencode-ai (npm), aider-chat
-- .bashrc exporta: SAMBANOVA_API_KEY, TOGETHER_API_KEY, OPENROUTER_API_KEY, CEREBRAS_API_KEY
-- Alias: colmena, proxy, menu, ocp, aider-samba, aider-together, aider-free
-
-**INICIO-AQUI.md:**
-- Cadena de fallback actualizada (Groq primero, no Gemini)
-- Tabla de estado actualizada con SambaNova, Together AI, Gemini-Lite
-- Lista completa de modelos disponibles en el proxy
-
-**REPOS-ECOSISTEMA.md — nuevo fichero:**
-- Auditoría completa de las 11 repos del ecosistema
-
-### Estado final
-
-| Componente | Estado |
-|------------|--------|
-| OpenCode v1.4.6 | ✅ instalado |
-| LiteLLM proxy :8000 | ✅ corriendo |
-| Groq Llama 70B | ✅ primero en cadena |
-| SambaNova Llama-4 | ✅ segundo |
-| Together AI Llama-4 | ✅ tercero |
-| Cerebras llama3.1-8b | ✅ nombre corregido |
-| Gemini Flash-Lite | ✅ añadido (más cuota) |
-| Fallback automático | ✅ |
-
----
-
-## 2026-04-16 — Sesión nocturna: Stack estabilizado con Gemini + Groq
-
-### Contexto
-Sesión compleja. Problema principal: ningún modelo respondía consistentemente.
-Groq key caducada (401), Cerebras con límite diario agotado, Gemini con
-rate limit por alta demanda nocturna, OpenRouter sin créditos para modelos grandes.
-
-### Cambios aplicados
-
-**Keys renovadas (guardadas en ~/.bashrc, NO en la repo):**
-- `GROQ_API_KEY` → renovada 2026-04-16 en console.groq.com
-- `GOOGLE_GENERATIVE_AI_API_KEY` → renovada 2026-04-16 en aistudio.google.com
-
-**litellm-config.yaml:**
-- Gemini 2.0 Flash → **primer modelo principal** (antes Cerebras)
-- Groq Llama 70B → **segundo** (reactivado con key nueva)
-- `gemini-fallback` y `groq-fallback` reactivados
-- Cadena: `Gemini → Groq → OpenRouter(free) → Cerebras`
-- OpenRouter apunta a `llama-4-scout:free`
-
-**scripts/start-colmena.sh — fixes críticos:**
-- ✅ Detecta si está dentro de tmux → arranca solo el proxy (fix del `[exited]`)
-- ✅ Busca litellm en: `.venv/` propio → thdora → PATH global
-- ✅ Logs redirigidos a `/tmp/litellm.log`
-- ✅ Health check mejorado: 20 intentos
-- ✅ Verificación de variables de entorno al arrancar
-
-**INICIO-AQUI.md:**
-- Tabla de estado actualizada
-- Opciones B y C (OpenCode directo sin LiteLLM)
-- Protocolo de trabajo estándar
-- Sección de diagnóstico con comandos útiles
-
-### Estado final de la sesión
-
-| Componente | Estado |
-|------------|--------|
-| OpenCode v1.4.6 | ✅ instalado |
-| Gemini 2.0 Flash directo | ✅ key activa |
-| Groq Llama 70B directo | ✅ key renovada |
-| LiteLLM proxy config | ✅ correcto |
-| start-colmena.sh | ✅ fix [exited] aplicado |
-| Fallback automático | ✅ Gemini→Groq→OpenRouter→Cerebras |
-
----
-
-## 2026-04-15 — Instalación inicial OpenCode + LiteLLM
-
-- OpenCode v1.4.6 instalado
-- LiteLLM proxy configurado en puerto 8000
-- Arquitectura Colmena definida (tmux 3 paneles)
-- Cerebras como modelo principal inicial
-- OpenRouter como fallback
-- Groq configurado (key caducó esa noche)
+### ✅ Añadido
+- LiteLLM Colmena configurado con múltiples proveedores
+- Scripts de arranque con tmux (start-colmena.sh)
+- opencode.json con modelo principal y fallbacks
+- Documentación agentes y guías iniciales
