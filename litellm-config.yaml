@@ -1,53 +1,79 @@
 # LiteLLM Proxy Config — Arquitectura Colmena
 # Arrancar: bash scripts/start-colmena.sh
 # OpenCode apunta a: http://localhost:8000
-# Última actualización: 2026-04-16 01:43 (fix: Groq key nueva + Gemini reactivado)
+# Última actualización: 2026-04-16 02:35 (Sambanova + Together AI, fallback rápido)
 #
-# ESTADO REAL 2026-04-16 01:43:
-#   Gemini 2.0 Flash → ✅ operativo (key nueva AIzaSyCqr...)
-#   Groq             → ✅ operativo (key nueva gsk_KQduif...)
+# ORDEN DE PRIORIDAD (principal):
+#   1. Groq          → llama-3.3-70b-versatile   ✅ 6000 req/día
+#   2. Sambanova     → llama-4-maverick           ✅ gratis
+#   3. Together AI   → llama-4-maverick           ✅ $1 crédito
+#   4. Cerebras      → llama3.1-70b              ⚠️  límite diario
+#   5. OpenRouter    → llama-4-scout:free         ✅ fallback
+#   6. Gemini Flash  → gemini-2.0-flash           ⚠️  1500 req/día
+#
+# ESTADO 2026-04-16:
+#   Groq             → ✅ operativo (gsk_KQduif...)
+#   Sambanova        → ✅ nueva key (7fe869f3...)
+#   Together AI      → ✅ nueva key (key_Ca6WMQ...)
+#   Gemini           → ⚠️  rate limit frecuente (free tier)
 #   Cerebras         → ⚠️  tokens/día agotados esta noche
-#   OpenRouter       → ⚠️  sin créditos para modelos grandes (max_tokens<=4096 ok)
+#   OpenRouter       → ✅ fallback gratis
 #   DeepSeek         → ❌ AuthenticationError
 #
 # VARIABLES DE ENTORNO REQUERIDAS (~/.bashrc):
-#   GOOGLE_GENERATIVE_AI_API_KEY → ✅ AIzaSyCqr... (renovada 2026-04-16)
-#   GROQ_API_KEY                 → ✅ gsk_KQduif... (renovada 2026-04-16)
-#   CEREBRAS_API_KEY             → ⚠️  agotado hoy, mañana ok
-#   OPENROUTER_API_KEY           → ⚠️  solo max_tokens<=4096
+#   GROQ_API_KEY                 → ✅ gsk_KQduif...
+#   SAMBANOVA_API_KEY            → ✅ 7fe869f3-40c1-4aae-b1e3-798352ca091d
+#   TOGETHER_API_KEY             → ✅ key_Ca6WMQijkpTd86WQnzVCA
+#   GOOGLE_GENERATIVE_AI_API_KEY → ⚠️  AIzaSyCqr... (rate limit frecuente)
+#   CEREBRAS_API_KEY             → ⚠️  agotado hoy
+#   OPENROUTER_API_KEY           → ✅ fallback
 #   ANTHROPIC_API_KEY            → de pago
 #   OPENAI_API_KEY               → de pago
 #   MISTRAL_API_KEY              → de pago
 
 model_list:
 
-  # ─── PRINCIPAL ───────────────────────────────────────────────────────
-  # Gemini primero: key nueva, 1M contexto, gratis
-  - model_name: principal
-    litellm_params:
-      model: gemini/gemini-2.0-flash
-      api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
-
-  # Groq segundo: key nueva, rápido
+  # ─── PRINCIPAL (orden de prioridad, fallback automático) ──────────────
+  # 1. Groq: más rápido y fiable gratis
   - model_name: principal
     litellm_params:
       model: groq/llama-3.3-70b-versatile
       api_key: os.environ/GROQ_API_KEY
       max_tokens: 8192
 
-  # Cerebras tercero: gratis pero con límite diario
+  # 2. Sambanova: llama-4 gratis, alta calidad
   - model_name: principal
     litellm_params:
-      model: cerebras/gpt-oss-120b
+      model: sambanova/Meta-Llama-4-Maverick-17B-128E-Instruct
+      api_key: os.environ/SAMBANOVA_API_KEY
+      max_tokens: 8192
+
+  # 3. Together AI: llama-4, $1 crédito
+  - model_name: principal
+    litellm_params:
+      model: together_ai/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8
+      api_key: os.environ/TOGETHER_API_KEY
+      max_tokens: 8192
+
+  # 4. Cerebras: rápido pero límite diario
+  - model_name: principal
+    litellm_params:
+      model: cerebras/llama-3.3-70b
       api_key: os.environ/CEREBRAS_API_KEY
       max_tokens: 4096
 
-  # OpenRouter último recurso
+  # 5. OpenRouter: fallback gratis
   - model_name: principal
     litellm_params:
       model: openrouter/meta-llama/llama-4-scout:free
       api_key: os.environ/OPENROUTER_API_KEY
       max_tokens: 4096
+
+  # 6. Gemini: último (rate limit frecuente en free tier)
+  - model_name: principal
+    litellm_params:
+      model: gemini/gemini-2.0-flash
+      api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
 
   # ─── GOOGLE ──────────────────────────────────────────────────────────
   - model_name: gemini-pro
@@ -92,15 +118,31 @@ model_list:
       model: openai/o3-mini
       api_key: os.environ/OPENAI_API_KEY
 
-  # ─── DEEPSEEK ⚠️  DESACTIVADO ────────────────────────────────────────
-  # - model_name: deepseek-r1
-  #   litellm_params:
-  #     model: deepseek/deepseek-reasoner
-  #     api_key: os.environ/DEEPSEEK_API_KEY
-  # - model_name: deepseek-v3
-  #   litellm_params:
-  #     model: deepseek/deepseek-chat
-  #     api_key: os.environ/DEEPSEEK_API_KEY
+  # ─── SAMBANOVA ✅ NUEVO ───────────────────────────────────────────────
+  - model_name: sambanova-llama4
+    litellm_params:
+      model: sambanova/Meta-Llama-4-Maverick-17B-128E-Instruct
+      api_key: os.environ/SAMBANOVA_API_KEY
+      max_tokens: 8192
+
+  - model_name: sambanova-deepseek
+    litellm_params:
+      model: sambanova/DeepSeek-R1-671B
+      api_key: os.environ/SAMBANOVA_API_KEY
+      max_tokens: 8192
+
+  # ─── TOGETHER AI ✅ NUEVO ─────────────────────────────────────────────
+  - model_name: together-llama4
+    litellm_params:
+      model: together_ai/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8
+      api_key: os.environ/TOGETHER_API_KEY
+      max_tokens: 8192
+
+  - model_name: together-deepseek
+    litellm_params:
+      model: together_ai/deepseek-ai/DeepSeek-R1
+      api_key: os.environ/TOGETHER_API_KEY
+      max_tokens: 8192
 
   # ─── META (vía OpenRouter) ───────────────────────────────────────────
   - model_name: llama-4-maverick
@@ -133,7 +175,7 @@ model_list:
       model: mistral/codestral-latest
       api_key: os.environ/MISTRAL_API_KEY
 
-  # ─── GROQ ✅ REACTIVADO ───────────────────────────────────────────────
+  # ─── GROQ ✅ ──────────────────────────────────────────────────────────
   - model_name: groq-fallback
     litellm_params:
       model: groq/llama-3.3-70b-versatile
@@ -160,18 +202,19 @@ model_list:
 
 router_settings:
   routing_strategy: least-busy
-  num_retries: 3
-  retry_after: 3
-  cooldown_time: 30
+  num_retries: 1          # Solo 1 reintento antes de saltar al siguiente
+  retry_after: 1          # Espera 1s entre reintentos
+  cooldown_time: 300      # Modelo en cooldown 5 min tras fallar
+  allowed_fails: 1        # 1 fallo → cooldown inmediato
   fallbacks:
-    - {"principal": ["gemini-fallback", "groq-fallback", "openrouter-fallback", "cerebras-fallback"]}
-    - {"openrouter-fallback": ["gemini-fallback", "cerebras-fallback"]}
-    - {"cerebras-fallback": ["gemini-fallback", "openrouter-fallback"]}
-    - {"groq-fallback": ["gemini-fallback", "openrouter-fallback"]}
-    - {"deepseek-r1": ["qwen3-235b", "llama-4-maverick"]}
-    - {"deepseek-v3": ["openrouter-fallback", "cerebras-fallback"]}
-    - {"claude-sonnet": ["gpt-4o", "openrouter-fallback"]}
-    - {"gemini-flash": ["groq-fallback", "openrouter-fallback", "cerebras-fallback"]}
+    - {"principal": ["groq-fallback", "openrouter-fallback", "gemini-fallback", "cerebras-fallback"]}
+    - {"openrouter-fallback": ["gemini-fallback", "cerebras-fallback", "groq-fallback"]}
+    - {"cerebras-fallback": ["gemini-fallback", "openrouter-fallback", "groq-fallback"]}
+    - {"groq-fallback": ["gemini-fallback", "openrouter-fallback", "cerebras-fallback"]}
+    - {"gemini-flash": ["groq-fallback", "sambanova-llama4", "openrouter-fallback"]}
+    - {"claude-sonnet": ["gpt-4o", "sambanova-llama4", "openrouter-fallback"]}
+    - {"sambanova-llama4": ["groq-fallback", "together-llama4", "openrouter-fallback"]}
+    - {"together-llama4": ["groq-fallback", "sambanova-llama4", "openrouter-fallback"]}
   context_window_fallbacks:
     - {"principal": ["openrouter-fallback"]}
     - {"cerebras-fallback": ["openrouter-fallback"]}
@@ -179,7 +222,7 @@ router_settings:
 litellm_settings:
   drop_params: true
   set_verbose: false
-  request_timeout: 120
+  request_timeout: 60     # Reducido a 60s para fallar más rápido
 
 general_settings:
   port: 8000
