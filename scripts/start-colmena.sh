@@ -12,14 +12,14 @@
 #
 # Navegar entre paneles: Ctrl+B luego flecha
 # Salir de tmux: Ctrl+B D, luego: tmux attach -t colmena
-#
-# PROBLEMA CONOCIDO: Si sale [exited] inmediatamente, es porque
-# estás dentro de tmux. El script lo detecta y arranca solo el proxy.
 
 DIR="$(cd "$(dirname "$0")/.." && pwd)"
 CONFIG="$DIR/litellm-config.yaml"
 PUERTO=8000
 SESSION="colmena"
+
+# ─── PATH: incluir npm-global para opencode ──────────────────────────
+export PATH="$HOME/.npm-global/bin:$HOME/.local/bin:$PATH"
 
 # ─── Buscar litellm (propio repo → thdora → global) ──────────────────
 LITELLM=""
@@ -40,6 +40,27 @@ if [ -z "$LITELLM" ]; then
   exit 1
 fi
 echo "✅ litellm encontrado: $LITELLM"
+
+# ─── Buscar opencode ─────────────────────────────────────────────────
+OPENCODE=""
+for CANDIDATE in \
+  "$HOME/.npm-global/bin/opencode" \
+  "$HOME/.local/bin/opencode" \
+  "/usr/local/bin/opencode"; do
+  if [ -f "$CANDIDATE" ]; then
+    OPENCODE="$CANDIDATE"
+    break
+  fi
+done
+if [ -z "$OPENCODE" ] && command -v opencode &>/dev/null; then
+  OPENCODE="opencode"
+fi
+if [ -z "$OPENCODE" ]; then
+  echo "⚠️  opencode no encontrado — reinstalando..."
+  npm install -g opencode-ai --prefix "$HOME/.npm-global"
+  OPENCODE="$HOME/.npm-global/bin/opencode"
+fi
+echo "✅ opencode encontrado: $OPENCODE"
 
 # ─── Verificar al menos una key gratuita ─────────────────────────────
 if [ -z "$GOOGLE_GENERATIVE_AI_API_KEY" ] && [ -z "$GROQ_API_KEY" ] && \
@@ -95,7 +116,7 @@ tmux send-keys -t $SESSION:0.2 "cd $DIR" Enter
 tmux send-keys -t $SESSION:0.2 "echo '👀 Esperando LiteLLM...' && for i in \$(seq 1 20); do curl -s http://localhost:$PUERTO/health/liveliness &>/dev/null && echo '✅ LiteLLM listo en :$PUERTO' && break; echo -n '.'; sleep 1; done" Enter
 
 # Panel izquierdo: OpenCode (espera 10s a LiteLLM)
-tmux send-keys -t $SESSION:0.0 "cd $DIR && sleep 10 && opencode" Enter
+tmux send-keys -t $SESSION:0.0 "cd $DIR && sleep 10 && '$OPENCODE'" Enter
 tmux select-pane -t $SESSION:0.0
 
 # ─── Adjuntar ────────────────────────────────────────────────────────
