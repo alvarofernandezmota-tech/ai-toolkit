@@ -1,7 +1,7 @@
 # LiteLLM Proxy Config — Arquitectura Colmena
 # Arrancar: bash scripts/start-colmena.sh
 # OpenCode apunta a: http://localhost:8000
-# Última actualización: 2026-04-16 03:39 (fix cerebras model, añadido gemini-flash-lite)
+# Última actualización: 2026-04-16 04:19 (fix fallbacks: openrouter/gemini primero para evitar cooldown total)
 #
 # ORDEN DE PRIORIDAD (principal):
 #   1. Groq          → llama-3.3-70b-versatile   ✅ 6000 req/día
@@ -24,7 +24,7 @@
 # VARIABLES DE ENTORNO REQUERIDAS (~/.bashrc):
 #   GROQ_API_KEY                 → ✅ gsk_KQduif...
 #   SAMBANOVA_API_KEY            → ✅ 7fe869f3-...
-#   TOGETHER_API_KEY             → ✅ key_Ca6WMQ... (no TOGETHERAI_API_KEY)
+#   TOGETHER_API_KEY             → ✅ tgp_v1_...
 #   GOOGLE_GENERATIVE_AI_API_KEY → ⚠️  rate limit frecuente
 #   CEREBRAS_API_KEY             → ⚠️  límite diario
 #   OPENROUTER_API_KEY           → ✅ fallback
@@ -218,22 +218,38 @@ model_list:
       model: gemini/gemini-2.0-flash-lite
       api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
 
+  - model_name: together-fallback
+    litellm_params:
+      model: together_ai/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8
+      api_key: os.environ/TOGETHER_API_KEY
+      max_tokens: 8192
+
+  - model_name: sambanova-fallback
+    litellm_params:
+      model: sambanova/Llama-4-Maverick-17B-128E-Instruct
+      api_key: os.environ/SAMBANOVA_API_KEY
+      max_tokens: 8192
+
 router_settings:
   routing_strategy: least-busy
-  num_retries: 1          # Solo 1 reintento antes de saltar al siguiente
-  retry_after: 1          # Espera 1s entre reintentos
-  cooldown_time: 300      # Modelo en cooldown 5 min tras fallar
-  allowed_fails: 1        # 1 fallo → cooldown inmediato
+  num_retries: 2
+  retry_after: 1
+  cooldown_time: 60       # Reducido a 1 min (era 5 min) para recuperarse antes
+  allowed_fails: 2        # 2 fallos antes de cooldown (era 1)
   fallbacks:
-    - {"principal": ["groq-fallback", "openrouter-fallback", "gemini-fallback", "gemini-lite-fallback", "cerebras-fallback"]}
-    - {"openrouter-fallback": ["gemini-fallback", "gemini-lite-fallback", "cerebras-fallback", "groq-fallback"]}
-    - {"cerebras-fallback": ["gemini-fallback", "gemini-lite-fallback", "openrouter-fallback", "groq-fallback"]}
-    - {"groq-fallback": ["sambanova-llama4", "gemini-fallback", "gemini-lite-fallback", "openrouter-fallback"]}
-    - {"gemini-flash": ["groq-fallback", "sambanova-llama4", "gemini-lite-fallback", "openrouter-fallback"]}
-    - {"gemini-fallback": ["gemini-lite-fallback", "groq-fallback", "openrouter-fallback"]}
-    - {"claude-sonnet": ["gpt-4o", "sambanova-llama4", "openrouter-fallback"]}
-    - {"sambanova-llama4": ["groq-fallback", "together-llama4", "openrouter-fallback"]}
-    - {"together-llama4": ["groq-fallback", "sambanova-llama4", "openrouter-fallback"]}
+    # principal: openrouter y gemini PRIMERO para evitar que cooldown de groq/sambanova bloquee todo
+    - {"principal": ["openrouter-fallback", "together-fallback", "sambanova-fallback", "gemini-fallback", "gemini-lite-fallback", "groq-fallback", "cerebras-fallback"]}
+    - {"openrouter-fallback": ["together-fallback", "sambanova-fallback", "gemini-fallback", "gemini-lite-fallback", "groq-fallback", "cerebras-fallback"]}
+    - {"groq-fallback": ["openrouter-fallback", "together-fallback", "sambanova-llama4", "sambanova-fallback", "gemini-fallback", "gemini-lite-fallback", "cerebras-fallback"]}
+    - {"cerebras-fallback": ["openrouter-fallback", "together-fallback", "sambanova-fallback", "gemini-fallback", "gemini-lite-fallback", "groq-fallback"]}
+    - {"gemini-fallback": ["gemini-lite-fallback", "openrouter-fallback", "together-fallback", "sambanova-fallback", "groq-fallback", "cerebras-fallback"]}
+    - {"gemini-lite-fallback": ["openrouter-fallback", "together-fallback", "sambanova-fallback", "gemini-fallback", "groq-fallback", "cerebras-fallback"]}
+    - {"together-fallback": ["openrouter-fallback", "sambanova-fallback", "gemini-fallback", "gemini-lite-fallback", "groq-fallback", "cerebras-fallback"]}
+    - {"sambanova-fallback": ["openrouter-fallback", "together-fallback", "gemini-fallback", "gemini-lite-fallback", "groq-fallback", "cerebras-fallback"]}
+    - {"gemini-flash": ["openrouter-fallback", "together-fallback", "sambanova-fallback", "groq-fallback", "gemini-lite-fallback", "cerebras-fallback"]}
+    - {"claude-sonnet": ["gpt-4o", "openrouter-fallback", "sambanova-fallback", "together-fallback"]}
+    - {"sambanova-llama4": ["openrouter-fallback", "together-fallback", "groq-fallback", "gemini-fallback", "cerebras-fallback"]}
+    - {"together-llama4": ["openrouter-fallback", "sambanova-fallback", "groq-fallback", "gemini-fallback", "cerebras-fallback"]}
   context_window_fallbacks:
     - {"principal": ["openrouter-fallback"]}
     - {"cerebras-fallback": ["openrouter-fallback"]}
