@@ -2,6 +2,47 @@
 
 ---
 
+## 2026-04-16 — Sesión madrugada 2: Fix OpenRouter slug + Gemini al final
+
+### Contexto
+OpenCode se bloqueaba con cascada de errores porque:
+1. `openrouter/meta-llama/llama-4-scout:free` devolvía 404 (slug no existe en OpenRouter)
+2. Gemini cuota diaria agotada a las 4AM (free tier)
+3. Groq + SambaNova en cooldown simultáneo → todos los fallbacks caídos
+
+### Cambios aplicados
+
+**litellm-config.yaml:**
+- ❌ `openrouter/meta-llama/llama-4-scout:free` → ✅ `openrouter/meta-llama/llama-4-scout` (quitado `:free` que daba 404)
+- Gemini movido al **final** de todos los fallbacks (cuota diaria agotable con free tier)
+- Orden `principal`: Groq → Sambanova → Together → OpenRouter → Cerebras → Gemini → Gemini-Lite
+- `cooldown_time: 30s` (era 60s) para recuperación más rápida
+- `allowed_fails: 3` (era 2) para más tolerancia antes de cooldown
+- Todos los fallbacks reordenados: Gemini siempre al final
+
+### Estado final
+
+| Componente | Estado |
+|------------|--------|
+| OpenCode v1.4.6 | ✅ corriendo |
+| LiteLLM proxy :8000 | ✅ corriendo |
+| Groq Llama 70B | ✅ primero en cadena |
+| SambaNova Llama-4 | ✅ segundo |
+| Together AI Llama-4 | ✅ tercero |
+| OpenRouter llama-4-scout | ✅ slug CORREGIDO (sin :free) |
+| Cerebras llama3.1-8b | ✅ quinto |
+| Gemini Flash | ⚠️ cuota diaria agotable — último |
+| Gemini Flash-Lite | ⚠️ cuota diaria agotable — último |
+| Fallback automático | ✅ cooldown 30s, 3 fallos permitidos |
+
+### Pendiente
+- [ ] Instalar litellm en venv propio de ai-toolkit (independizar de thdora)
+- [ ] Renovar `DEEPSEEK_API_KEY` en platform.deepseek.com
+- [ ] Arreglar `.openclaw` completions (error en .bashrc línea 122)
+- [ ] Considerar añadir segunda GOOGLE_API_KEY para doblar cuota diaria
+
+---
+
 ## 2026-04-16 — Sesión madrugada: Gemini 429 resuelto, SambaNova + Together AI añadidos
 
 ### Contexto
@@ -23,15 +64,15 @@ corregir nombre modelo Cerebras.
 | Proveedor | Nombre en config | Estado |
 |-----------|-----------------|--------|
 | Groq | `groq/llama-3.3-70b-versatile` | ✅ |
-| SambaNova | `sambanova/Llama-4-Maverick-17B-128E-Instruct` | ✅ corregido |
-| SambaNova | `sambanova/DeepSeek-R1-0528` | ✅ corregido |
-| SambaNova | `sambanova/DeepSeek-V3-0324` | ✅ añadido |
+| SambaNova | `sambanova/Llama-4-Maverick-17B-128E-Instruct` | ✅ |
+| SambaNova | `sambanova/DeepSeek-R1-0528` | ✅ |
+| SambaNova | `sambanova/DeepSeek-V3-0324` | ✅ |
 | Together | `together_ai/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8` | ✅ |
 | Together | `together_ai/deepseek-ai/DeepSeek-R1` | ✅ |
-| OpenRouter | `openrouter/meta-llama/llama-4-scout:free` | ✅ |
-| Gemini | `gemini/gemini-2.0-flash` | ✅ |
-| Gemini Lite | `gemini/gemini-2.0-flash-lite` | ✅ añadido |
-| Cerebras | `cerebras/llama3.1-8b` | ✅ CORREGIDO (era llama3.3-70b) |
+| OpenRouter | `openrouter/meta-llama/llama-4-scout` | ✅ (corregido) |
+| Gemini | `gemini/gemini-2.0-flash` | ⚠️ cuota diaria |
+| Gemini Lite | `gemini/gemini-2.0-flash-lite` | ⚠️ cuota diaria |
+| Cerebras | `cerebras/llama3.1-8b` | ✅ CORREGIDO |
 
 **opencode.json — modelos añadidos al selector Ctrl+P:**
 - `sambanova-llama4`, `sambanova-deepseek`, `sambanova-deepseek-v3`
@@ -69,14 +110,7 @@ corregir nombre modelo Cerebras.
 | Together AI Llama-4 | ✅ tercero |
 | Cerebras llama3.1-8b | ✅ nombre corregido |
 | Gemini Flash-Lite | ✅ añadido (más cuota) |
-| Fallback automático | ✅ 1 fallo → cooldown 5 min |
-
-### Pendiente para próxima sesión
-- [ ] Verificar LiteLLM arranca con `--solo-proxy`
-- [ ] Renovar `DEEPSEEK_API_KEY` en platform.deepseek.com
-- [ ] Instalar `gh` CLI en WSL (`sudo apt install gh && gh auth login`)
-- [ ] Probar `opencode -m sambanova-llama4` directamente
-- [ ] Completar `CEREBRAS_API_KEY` y `OPENROUTER_API_KEY` en .bashrc
+| Fallback automático | ✅ |
 
 ---
 
@@ -123,12 +157,6 @@ rate limit por alta demanda nocturna, OpenRouter sin créditos para modelos gran
 | LiteLLM proxy config | ✅ correcto |
 | start-colmena.sh | ✅ fix [exited] aplicado |
 | Fallback automático | ✅ Gemini→Groq→OpenRouter→Cerebras |
-
-### Pendiente para próxima sesión
-- [x] Verificar LiteLLM arranca con `--solo-proxy` — pendiente
-- [ ] Renovar `DEEPSEEK_API_KEY` en platform.deepseek.com
-- [ ] Instalar litellm en venv propio de ai-toolkit (independizar de thdora)
-- [ ] Completar `CEREBRAS_API_KEY` y `OPENROUTER_API_KEY` en .bashrc
 
 ---
 
