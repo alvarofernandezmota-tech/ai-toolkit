@@ -1,37 +1,24 @@
-# 🤖 Agentes
+# Agentes
 
-Implementaciones y configuraciones de los agentes del ecosistema.
+> Agentes documentados, probados y listos para usar.
 
-## Agentes disponibles
+## Qué hay aquí
 
-| Agente | Herramienta | Para qué | Coste |
-|---|---|---|---|
-| **Claude Code** | `claude` | Análisis de repos, arquitectura, commits autónomos | 0€ |
-| **Aider** | `aider` | Fixes rápidos, tareas concretas, edición de ficheros | 0€ |
-| **n8n** | Docker | Orquestación de workflows 24/7 | 0€ |
-| **THDORA** | Telegram Bot | Gestión rutinaria personal | 0€ |
+Cada archivo documenta un agente: qué hace, cómo se configura, cómo se lanza y qué resultados da.
 
-## Cómo usar
+## Estado de los agentes
 
-```bash
-# Claude Code en cualquier repo
-cd ~/projects/tu-repo
-claude
+| Agente | Herramienta | Estado |
+|--------|-------------|--------|
+| Coding + refactor | OpenCode + LiteLLM | ✅ Funcionando |
+| Búsqueda web | Groq + DuckDuckGo | ✅ Documentado |
+| Código terminal | Claude Code + OpenRouter | ✅ Funcionando |
+| Multi-agente | CrewAI | 🔨 En construcción |
+| Automatización | n8n self-hosted | ⏳ Mayo 2026 |
+| Agente vida personal | Thdora | 🔨 En construcción |
 
-# Aider para fix rápido
-aider-fast archivo.py
+## Cómo añadir un agente
 
-# Agente en repo concreto
-cc-thdora    # Claude Code en THDORA
-aider-thdora # Aider en THDORA
-```
-
-## Estructura de esta carpeta
-
-Cada agente tiene su propia subcarpeta con:
-- `config/` — ficheros de configuración
-- `prompts/` — prompts base del agente
-- `workflows/` — flujos de trabajo definidos
-
----
-_Ver [setup/claude-code-openrouter.md](../setup/claude-code-openrouter.md) y [setup/aider-groq.md](../setup/aider-groq.md) para la configuración detallada._
+1. Crear archivo: `agentes/nombre-agente.md`
+2. Incluir: qué hace, herramienta, config, comandos, resultado real
+3. Añadir fila a la tabla de arriba

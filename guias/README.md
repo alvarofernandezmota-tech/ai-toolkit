@@ -1,35 +1,23 @@
-# 📚 Guías y Documentación
+# Guías
 
-Este directorio contiene documentación verificada sobre modelos LLM, benchmarks y metas técnicas para el ecosistema de IA. 
+> Guías de setup paso a paso, probadas y verificadas.
 
-## ± Modelos recomendados (Abril 2026)
+## Guías disponibles
 
-| Modelo | ID exacto | Características | Uso recomendado |
-|---|---|---|---|
-| Devstral 2 | `openrouter/mistralai/devstral-2:free` | #1 en SWE-bench | Código ésquemático y optimización
-| DeepSeek R1 | `openrouter/deepseek/deepseek-r1:free` | Razonamiento profundo | Arquitectura y depuración
-| Qwen3 Coder | `openrouter/qwen/qwq-32b:free` | Código multi-fichero | Proyectos complejos
-| Llama 3.3 | `groq/llama-3.3-70b-versatile` | Velocidad | Fixes diarios
+| Guía | Estado | Descripción |
+|------|--------|-------------|
+| [setup-servidor-ssh-wsl.md](./setup-servidor-ssh-wsl.md) | ✅ Completa | PC grande como servidor WSL con SSH |
+| [opencode-setup.md](../docs/opencode-setup.md) | ✅ Completa | Configurar OpenCode con LiteLLM + Ollama |
 
-## ´ Benchmarks y Evaluaciones
+## Cómo usar una guía
 
-- [Rendimiento de Devstral 2](investigacion/benchmarks-devstral.md)
-- [Comparativa de modelos Qwen vs Llama 3.3](investigacion/llama-qwen-v3.md)
-- [Documentación de capacidad de razonamiento DeepSeek R1](investigacion/r1-capacidades.md)
+1. Leer completa antes de ejecutar
+2. Verificar requisitos previos
+3. Ejecutar paso a paso
+4. Si algo falla → documentar en `pruebas/`
 
-## µ Recursos de Formación
+## Cómo añadir una guía
 
-- [Guía para trabajar con Claude Code](guias/claude-code.md)
-- [Prompt engineering avanzado](guias/prompt-engineering.md)
-- [Integración de modelos locales (Ollama)](guias/ollama-integration.md)
-
-## µ Repositorios de Referencia
-
-- [CLAIUDE.md plantilla](https://github.com/alvarofernandezmota-tech/ai-toolkit/blob/main/CLAUDE.md)
-- [Estudio THDORA](https://github.com/alvarofernandezmota-tech/ai-toolkit/tree/main/investigacion)
-
-## ¡ Recomendación Inicio
-
-1. Consulta los benchmarks para escoger modelos
-2. Usa el modelo recomendado en cada guía
-3. Documenta siempre en research/experimentos.md los hallazgos
+1. Crear: `guias/YYYY-MM-DD-nombre.md`
+2. Estructura: Objetivo → Requisitos → Pasos → Verificación → Errores conocidos
+3. Probar que funciona antes de marcar como ✅

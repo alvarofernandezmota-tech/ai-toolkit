@@ -1,147 +1,139 @@
 # 🤖 ai-toolkit
 
-> A personal ecosystem of AI agents that work for you — coding, research, automation. Cost: $0/month.
+> Ecosistema personal de agentes IA — coding, investigación, automatización. Coste: $0/mes.
 
-Build your own AI agent ecosystem using free APIs (OpenRouter, Groq), open source tools (Claude Code, OpenCode, Aider), and your own keys. No subscriptions. No vendor lock-in. Just your stack.
+Stack probado y documentado para developers que quieren:
+- Usar **OpenCode, Claude Code y Aider** con modelos gratuitos vía OpenRouter/Groq
+- Correr **modelos locales** (Qwen3, DeepSeek, Qwen2.5-Coder) con Ollama sin gastar APIs
+- Construir agentes que trabajan en codebases reales y automatizan tareas
+- Documentar todo para no perder trabajo entre sesiones
 
----
-
-## What this is
-
-A documented, working setup of AI agents for developers who want to:
-
-- Use **Claude Code, OpenCode and Aider** with free models via OpenRouter
-- Run **DeepSeek R1, Llama 4, Qwen3** without paying a cent
-- Build agents that work on real codebases, generate docs, and automate repetitive tasks
-- Connect everything with **n8n** for 24/7 automation
-
-Everything here has been tested and is actually running in production.
+Todo lo que hay aquí está probado y corriendo en producción.
 
 ---
 
-## The stack
-
-```
-Your machine
- │
- ├── Claude Code → OpenRouter (free models) → coding agent
- ├── OpenCode    → OpenRouter (DeepSeek R1)  → research + docs agent
- ├── Aider       → Groq (free, 750 tok/s)   → fast code edits
- └── n8n         → self-hosted               → orchestration (coming May 2026)
-
-Cost: $0/month. CPU: <1%. RAM: ~370 MB.
-```
-
----
-
-## Quick start
+## 🚀 Quick start
 
 ```bash
 git clone https://github.com/alvarofernandezmota-tech/ai-toolkit
 cd ai-toolkit
-bash setup.sh
+git pull                          # SIEMPRE antes de arrancar
+bash scripts/start-colmena.sh
 ```
 
-You need:
-- `OPENROUTER_API_KEY` from [openrouter.ai](https://openrouter.ai) (free)
-- `GROQ_API_KEY` from [console.groq.com](https://console.groq.com) (free)
+Necesitas al menos una key gratuita:
+- `GROQ_API_KEY` → [console.groq.com](https://console.groq.com) (gratis)
+- `OPENROUTER_API_KEY` → [openrouter.ai](https://openrouter.ai) (gratis)
+- `GOOGLE_GENERATIVE_AI_API_KEY` → [aistudio.google.com](https://aistudio.google.com) (gratis)
 
 ---
 
-## Running Claude Code with free models
+## 🏗️ El stack
 
-```bash
-# No paid Anthropic account needed
-OPENAI_API_KEY="$OPENROUTER_API_KEY" \
-OPENAI_BASE_URL="https://openrouter.ai/api/v1" \
-claude --model anthropic/claude-3.5-sonnet
+```
+PC grande (WSL Ubuntu + GTX 1060 6GB)
+ │
+ ├── LiteLLM Colmena (:8000)     ← proxy unificado para todos los proveedores
+ │   ├── Google Gemini (gratis)
+ │   ├── Groq / Cerebras (gratis, rápido)
+ │   ├── OpenRouter (gratis)
+ │   └── DeepSeek / Mistral / etc
+ │
+ ├── Ollama local (:11434)        ← modelos sin internet, sin coste
+ │   ├── qwen3:8b-q4_K_M         (5.2 GB — thinking general)
+ │   ├── qwen2.5-coder:7b        (4.7 GB — código rápido)
+ │   ├── qwen2.5-coder:14b       (9.0 GB — código potente)
+ │   ├── deepseek-r1:14b         (9.0 GB — razonamiento profundo)
+ │   └── nomic-embed-text        (274 MB — RAG/embeddings)
+ │
+ └── OpenCode                    ← agente de coding apuntando a todo lo anterior
 ```
 
-Or use the rotation script that automatically falls back across 6 free models:
-
-```bash
-bash scripts/model-rotate.sh
-```
+Coste nube: $0/mes. CPU idle: <1%. RAM proxy: ~370 MB.
 
 ---
 
-## Running OpenCode with DeepSeek R1
-
-```bash
-# 1. Create config (the file must be named opencode.json, not config.json)
-mkdir -p ~/.config/opencode
-cat > ~/.config/opencode/opencode.json << 'EOF'
-{
-  "$schema": "https://opencode.ai/config.json",
-  "model": "openrouter/deepseek/deepseek-r1:free"
-}
-EOF
-
-# 2. Launch
-OPENAI_API_KEY="$OPENROUTER_API_KEY" \
-OPENAI_BASE_URL="https://openrouter.ai/api/v1" \
-opencode
-```
-
----
-
-## Free models worth using (April 2026)
-
-| Model | Provider | Thinking | Best for |
-|---|---|---|---|
-| `deepseek/deepseek-r1:free` | OpenRouter | ✅ Yes | Architecture, complex reasoning |
-| `qwen/qwen3-235b-a22b:free` | OpenRouter | ✅ Hybrid | Coding — best open source |
-| `meta-llama/llama-4-scout:free` | OpenRouter | ❌ No | Fast general tasks |
-| `llama-3.3-70b-versatile` | Groq | ❌ No | Maximum speed (750 tok/s) |
-
----
-
-## Repo structure
+## 📁 Estructura del repositorio
 
 ```
 ai-toolkit/
-├── README.md               ← This file (public, for the community)
-├── INICIO-AQUI.md          ← Personal dashboard (in Spanish, for the author)
-├── ECOSISTEMA.md           ← Full ecosystem architecture
-├── CHANGELOG.md            ← What changed in each session
-├── agentes/                ← One file per agent (definition + usage)
-│   └── PENDIENTES.md       ← Agents being built
-├── guias/                  ← Personal usage guides
-│   └── opencode-deepseek.md
-├── docs/
-│   └── diario/             ← Session logs
-├── scripts/                ← Ready-to-use scripts
-│   ├── model-rotate.sh     ← Auto-rotation across free models
-│   └── aider-rotate.sh     ← Aider with Groq fallback
-└── investigacion/          ← Verified research with sources
+├── COMO-PROCEDEMOS.md      ← flujo de trabajo, reglas, cómo hacemos todo
+├── CHANGELOG.md            ← historial: éxitos, errores, pendientes
+├── README.md               ← este archivo
+│
+├── scripts/                ← scripts de arranque y utilidades
+│   ├── start-colmena.sh    ← arranque principal (tmux + LiteLLM + OpenCode)
+│   ├── opencode-rotate.sh  ← rotar modelos
+│   └── ...
+│
+├── docs/                   ← documentación técnica estable
+│   ├── arranque-rapido.md
+│   └── setup-servidor-ssh-wsl.md
+│
+├── pruebas/                ← laboratorio: todo lo que probamos (éxitos y errores)
+│   ├── opencode/
+│   ├── ollama/
+│   ├── agentes/
+│   └── modelos/
+│
+├── agentes/                ← agentes documentados y validados
+├── guias/                  ← guías de setup paso a paso
+├── prompts/                ← prompts reutilizables
+├── investigacion/          ← research verificado con fuentes
+│
+└── opensource/             ← preparado para publicar a la comunidad
 ```
 
 ---
 
-## Agents built so far
+## 🧪 Modelos locales (Ollama)
 
-| Agent | Tool | Status |
-|---|---|---|
-| Coding agent | Claude Code + OpenRouter | ✅ Working |
-| Research + docs agent | OpenCode + DeepSeek R1 | ✅ Working |
-| Web search agent | Groq + DuckDuckGo | 📝 Documented |
-| n8n automation agent | n8n self-hosted | ❌ May 2026 |
-| Multi-agent orchestration | CrewAI | ❌ Autumn 2026 |
-
----
-
-## Why BYOK (Bring Your Own Key)
-
-The insight behind this project: **free AI APIs already exist if you connect them directly**. You don't need subscriptions. OpenRouter gives you access to DeepSeek R1, Llama 4, Qwen3 and more — all free — with a single API key. Groq gives you 750 tokens/second for free.
-
-The work is in connecting them well and documenting what actually works.
+| Modelo | Tamaño | VRAM | Uso |
+|--------|--------|------|-----|
+| `qwen3:8b-q4_K_M` | 5.2 GB | Cabe entero | Chat + thinking general |
+| `qwen2.5-coder:7b` | 4.7 GB | Cabe entero | Código rápido |
+| `qwen2.5-coder:14b` | 9.0 GB | VRAM+RAM offload | Código potente |
+| `deepseek-r1:14b` | 9.0 GB | VRAM+RAM offload | Razonamiento profundo |
+| `nomic-embed-text` | 274 MB | Mínimo | RAG / embeddings |
 
 ---
 
-## Contributing
+## ☁️ Modelos nube gratuitos
 
-This is a personal toolkit that's being built in public. If something works for you, open a PR. If something is broken or outdated, open an issue.
+| Alias | Modelo real | Proveedor |
+|-------|-------------|----------|
+| `principal` | cerebras-3.3-70b (multi-fallback) | Cerebras/Groq |
+| `gemini-pro` | gemini-2.5-pro-exp | Google |
+| `gemini-flash` | gemini-2.0-flash | Google |
+| `llama-4-maverick` | llama-4-maverick | Meta/OpenRouter |
+| `qwen3-235b` | qwen3-235b-a22b | Alibaba/OpenRouter |
+| `deepseek-r1` | deepseek-reasoner | DeepSeek |
+| `codestral` | codestral-latest | Mistral |
 
 ---
 
-*Built and maintained by [Álvaro Fernández Mota](https://github.com/alvarofernandezmota-tech) · April 2026*
+## 🔥 Errores conocidos y soluciones
+
+**Error openclaw al abrir terminal:**
+```bash
+mkdir -p ~/.openclaw/completions && touch ~/.openclaw/completions/openclaw.bash
+```
+
+**git pull bloqueado por opencode.json local:**
+```bash
+git checkout -- opencode.json && git pull
+```
+
+**OpenCode no abre solo en tmux:** lanzar desde fuera de tmux o abrir manualmente en panel izquierdo.
+
+Ver más en [`pruebas/`](./pruebas/) con todos los errores documentados.
+
+---
+
+## 🤝 Contribuir
+
+Toolkit personal construido en público. Si algo funciona para ti, abre un PR. Si algo está roto, abre un issue.
+
+---
+
+*Construido y mantenido por [Álvaro Fernández Mota](https://github.com/alvarofernandezmota-tech) · Abril 2026*
