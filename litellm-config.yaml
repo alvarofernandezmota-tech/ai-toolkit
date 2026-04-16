@@ -1,15 +1,16 @@
 # LiteLLM Proxy Config — Arquitectura Colmena
 # Arrancar: bash scripts/start-colmena.sh
 # OpenCode apunta a: http://localhost:8000
-# Última actualización: 2026-04-16 03:07 (nombres modelos corregidos, DeepSeek-V3 añadido)
+# Última actualización: 2026-04-16 03:39 (fix cerebras model, añadido gemini-flash-lite)
 #
 # ORDEN DE PRIORIDAD (principal):
 #   1. Groq          → llama-3.3-70b-versatile   ✅ 6000 req/día
 #   2. Sambanova     → Llama-4-Maverick           ✅ gratis
 #   3. Together AI   → Llama-4-Maverick           ✅ $1 crédito
-#   4. Cerebras      → llama3.3-70b               ⚠️  límite diario
-#   5. OpenRouter    → llama-4-scout:free         ✅ fallback
-#   6. Gemini Flash  → gemini-2.0-flash           ⚠️  1500 req/día
+#   4. OpenRouter    → llama-4-scout:free         ✅ fallback
+#   5. Gemini Flash  → gemini-2.0-flash           ⚠️  1500 req/día
+#   6. Gemini Lite   → gemini-2.0-flash-lite      ✅ más cuota gratis
+#   7. Cerebras      → llama3.1-8b               ⚠️  límite diario
 #
 # ESTADO 2026-04-16:
 #   Groq             → ✅ operativo
@@ -55,25 +56,31 @@ model_list:
       api_key: os.environ/TOGETHER_API_KEY
       max_tokens: 8192
 
-  # 4. Cerebras: rápido pero límite diario
-  - model_name: principal
-    litellm_params:
-      model: cerebras/llama3.3-70b
-      api_key: os.environ/CEREBRAS_API_KEY
-      max_tokens: 4096
-
-  # 5. OpenRouter: fallback gratis
+  # 4. OpenRouter: fallback gratis
   - model_name: principal
     litellm_params:
       model: openrouter/meta-llama/llama-4-scout:free
       api_key: os.environ/OPENROUTER_API_KEY
       max_tokens: 4096
 
-  # 6. Gemini: último (rate limit frecuente en free tier)
+  # 5. Gemini Flash: penúltimo (rate limit frecuente en free tier)
   - model_name: principal
     litellm_params:
       model: gemini/gemini-2.0-flash
       api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
+
+  # 6. Gemini Flash Lite: más cuota gratis que Flash
+  - model_name: principal
+    litellm_params:
+      model: gemini/gemini-2.0-flash-lite
+      api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
+
+  # 7. Cerebras: último, llama3.1-8b (llama3.3-70b NO existe en Cerebras)
+  - model_name: principal
+    litellm_params:
+      model: cerebras/llama3.1-8b
+      api_key: os.environ/CEREBRAS_API_KEY
+      max_tokens: 4096
 
   # ─── GOOGLE ──────────────────────────────────────────────────────────
   - model_name: gemini-pro
@@ -206,6 +213,11 @@ model_list:
       model: gemini/gemini-2.0-flash
       api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
 
+  - model_name: gemini-lite-fallback
+    litellm_params:
+      model: gemini/gemini-2.0-flash-lite
+      api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
+
 router_settings:
   routing_strategy: least-busy
   num_retries: 1          # Solo 1 reintento antes de saltar al siguiente
@@ -213,11 +225,12 @@ router_settings:
   cooldown_time: 300      # Modelo en cooldown 5 min tras fallar
   allowed_fails: 1        # 1 fallo → cooldown inmediato
   fallbacks:
-    - {"principal": ["groq-fallback", "openrouter-fallback", "gemini-fallback", "cerebras-fallback"]}
-    - {"openrouter-fallback": ["gemini-fallback", "cerebras-fallback", "groq-fallback"]}
-    - {"cerebras-fallback": ["gemini-fallback", "openrouter-fallback", "groq-fallback"]}
-    - {"groq-fallback": ["gemini-fallback", "openrouter-fallback", "cerebras-fallback"]}
-    - {"gemini-flash": ["groq-fallback", "sambanova-llama4", "openrouter-fallback"]}
+    - {"principal": ["groq-fallback", "openrouter-fallback", "gemini-fallback", "gemini-lite-fallback", "cerebras-fallback"]}
+    - {"openrouter-fallback": ["gemini-fallback", "gemini-lite-fallback", "cerebras-fallback", "groq-fallback"]}
+    - {"cerebras-fallback": ["gemini-fallback", "gemini-lite-fallback", "openrouter-fallback", "groq-fallback"]}
+    - {"groq-fallback": ["sambanova-llama4", "gemini-fallback", "gemini-lite-fallback", "openrouter-fallback"]}
+    - {"gemini-flash": ["groq-fallback", "sambanova-llama4", "gemini-lite-fallback", "openrouter-fallback"]}
+    - {"gemini-fallback": ["gemini-lite-fallback", "groq-fallback", "openrouter-fallback"]}
     - {"claude-sonnet": ["gpt-4o", "sambanova-llama4", "openrouter-fallback"]}
     - {"sambanova-llama4": ["groq-fallback", "together-llama4", "openrouter-fallback"]}
     - {"together-llama4": ["groq-fallback", "sambanova-llama4", "openrouter-fallback"]}
