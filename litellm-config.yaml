@@ -1,95 +1,78 @@
 # LiteLLM Proxy Config — Arquitectura Colmena
 # Arrancar: bash scripts/start-colmena.sh
 # OpenCode apunta a: http://localhost:8000
-# Última actualización: 2026-04-16 04:43 (fix: quitar :free de openrouter, gemini al final, cooldown 30s)
+# Última actualización: 2026-04-16 04:52 (fix: timeout 15s, retries 1, gemini al final)
 #
 # ORDEN DE PRIORIDAD (principal):
-#   1. Groq          → llama-3.3-70b-versatile              ✅ 6000 req/día, más rápido
-#   2. Sambanova     → Llama-4-Maverick                     ✅ gratis, alta calidad
+#   1. Groq          → llama-3.3-70b-versatile              ✅ 6000 req/día
+#   2. Sambanova     → Llama-4-Maverick                     ✅ gratis
 #   3. Together AI   → Llama-4-Maverick                     ✅ $1 crédito
-#   4. OpenRouter    → meta-llama/llama-4-scout             ✅ fallback gratis (sin :free)
-#   5. Cerebras      → llama3.1-8b                          ⚠️  límite diario variable
-#   6. Gemini Flash  → gemini-2.0-flash                     ⚠️  cuota diaria agotable — ÚLTIMO
-#   7. Gemini Lite   → gemini-2.0-flash-lite                ⚠️  cuota diaria agotable — ÚLTIMO
+#   4. OpenRouter    → meta-llama/llama-4-scout             ✅ fallback gratis
+#   5. Cerebras      → llama3.1-8b                          ⚠️  límite diario
+#   6. Gemini Flash  → gemini-2.0-flash                     ⚠️  cuota diaria — ÚLTIMO
+#   7. Gemini Lite   → gemini-2.0-flash-lite                ⚠️  cuota diaria — ÚLTIMO
 #
-# ESTADO 2026-04-16:
-#   Groq             → ✅ operativo (rate limit ocasional a ciertas horas)
+# ESTADO 2026-04-16 04:52:
+#   Groq             → ✅ operativo
 #   Sambanova        → ✅ operativo (503 esporádico)
 #   Together AI      → ✅ operativo
-#   OpenRouter       → ✅ slug corregido (era llama-4-scout:free → 404)
+#   OpenRouter       → ✅ slug corregido (sin :free)
 #   Cerebras         → ⚠️  límite diario variable
-#   Gemini Flash     → ❌ cuota diaria agotada (free tier) — movido al final
-#   Gemini Lite      → ❌ cuota diaria agotada (free tier) — movido al final
-#   DeepSeek         → ❌ AuthenticationError
+#   Gemini Flash     → ❌ cuota diaria agotada (free tier) — al final
+#   Gemini Lite      → ❌ cuota diaria agotada (free tier) — al final
 #
-# PROBLEMA RESUELTO 2026-04-16:
-#   - llama-4-scout:free en OpenRouter devolvía 404 (slug no existe)
-#   - Gemini quota diaria agotada a las 4AM → movido al final de fallbacks
-#   - cooldown_time bajado de 300s → 30s para recuperación más rápida
-#   - allowed_fails subido a 3 para más tolerancia antes de cooldown
-#
-# VARIABLES DE ENTORNO REQUERIDAS (~/.bashrc):
-#   GROQ_API_KEY                 → ✅ gsk_KQduif...
-#   SAMBANOVA_API_KEY            → ✅ 7fe869f3-...
-#   TOGETHER_API_KEY             → ✅ tgp_v1_...
-#   GOOGLE_GENERATIVE_AI_API_KEY → ❌ cuota diaria agotada (free tier)
-#   CEREBRAS_API_KEY             → ⚠️  límite diario
-#   OPENROUTER_API_KEY           → ✅ fallback gratis
-#   ANTHROPIC_API_KEY            → de pago
-#   OPENAI_API_KEY               → de pago
-#   MISTRAL_API_KEY              → de pago
+# FIXES APLICADOS:
+#   - request_timeout: 15s (era 60s) → falla rápido y pasa al siguiente
+#   - num_retries: 1 (era 3) → no pierde tiempo reintentando el mismo modelo
+#   - cooldown_time: 30s
+#   - allowed_fails: 3
+#   - llama-4-scout:free → llama-4-scout (slug corregido)
+#   - Gemini siempre al final
 
 model_list:
 
-  # ─── PRINCIPAL (orden de prioridad, fallback automático) ──────────────
-  # 1. Groq: más rápido y fiable gratis
+  # ─── PRINCIPAL ────────────────────────────────────────────────────────────────
   - model_name: principal
     litellm_params:
       model: groq/llama-3.3-70b-versatile
       api_key: os.environ/GROQ_API_KEY
       max_tokens: 8192
 
-  # 2. Sambanova: llama-4 gratis, alta calidad
   - model_name: principal
     litellm_params:
       model: sambanova/Llama-4-Maverick-17B-128E-Instruct
       api_key: os.environ/SAMBANOVA_API_KEY
       max_tokens: 8192
 
-  # 3. Together AI: llama-4, $1 crédito
   - model_name: principal
     litellm_params:
       model: together_ai/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8
       api_key: os.environ/TOGETHER_API_KEY
       max_tokens: 8192
 
-  # 4. OpenRouter: fallback gratis — SLUG CORREGIDO (sin :free)
   - model_name: principal
     litellm_params:
       model: openrouter/meta-llama/llama-4-scout
       api_key: os.environ/OPENROUTER_API_KEY
       max_tokens: 4096
 
-  # 5. Cerebras: antes de gemini
   - model_name: principal
     litellm_params:
       model: cerebras/llama3.1-8b
       api_key: os.environ/CEREBRAS_API_KEY
       max_tokens: 4096
 
-  # 6. Gemini Flash: penúltimo (cuota diaria agotable)
   - model_name: principal
     litellm_params:
       model: gemini/gemini-2.0-flash
       api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
 
-  # 7. Gemini Flash Lite: último recurso
   - model_name: principal
     litellm_params:
       model: gemini/gemini-2.0-flash-lite
       api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
 
-  # ─── GOOGLE ──────────────────────────────────────────────────────────
+  # ─── GOOGLE ────────────────────────────────────────────────────────────────
   - model_name: gemini-pro
     litellm_params:
       model: gemini/gemini-2.5-pro-exp-03-25
@@ -171,7 +154,6 @@ model_list:
       api_key: os.environ/OPENROUTER_API_KEY
       max_tokens: 4096
 
-  # CORREGIDO: quitado :free (slug no existe en OpenRouter)
   - model_name: llama-4-scout
     litellm_params:
       model: openrouter/meta-llama/llama-4-scout
@@ -210,7 +192,6 @@ model_list:
       api_key: os.environ/CEREBRAS_API_KEY
       max_tokens: 4096
 
-  # CORREGIDO: quitado :free (slug no existe en OpenRouter → 404)
   - model_name: openrouter-fallback
     litellm_params:
       model: openrouter/meta-llama/llama-4-scout
@@ -241,12 +222,11 @@ model_list:
 
 router_settings:
   routing_strategy: least-busy
-  num_retries: 3
-  retry_after: 1
-  cooldown_time: 30        # Bajado a 30s (era 60s) para recuperación más rápida
-  allowed_fails: 3         # Subido a 3 (era 2) para más tolerancia
+  num_retries: 1           # 1 reintento (era 3) → falla rápido y pasa al siguiente
+  retry_after: 0
+  cooldown_time: 30
+  allowed_fails: 3
   fallbacks:
-    # principal: groq/sambanova/together primero. Gemini AL FINAL (cuota diaria agotable)
     - {"principal": ["together-fallback", "sambanova-fallback", "openrouter-fallback", "groq-fallback", "cerebras-fallback", "gemini-fallback", "gemini-lite-fallback"]}
     - {"openrouter-fallback": ["together-fallback", "sambanova-fallback", "groq-fallback", "cerebras-fallback", "gemini-fallback", "gemini-lite-fallback"]}
     - {"groq-fallback": ["together-fallback", "sambanova-fallback", "openrouter-fallback", "cerebras-fallback", "gemini-fallback", "gemini-lite-fallback"]}
@@ -266,7 +246,7 @@ router_settings:
 litellm_settings:
   drop_params: true
   set_verbose: false
-  request_timeout: 60
+  request_timeout: 15      # 15s (era 60s) → falla rápido y pasa al siguiente modelo
 
 general_settings:
   port: 8000
