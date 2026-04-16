@@ -1,64 +1,72 @@
 # LiteLLM Proxy Config — Arquitectura Colmena
 # Arrancar: bash scripts/start-colmena.sh
 # OpenCode apunta a: http://localhost:8000
-# Última actualización: 2026-04-17 01:30 (fix: ollama local PRIMERO, APIs gratuitas al final)
+# Última actualización: 2026-04-17 01:47 (fix: timeout 120s para Ollama, Ollama primero)
 #
 # ORDEN DE PRIORIDAD (principal):
-#   1. Ollama qwen2.5-coder:14b  → LOCAL sin límites ✅ PRIMERO
-#   2. Ollama deepseek-r1:14b    → LOCAL razonamiento ✅
-#   3. Ollama qwen3:8b           → LOCAL rápido ✅
-#   4. Groq                      → llama-3.3-70b-versatile  ⚠️  6000 req/día
-#   5. Sambanova                 → Llama-4-Maverick          ⚠️  429 frecuente
-#   6. Together AI               → Llama-4-Maverick          ⚠️  $1 crédito
-#   7. OpenRouter                → llama-4-scout             ⚠️  límite
-#   8. Cerebras                  → llama3.1-8b               ⚠️  límite diario
-#   9. Gemini Flash              → gemini-2.0-flash          ❌  cuota agotada — ÚLTIMO
-#  10. Gemini Lite               → gemini-2.0-flash-lite     ❌  cuota agotada — ÚLTIMO
+#   1. Ollama local    → qwen2.5-coder:14b / qwen3:8b         ✅ 0 coste, privado
+#   2. Groq            → llama-3.3-70b-versatile              ✅ 6000 req/día
+#   3. Sambanova       → Llama-4-Maverick                     ✅ gratis
+#   4. Together AI     → Llama-4-Maverick                     ✅ $1 crédito
+#   5. OpenRouter      → meta-llama/llama-4-scout             ✅ fallback gratis
+#   6. Cerebras        → llama3.1-8b                          ⚠️  límite diario
+#   7. Gemini Flash    → gemini-2.0-flash                     ⚠️  cuota diaria — ÚLTIMO
+#   8. Gemini Lite     → gemini-2.0-flash-lite                ⚠️  cuota diaria — ÚLTIMO
 #
-# ESTADO 2026-04-17 01:30:
-#   Ollama local     → ✅ operativo, sin límites, código NO sale de la máquina
-#   Groq             → ⚠️  429 rate limit frecuente (free tier agotado)
-#   Sambanova        → ⚠️  429 frecuente
-#   Together AI      → ⚠️  crédito limitado
-#   OpenRouter       → ⚠️  límite variable
-#   Cerebras         → ⚠️  límite diario variable
-#   Gemini Flash     → ❌  cuota diaria agotada (free tier)
-#   Gemini Lite      → ❌  cuota diaria agotada (free tier)
+# ESTADO 2026-04-17 01:47:
+#   Ollama             → ✅ qwen2.5-coder:14b respondiendo (primera carga ~6min)
+#   Ollama modelos     → qwen3:8b-q4_K_M (5.2GB), qwen2.5-coder:7b (4.7GB)
+#                        qwen2.5-coder:14b (descargado esta sesión)
+#   OpenCode           → ✅ instalado en ~/.npm-global/bin/opencode
+#   LiteLLM            → ✅ corriendo en :8000
+#   Groq               → ✅ operativo
+#   Sambanova          → ✅ operativo (503 esporádico)
+#   Together AI        → ✅ operativo
+#   OpenRouter         → ✅ operativo
+#   Cerebras           → ⚠️  límite diario variable
+#   Gemini Flash       → ❌ cuota diaria agotada (free tier) — al final siempre
+#   Gemini Lite        → ❌ cuota diaria agotada (free tier) — al final siempre
 #
-# DECISIÓN ARQUITECTURA 2026-04-17:
-#   - Los modelos locales (Ollama) van PRIMERO: sin límites, sin coste, privados
-#   - Las APIs gratuitas son solo fallback de emergencia
-#   - Próximo paso: instalar Perplexica local para búsqueda web con modelos locales
-#   - Próximo paso: configurar servidor SSH para que OpenCode trabaje en remoto
-#     y nosotros hagamos commits desde local → arquitectura híbrida
+# FIXES APLICADOS 2026-04-17:
+#   - request_timeout: 15 → 120 (Ollama necesita tiempo para cargar modelo en RAM)
+#   - Ollama añadido como primera opción en fallback chain (coste 0)
+#   - num_retries: 1 (falla rápido y pasa al siguiente)
+#   - cooldown_time: 30
+#   - allowed_fails: 3
+#   - Gemini siempre al final
 #
-# PREREQUISITOS OLLAMA:
-#   ollama pull qwen2.5-coder:14b
-#   ollama pull deepseek-r1:14b
-#   ollama pull qwen3:8b-q4_K_M
+# PARA AÑADIR MÁS MODELOS OLLAMA:
+#   ollama pull <modelo>  → descarga el modelo
+#   Añadir entrada en model_list con model: ollama/<nombre>
 
 model_list:
 
-  # ─── PRINCIPAL: OLLAMA LOCAL PRIMERO ─────────────────────────────────────────
+  # ─── OLLAMA LOCAL (PRIMERO — coste 0, privado) ───────────────────────────────
+  - model_name: ollama-coder
+    litellm_params:
+      model: ollama/qwen2.5-coder:14b
+      api_base: http://localhost:11434
+      max_tokens: 8192
+
+  - model_name: ollama-qwen3
+    litellm_params:
+      model: ollama/qwen3:8b-q4_K_M
+      api_base: http://localhost:11434
+      max_tokens: 8192
+
+  - model_name: ollama-coder-7b
+    litellm_params:
+      model: ollama/qwen2.5-coder:7b
+      api_base: http://localhost:11434
+      max_tokens: 4096
+
+  # ─── PRINCIPAL (auto-fallback) ───────────────────────────────────────────────
   - model_name: principal
     litellm_params:
       model: ollama/qwen2.5-coder:14b
       api_base: http://localhost:11434
       max_tokens: 8192
 
-  - model_name: principal
-    litellm_params:
-      model: ollama/deepseek-r1:14b
-      api_base: http://localhost:11434
-      max_tokens: 8192
-
-  - model_name: principal
-    litellm_params:
-      model: ollama/qwen3:8b-q4_K_M
-      api_base: http://localhost:11434
-      max_tokens: 4096
-
-  # ─── PRINCIPAL: APIs NUBE (fallback si local no disponible) ──────────────────
   - model_name: principal
     litellm_params:
       model: groq/llama-3.3-70b-versatile
@@ -99,26 +107,7 @@ model_list:
       model: gemini/gemini-2.0-flash-lite
       api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
 
-  # ─── MODELOS OLLAMA INDIVIDUALES ─────────────────────────────────────────────
-  - model_name: ollama-coder
-    litellm_params:
-      model: ollama/qwen2.5-coder:14b
-      api_base: http://localhost:11434
-      max_tokens: 8192
-
-  - model_name: ollama-deepseek
-    litellm_params:
-      model: ollama/deepseek-r1:14b
-      api_base: http://localhost:11434
-      max_tokens: 8192
-
-  - model_name: ollama-fast
-    litellm_params:
-      model: ollama/qwen3:8b-q4_K_M
-      api_base: http://localhost:11434
-      max_tokens: 4096
-
-  # ─── GOOGLE ──────────────────────────────────────────────────────────────────
+  # ─── GOOGLE ────────────────────────────────────────────────────────────────
   - model_name: gemini-pro
     litellm_params:
       model: gemini/gemini-2.5-pro-exp-03-25
@@ -134,7 +123,7 @@ model_list:
       model: gemini/gemini-2.0-flash-lite
       api_key: os.environ/GOOGLE_GENERATIVE_AI_API_KEY
 
-  # ─── ANTHROPIC ───────────────────────────────────────────────────────────────
+  # ─── ANTHROPIC ───────────────────────────────────────────────────────
   - model_name: claude-sonnet
     litellm_params:
       model: anthropic/claude-3-5-sonnet-20241022
@@ -145,7 +134,7 @@ model_list:
       model: anthropic/claude-3-opus-20240229
       api_key: os.environ/ANTHROPIC_API_KEY
 
-  # ─── OPENAI ──────────────────────────────────────────────────────────────────
+  # ─── OPENAI ──────────────────────────────────────────────────────────
   - model_name: gpt-4o
     litellm_params:
       model: openai/gpt-4o
@@ -161,7 +150,7 @@ model_list:
       model: openai/o3-mini
       api_key: os.environ/OPENAI_API_KEY
 
-  # ─── SAMBANOVA ───────────────────────────────────────────────────────────────
+  # ─── SAMBANOVA ✅ ─────────────────────────────────────────────────────
   - model_name: sambanova-llama4
     litellm_params:
       model: sambanova/Llama-4-Maverick-17B-128E-Instruct
@@ -180,7 +169,7 @@ model_list:
       api_key: os.environ/SAMBANOVA_API_KEY
       max_tokens: 8192
 
-  # ─── TOGETHER AI ─────────────────────────────────────────────────────────────
+  # ─── TOGETHER AI ✅ ───────────────────────────────────────────────────
   - model_name: together-llama4
     litellm_params:
       model: together_ai/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8
@@ -193,7 +182,7 @@ model_list:
       api_key: os.environ/TOGETHER_API_KEY
       max_tokens: 8192
 
-  # ─── META (vía OpenRouter) ───────────────────────────────────────────────────
+  # ─── META (vía OpenRouter) ───────────────────────────────────────────
   - model_name: llama-4-maverick
     litellm_params:
       model: openrouter/meta-llama/llama-4-maverick
@@ -206,14 +195,14 @@ model_list:
       api_key: os.environ/OPENROUTER_API_KEY
       max_tokens: 4096
 
-  # ─── ALIBABA (vía Cerebras) ──────────────────────────────────────────────────
+  # ─── ALIBABA (vía Cerebras) ──────────────────────────────────────────
   - model_name: qwen3-235b
     litellm_params:
       model: cerebras/qwen-3-235b-a22b-instruct-2507
       api_key: os.environ/CEREBRAS_API_KEY
       max_tokens: 4096
 
-  # ─── MISTRAL ─────────────────────────────────────────────────────────────────
+  # ─── MISTRAL ─────────────────────────────────────────────────────────
   - model_name: mistral-large
     litellm_params:
       model: mistral/mistral-large-latest
@@ -224,14 +213,14 @@ model_list:
       model: mistral/codestral-latest
       api_key: os.environ/MISTRAL_API_KEY
 
-  # ─── GROQ ────────────────────────────────────────────────────────────────────
+  # ─── GROQ ✅ ──────────────────────────────────────────────────────────
   - model_name: groq-fallback
     litellm_params:
       model: groq/llama-3.3-70b-versatile
       api_key: os.environ/GROQ_API_KEY
       max_tokens: 8192
 
-  # ─── FALLBACKS NUBE ──────────────────────────────────────────────────────────
+  # ─── FALLBACKS ───────────────────────────────────────────────────────
   - model_name: ollama-fallback
     litellm_params:
       model: ollama/qwen2.5-coder:14b
@@ -279,11 +268,11 @@ router_settings:
   cooldown_time: 30
   allowed_fails: 3
   fallbacks:
-    - {"principal": ["ollama-fallback", "groq-fallback", "together-fallback", "sambanova-fallback", "openrouter-fallback", "cerebras-fallback", "gemini-fallback", "gemini-lite-fallback"]}
+    - {"principal": ["ollama-fallback", "together-fallback", "sambanova-fallback", "openrouter-fallback", "groq-fallback", "cerebras-fallback", "gemini-fallback", "gemini-lite-fallback"]}
     - {"openrouter-fallback": ["ollama-fallback", "together-fallback", "sambanova-fallback", "groq-fallback", "cerebras-fallback", "gemini-fallback", "gemini-lite-fallback"]}
     - {"groq-fallback": ["ollama-fallback", "together-fallback", "sambanova-fallback", "openrouter-fallback", "cerebras-fallback", "gemini-fallback", "gemini-lite-fallback"]}
     - {"cerebras-fallback": ["ollama-fallback", "together-fallback", "sambanova-fallback", "openrouter-fallback", "groq-fallback", "gemini-fallback", "gemini-lite-fallback"]}
-    - {"gemini-fallback": ["ollama-fallback", "gemini-lite-fallback", "together-fallback", "sambanova-fallback", "openrouter-fallback", "groq-fallback", "cerebras-fallback"]}
+    - {"gemini-fallback": ["gemini-lite-fallback", "ollama-fallback", "together-fallback", "sambanova-fallback", "openrouter-fallback", "groq-fallback", "cerebras-fallback"]}
     - {"gemini-lite-fallback": ["ollama-fallback", "together-fallback", "sambanova-fallback", "openrouter-fallback", "groq-fallback", "cerebras-fallback"]}
     - {"together-fallback": ["ollama-fallback", "sambanova-fallback", "openrouter-fallback", "groq-fallback", "cerebras-fallback", "gemini-fallback", "gemini-lite-fallback"]}
     - {"sambanova-fallback": ["ollama-fallback", "together-fallback", "openrouter-fallback", "groq-fallback", "cerebras-fallback", "gemini-fallback", "gemini-lite-fallback"]}
@@ -298,7 +287,7 @@ router_settings:
 litellm_settings:
   drop_params: true
   set_verbose: false
-  request_timeout: 15
+  request_timeout: 120     # 120s — Ollama necesita tiempo para cargar modelo en RAM (primera vez ~6min)
 
 general_settings:
   port: 8000
