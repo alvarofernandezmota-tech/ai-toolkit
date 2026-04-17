@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "ollama/qwen2.5-coder:14b",
+  "model": "litellm/groq-fallback",
   "provider": {
     "litellm": {
       "npm": "@ai-sdk/openai-compatible",
@@ -11,11 +11,11 @@
         "compatibility": "compatible"
       },
       "models": {
+        "groq-fallback":         { "name": "Llama 3.3 70B ⚡ DEFAULT — computer-mode, agentes, instrucciones" },
         "principal":             { "name": "Principal (auto-fallback)" },
-        "ollama-coder":          { "name": "Qwen2.5 Coder 14B LOCAL ⭐ RECOMENDADO" },
+        "ollama-coder":          { "name": "Qwen2.5 Coder 14B LOCAL 🖥️ — solo generación código puro" },
         "ollama-fast":           { "name": "Qwen3 8B LOCAL ⚡ rápido" },
         "ollama-deepseek":       { "name": "DeepSeek R1 14B LOCAL 🤔 thinking" },
-        "groq-fallback":         { "name": "Groq Llama 3.3 70B ⚡ nube rápida" },
         "sambanova-llama4":      { "name": "SambaNova Llama 4 Maverick" },
         "sambanova-deepseek":    { "name": "SambaNova DeepSeek R1" },
         "sambanova-deepseek-v3": { "name": "SambaNova DeepSeek V3" },
@@ -35,14 +35,14 @@
     },
     "ollama": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "Ollama Local (GTX 1060)",
+      "name": "Ollama Local (GTX 1060) — solo código puro",
       "options": {
         "baseURL": "http://localhost:11434/v1",
         "apiKey": "ollama",
         "compatibility": "compatible"
       },
       "models": {
-        "qwen2.5-coder:14b":   { "name": "Qwen2.5 Coder 14B ⭐ PRINCIPAL (VRAM+RAM)" },
+        "qwen2.5-coder:14b":   { "name": "Qwen2.5 Coder 14B 🖥️ código puro (no computer-mode)" },
         "qwen2.5-coder:7b":    { "name": "Qwen2.5 Coder 7B ⚡ rápido (6GB VRAM)" },
         "qwen3:8b-q4_K_M":     { "name": "Qwen3 8B 🧠 Thinking LOCAL" },
         "deepseek-r1:14b":     { "name": "DeepSeek R1 14B 🤔 Thinking (VRAM+RAM)" },
