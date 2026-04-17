@@ -1,52 +1,111 @@
 #!/bin/bash
-# Herramienta: crear-ficha-agente.sh
-# Uso: bash herramientas/crear-ficha-agente.sh nombre-agente "Descripción" "capacidad1, capacidad2"
-# Genera agentes/<nombre-agente>.md con estructura estándar
+# ==============================================================
+# crear-ficha-agente.sh
+# Propósito: generar una ficha .md en agentes/ con plantilla estándar
+# Uso:      ./herramientas/crear-ficha-agente.sh <nombre> <"descripcion">
+# Ejemplo:  ./herramientas/crear-ficha-agente.sh revisor-codigo "Revisa PRs y sugiere mejoras"
+# Códigos:  0 = éxito | 1 = error
+# ==============================================================
 
 set -e
 
-NOMBRE="${1}"
-DESCRIPCION="${2:-'Agente sin descripción'}"
-CAPACIDADES="${3:-'por definir'}"
+NOMBRE="$1"
+DESCRIPCION="$2"
+FECHA=$(date +"%Y-%m-%d")
 
+# --- Validaciones ---
 if [ -z "$NOMBRE" ]; then
-  echo "❌ Uso: bash herramientas/crear-ficha-agente.sh <nombre> <descripcion> [capacidades]"
+  echo "❌ ERROR: Debes pasar el nombre del agente como primer parámetro."
+  echo "   Uso: $0 <nombre> <\"descripcion\">"
   exit 1
 fi
 
-REPO_DIR="$(git rev-parse --show-toplevel 2>/dev/null || echo $PWD)"
-FICHA="$REPO_DIR/agentes/${NOMBRE}.md"
-
-if [ -f "$FICHA" ]; then
-  echo "⚠️  Ya existe: $FICHA"
-  exit 0
+if [ -z "$DESCRIPCION" ]; then
+  echo "❌ ERROR: Debes pasar la descripción del agente como segundo parámetro."
+  echo "   Uso: $0 <nombre> <\"descripcion\">"
+  exit 1
 fi
 
-FECHA=$(date +%Y-%m-%d)
+# Normalizar nombre: minúsculas, espacios por guiones
+NOMBRE_NORM=$(echo "$NOMBRE" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
 
-cat > "$FICHA" << EOF
-# Agente: ${NOMBRE}
+# Resolver ruta relativa a la raíz del repo
+REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo ".")
+DEST="$REPO_ROOT/agentes/${NOMBRE_NORM}.md"
 
-> Creado: ${FECHA}
+# --- Comprobación: no sobreescribir ---
+if [ -f "$DEST" ]; then
+  echo "⚠️  AVISO: Ya existe $DEST. No se sobreescribirá."
+  echo "   Elimina el archivo manualmente si quieres regenerarlo."
+  exit 1
+fi
 
-## Qué hace
-${DESCRIPCION}
+# --- Crear carpeta si no existe ---
+mkdir -p "$REPO_ROOT/agentes"
 
-## Modelos recomendados
-- groq-fallback (Llama 3.3 70B) — planificación y tool calls
-- qwen2.5-coder:14b — generación de código puro
+# --- Escribir plantilla ---
+cat > "$DEST" << EOF
+# 🤖 Agente: ${NOMBRE_NORM}
 
-## Capacidades
-${CAPACIDADES}
+> ${DESCRIPCION}
 
-## Inputs
-- por definir
+---
 
-## Output
-- por definir
+## Propósito
 
-## Script asociado
-\`scripts/${NOMBRE}.sh\`
+<!-- Describe en 2-3 frases qué hace este agente y cuándo se usa -->
+
+---
+
+## Entradas
+
+| Parámetro | Tipo | Descripción |
+|---|---|---|
+| - | - | - |
+
+---
+
+## Salidas
+
+| Salida | Tipo | Descripción |
+|---|---|---|
+| - | - | - |
+
+---
+
+## Prompt base
+
+\`\`\`
+<!-- Pega aquí el prompt o instrucciones del agente -->
+\`\`\`
+
+---
+
+## Herramientas / dependencias
+
+- [ ] LLM: <!-- modelo usado -->
+- [ ] Scripts: <!-- scripts que invoca -->
+- [ ] APIs: <!-- si consume APIs externas -->
+
+---
+
+## Ejemplos de uso
+
+\`\`\`bash
+# Ejemplo 1
+\`\`\`
+
+---
+
+## Estado
+
+- [ ] Diseñado
+- [ ] Probado manualmente
+- [ ] Integrado en flujo
+
+---
+
+_Ficha creada: ${FECHA} | Parte del Sistema Colmena — ai-toolkit_
 EOF
 
-echo "✅ Ficha creada: $FICHA"
+echo "✅ Ficha creada: $DEST"
