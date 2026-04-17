@@ -1,54 +1,65 @@
-# OpenCode — Configuración y Compaction
+# Configuración de OpenCode con LiteLLM local
 
-## Problema: Compaction agota tokens de OpenRouter
+## Problema
 
-OpenCode compacta automáticamente el contexto cuando supera cierto límite.
-Esa petición de compaction puede pedir 32.000 tokens de golpe, lo que supera
-el saldo gratuito de OpenRouter (~6.000 tokens).
+OpenCode necesita un `config.json` con una API key válida para conectarse a LiteLLM. Si el archivo no existe, manda `sk-...` como placeholder y LiteLLM devuelve `401 Unauthorized`.
 
-## Solución implementada
+## Solución
 
-El `opencode.json` está en la raíz del proyecto y OpenCode lo carga automáticamente
-al ejecutarse desde `~/projects/ai-toolkit`.
+### 1. Crear el config de OpenCode
 
-Los modelos registrados en el provider `litellm` permiten cambiar de modelo
-en OpenCode con `Ctrl+P → model` sin tocar ningún config.
-
-## Si la compaction sigue fallando
-
-Opción 1 — Desactivar autocompaction completamente:
 ```bash
-export OPENCODE_DISABLE_AUTOCOMPACT=true
+mkdir -p ~/.config/opencode
+cat > ~/.config/opencode/config.json << 'EOF'
+{
+  "providers": {
+    "openai": {
+      "apiKey": "sk-colmena-local",
+      "baseUrl": "http://localhost:8000/v1"
+    }
+  }
+}
+EOF
 ```
-Añadir al `.env` del proyecto para que persista.
 
-Opción 2 — Compactar manualmente cuando tú quieras:
-En OpenCode: `/compact`
-Esto compacta en ese momento con el modelo activo.
+### 2. Opción A — Añadir master_key a LiteLLM (recomendado)
 
-Opción 3 — Nueva sesión (nuclear):
+En el yaml de LiteLLM (`~/projects/thdora/litellm_config.yaml` o similar), añadir:
+
+```yaml
+general_settings:
+  master_key: sk-colmena-local
+```
+
+Luego reiniciar LiteLLM.
+
+### 3. Opción B — Desactivar auth en LiteLLM (desarrollo local)
+
+```yaml
+general_settings:
+  disable_auth: true
+```
+
+## Verificar que funciona
+
 ```bash
-opencode  # sin -s, abre sesión nueva sin contexto
+# Con API key
+curl -s http://localhost:8000/v1/models \
+  -H "Authorization: Bearer sk-colmena-local" | python3 -m json.tool | grep '"id"'
+
+# Sin auth
+curl -s http://localhost:8000/v1/models | python3 -m json.tool | grep '"id"'
 ```
 
-## Cambiar de modelo en OpenCode
+## Diagnóstico rápido
 
+```bash
+# Ver si existe el config
+ls -la ~/.config/opencode/config.json
+
+# Ver el contenido
+cat ~/.config/opencode/config.json
+
+# Ver master_key de LiteLLM
+grep -rni "master_key" ~/projects/thdora/ 2>/dev/null | grep -v ".pyc"
 ```
-Ctrl+P → model → seleccionar
-```
-
-Modelos disponibles (todos vía LiteLLM en localhost:8000):
-- `principal` — Cerebras gpt-oss-120b → fallback OpenRouter
-- `cerebras-fallback` — llama3.1-8b (pequeño, para compaction)
-- `openrouter-fallback` — Llama 4 Maverick vía OpenRouter
-- `gemini-flash` — cuando Gemini esté operativo
-- `claude-sonnet`, `gpt-4o` — de pago
-
-## Reseteos de límites gratuitos
-
-| Proveedor | Reset |
-|---|---|
-| Cerebras | Diario (00:00 UTC = 02:00 CEST) |
-| OpenRouter | Por créditos (recargar en openrouter.ai/settings/credits) |
-| Gemini Free Tier | Por minuto y por día (00:00 PST) |
-| Groq | Por minuto/día según tier |
