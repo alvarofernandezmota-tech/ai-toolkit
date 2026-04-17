@@ -11,19 +11,19 @@
       },
       "models": {
         "principal": {
-          "name": "Principal (Cerebras → OpenRouter)"
+          "name": "Principal (Cerebras \u2192 OpenRouter)"
         },
         "local": {
-          "name": "🏠 Local (Ollama default)"
+          "name": "\ud83c\udfe0 Local (Ollama default)"
         },
         "ollama-local": {
-          "name": "🏠 Ollama gemma3:4b"
+          "name": "\ud83c\udfe0 Ollama gemma3:4b"
         },
         "ollama-coder": {
-          "name": "🏠 Ollama qwen2.5-coder:7b"
+          "name": "\ud83c\udfe0 Ollama qwen2.5-coder:7b"
         },
         "ollama-r1": {
-          "name": "🏠 Ollama deepseek-r1:8b"
+          "name": "\ud83c\udfe0 Ollama deepseek-r1:8b"
         },
         "gemini-pro": {
           "name": "Gemini 2.5 Pro"
@@ -73,7 +73,6 @@
       }
     }
   },
-  "autosave": true,
   "keybinds": {
     "leader": "ctrl+x"
   }
