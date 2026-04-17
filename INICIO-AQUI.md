@@ -1,79 +1,109 @@
-# 🚀 INICIO AQUÍ — Arranque rápido
+# 🚀 INICIO AQUÍ — ai-toolkit
 
-> Última actualización: 2026-04-17 02:00 | Estado: ✅ TODO OPERATIVO
+> Última actualización: 17 abril 2026, 02:30 CEST
 
-## Stack completo
+Este archivo es el punto de entrada para cualquier sesión nueva. Lee esto primero.
 
-| Componente | Puerto | Estado |
-|-----------|--------|--------|
-| Ollama (modelos locales) | :11434 | ✅ Operativo |
-| LiteLLM Colmena (router) | :8000 | ✅ Operativo |
-| OpenCode (editor IA) | — | ✅ Operativo |
+---
 
-## Arranque en 3 pasos
+## 🎯 Estado actual del sistema
 
-### 1. Ollama ya corre solo al iniciar (systemd)
-Verificar:
+| Componente | Estado | Notas |
+|---|---|---|
+| LiteLLM Colmena | ✅ Funcionando | Puerto 8000, `start-colmena.sh` |
+| OpenCode v1.4.6 | ✅ Instalado | `~/.npm-global/bin/opencode` |
+| Ollama local | ✅ Funcionando | 4-5 modelos descargados |
+| SSH PC grande | ⏳ Parcial | Falta copiar clave del Acer |
+| VSCode Remote-SSH | ❌ Pendiente | Depende del SSH |
+
+---
+
+## ⚡ Arrancar el sistema (cada sesión)
+
 ```bash
-curl http://localhost:11434/api/tags
+# En WSL del PC grande:
+cd ~/projects/ai-toolkit
+bash scripts/start-colmena.sh
 ```
 
-### 2. Arrancar LiteLLM Colmena
+Espera hasta ver: `✅ LiteLLM listo en :8000`
+
+Luego en otra ventana/panel:
 ```bash
 cd ~/projects/ai-toolkit
-git pull  # siempre actualizar primero
-
-# Lanzar LiteLLM directamente (forma correcta)
-pkill -f litellm 2>/dev/null; sleep 1
-/home/alvaro/projects/thdora/.venv/bin/litellm \
-  --config /home/alvaro/projects/ai-toolkit/litellm-config.yaml \
-  --port 8000 &
-
-# Esperar a que esté listo
-for i in $(seq 1 20); do
-  curl -s http://localhost:8000/health/liveliness &>/dev/null && echo '✅ LiteLLM listo en :8000' && break
-  echo -n '.'; sleep 1
-done
+~/.npm-global/bin/opencode
 ```
 
-> ⚠️ **NOTA**: NO usar `scripts/start-colmena.sh` todavía — tiene un bug que interpreta el YAML como comandos bash. Usar el comando directo de arriba.
+---
 
-### 3. Arrancar OpenCode
+## 📋 Próximos pasos (en orden)
+
+1. **Verificar modelos Ollama:**
+   ```bash
+   ollama list
+   # Deben aparecer: qwen3:8b, qwen2.5-coder:7b, qwen2.5-coder:14b, deepseek-r1:14b, nomic-embed-text
+   ```
+
+2. **Copiar clave SSH desde Acer** (necesita cargador):
+   ```powershell
+   type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh -p 2222 alvaro@10.159.182.228 "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+   ```
+
+3. **Conectar VSCode del Acer:**
+   - Host: `10.159.182.228`, Puerto: `2222`, User: `alvaro`
+
+4. **Primera tarea OpenCode pendiente:**
+   - Ver si `scripts/generar-diario.sh` se creó correctamente
+   - Si no: pedir a OpenCode que lo regenere con modelo `groq-fallback` (más rápido)
+
+---
+
+## 🧠 Estrategia de modelos
+
+**Ollama local = trabajo principal**
+- Sin límites, sin coste, privado
+- Lento sin GPU dedicada (~5-6 min en CPU para 14b)
+- Con RTX 3070+ sería ~30 segundos
+
+**APIs cloud = emergencia puntual**
+- Groq: rápido pero 429 en contextos >12k tokens
+- Gemini/Sambanova/Together: cuotas diarias, inestables
+- Usar solo si Ollama está sobrecargado o falla
+
+**Para tareas rápidas en OpenCode:** usar `litellm/groq-fallback` directamente
+
+---
+
+## 📂 Archivos clave del repo
+
+| Archivo | Para qué |
+|---|---|
+| `litellm-config.yaml` | Config completa de LiteLLM con todos los modelos |
+| `opencode.json` | Config de OpenCode → apunta a LiteLLM local |
+| `scripts/start-colmena.sh` | Script de arranque del servidor |
+| `scripts/generar-diario.sh` | Brief diario automático (generado por OpenCode) |
+| `ROADMAP.md` | Qué construir y en qué orden |
+| `ECOSISTEMA.md` | Arquitectura completa del sistema |
+| `guias/setup-servidor-ssh-wsl.md` | Guía técnica SSH + Ollama + OpenCode |
+| `docs/hardware-strategy.md` | Estrategia GPU y límites por hardware |
+
+---
+
+## 🐛 Problemas conocidos y soluciones
+
+**`opencode: command not found`**
 ```bash
-cd ~/projects/ai-toolkit
-opencode
+export PATH="$HOME/.npm-global/bin:$PATH"
+# O usar ruta completa:
+~/.npm-global/bin/opencode
 ```
 
-## Modelos disponibles (Ollama local, sin límites)
+**LiteLLM 429 en groq/gemini**
+- Normal — las APIs gratuitas tienen límites
+- LiteLLM hace fallback automático al siguiente modelo
+- Si todo falla: Ollama local siempre responde (más lento)
 
-| Modelo | Uso ideal | Tamaño |
-|--------|-----------|--------|
-| `qwen2.5-coder:14b` | Código, análisis repos | 9 GB |
-| `deepseek-r1:14b` | Razonamiento complejo | 9 GB |
-| `qwen3:8b-q4_K_M` | Tareas rápidas | 5.2 GB |
-| `nomic-embed-text` | Embeddings/búsqueda | 274 MB |
-
-## Troubleshooting
-
-### Ollama timeout (primera petición lenta)
-- **Normal**: primera petición tarda 30-60s cargando modelo en RAM
-- **Fix aplicado**: `request_timeout: 120` en litellm-config.yaml ✅
-- **No hacer nada** — simplemente esperar
-
-### Groq 429 RateLimitError
-- Límite TPM: 12000 tokens/min en free tier
-- Con contextos grandes (>12000 tokens) falla siempre
-- **Solución**: Ollama local va primero — Groq solo es fallback de emergencia
-
-### Gemini 429 / cuota agotada
-- Free tier diario agotado
-- **Solución**: está al final de la cadena de fallbacks — no se usa si Ollama funciona
-
-### start-colmena.sh da error "command not found"
-- Bug conocido: el script parsea mal el YAML
-- **Fix temporal**: usar el comando directo del paso 2
-- **TODO**: reescribir el script (tarea pendiente)
-
-## Próxima tarea en curso
-
-OpenCode está creando `scripts/generar-diario.sh` — primera tarea autónoma real del agente.
+**Ollama tarda mucho (>5 min)**
+- Normal en CPU sin GPU dedicada
+- Solución real: GPU dedicada RTX 3070/3080
+- Workaround: usar modelos 7b-8b en vez de 14b para tareas rápidas
