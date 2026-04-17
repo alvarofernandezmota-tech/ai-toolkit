@@ -1,13 +1,29 @@
 # Agentes pendientes de construir
 
-> Lista viva. Cada vez que decidas construir un agente, muevelo de aqui a su propio archivo en `agentes/`.
+> Lista viva. Cada vez que decidas construir un agente, muévelo de aquí a su propio archivo en `agentes/`.
 
 ---
 
-## 🔥 Prioritarios (proxima sesion)
+## ✅ Completados
+
+- [x] Claude Code conectado a OpenRouter (14/04/2026)
+- [x] OpenCode + DeepSeek R1 funcionando (15/04/2026)
+- [x] Scripts de rotación de modelos con fallback (15/04/2026)
+- [x] Estructura base del repo completa (14/04/2026)
+- [x] **Agente OpenCode documentado** → `agentes/agente-opencode.md` (17/04/2026)
+- [x] **Agente LiteLLM documentado** → `agentes/agente-litellm.md` (17/04/2026)
+- [x] **Agente Ollama documentado** → `agentes/agente-ollama.md` (17/04/2026)
+- [x] **Agente Investigación documentado** → `agentes/agente-investigacion.md` (17/04/2026)
+- [x] **Agente Git Commits documentado** → `agentes/agente-git-commits.md` (17/04/2026)
+- [x] Agente resumen de sesión → `agentes/agente-resumen.md`
+- [x] `scripts/generar-diario.sh` generado por OpenCode (17/04/2026)
+
+---
+
+## 🔥 Prioritarios (próxima sesión)
 
 ### 1. Agente de coding real sobre THDORA
-**Que hace:** Usa Claude Code para trabajar sobre el codigo real de THDORA, empezando por los bugs identificados.  
+**Que hace:** Usa Claude Code para trabajar sobre el código real de THDORA, empezando por los bugs identificados.  
 **Herramienta:** Claude Code + OpenRouter  
 **Input:** Lista de bugs en `agentes/thdora-primera-sesion.md`  
 **Como arrancarlo:**
@@ -19,81 +35,57 @@ claude --model anthropic/claude-3.5-sonnet
 # Dentro de Claude Code: "Lee CLAUDE.md y luego ataca el primer bug de la lista"
 ```
 **Estado:** 🔴 Pendiente  
-**Estimacion:** 1-2 horas primera sesion
+**Estimación:** 1-2 horas primera sesión
 
 ---
 
-### 2. Agente de investigacion web automatico
-**Que hace:** Dado un tema, busca informacion actualizada, la resume y la guarda en `investigacion/`.  
-**Herramienta:** OpenCode + DeepSeek R1 (ya funciona) o Groq + busqueda web  
-**Input:** Prompt con el tema a investigar  
-**Output:** Archivo MD en `investigacion/YYYY-MM-DD-tema.md`  
-**Como construirlo:**
-```bash
-# Arrancar OpenCode
-OPENAI_API_KEY="$OPENROUTER_API_KEY" \
-OPENAI_BASE_URL="https://openrouter.ai/api/v1" \
-opencode
-# Prompt: "Crea un script Python que dado un tema busque informacion con 
-# Perplexity/Tavily API y la guarde como MD en investigacion/"
-```
-**Estado:** 🔴 Pendiente  
-**Estimacion:** 2-3 horas
+### 2. `scripts/investigar.sh` — búsqueda automática
+**Que hace:** Script que dado un tema busca con Perplexity/Tavily API y guarda en `investigacion/`.  
+**Base:** Ya documentado en `agentes/agente-investigacion.md`  
+**Estado:** 🔴 Pendiente construcción del script  
+**Estimación:** 2-3 horas
 
 ---
 
-### 3. Agente de documentacion automatica de sesion
-**Que hace:** Al final de cada sesion, analiza los commits del dia y genera una entrada de diario automaticamente.  
-**Herramienta:** Script Python + OpenRouter API directa  
-**Input:** Output de `git log --since=today`  
-**Output:** Archivo MD en `docs/diario/YYYY-MM-DD-sesion.md`  
-**Como construirlo:**
-```bash
-# Construir con OpenCode
-OPENAI_API_KEY="$OPENROUTER_API_KEY" \
-OPENAI_BASE_URL="https://openrouter.ai/api/v1" \
-opencode
-# Prompt: "Crea scripts/generar-diario.sh que use git log para obtener los 
-# commits de hoy, los pase a un modelo via OpenRouter API y genere un MD"
-```
-**Estado:** 🔴 Pendiente  
-**Estimacion:** 1-2 horas
+### 3. `scripts/cerrar-sesion.sh` — commit automático de cierre
+**Que hace:** Al final de cada sesión, hace `git add -A`, genera commit semántico y actualiza CHANGELOG.  
+**Base:** Ya documentado en `agentes/agente-git-commits.md`  
+**Estado:** 🔴 Pendiente construcción del script  
+**Estimación:** 30 min
+
+---
+
+### 4. Agente revisor de código (THDORA)
+**Archivo:** `agentes/agente-revisor-codigo.md` (borrador existe)  
+**Estado:** 🟡 Borrador generado 15/04/2026. Necesita prueba real sobre código de THDORA.  
+**Siguiente paso:** Probarlo con una sesión real.
 
 ---
 
 ## 🟡 En progreso
 
-### Agente resumen de sesion
-**Archivo:** `agentes/agente-resumen.md`  
-**Estado:** Borrador generado por OpenCode el 15/04/2026. Necesita revision y prueba real.  
-**Siguiente paso:** Probarlo con una sesion real y ver si el output es util.
-
-### Agente revisor de codigo
-**Archivo:** `agentes/agente-revisor-codigo.md`  
-**Estado:** Borrador generado por OpenCode el 15/04/2026. Necesita revision y prueba real.  
-**Siguiente paso:** Probarlo sobre codigo real de THDORA.
+### RAG con nomic-embed-text + ChromaDB
+**Que hace:** Embeddings locales sobre los docs del repo para búsqueda semántica.  
+**Herramienta:** `nomic-embed-text` (ya instalado en Ollama) + ChromaDB  
+**Estado:** 🟡 Modelo disponible, falta implementar el pipeline  
+**Estimación:** 3-4 horas
 
 ---
 
-## 🔵 En el backlog (no urgente)
+## 🔵 Backlog (no urgente)
 
-### Agente de n8n para automatizacion de tareas repetitivas
+### Agente de n8n para automatización de tareas repetitivas
 **Archivo:** `agentes/agente-n8n-automatizacion.md`  
-**Cuando:** Cuando THDORA este mas estable y haya tareas repetitivas claras.
+**Cuando:** Cuando THDORA esté más estable y haya tareas repetitivas claras.
 
 ### Agente multiagente con CrewAI
 **Archivo:** `agentes/agente-multiagente-crewai.md`  
-**Cuando:** Cuando los agentes individuales ya funcionen bien. CrewAI es la capa de orquestacion.
+**Cuando:** Cuando los agentes individuales ya funcionen bien.
 
-### Agente de vida personal (habitos, finanzas, salud)
+### Agente de vida personal (hábitos, finanzas, salud)
 **Archivo:** `agentes/thdora-agente-vida.md`  
-**Cuando:** Cuando el ecosistema tecnico este solido. Es el objetivo final.
+**Cuando:** Cuando el ecosistema técnico esté sólido. Es el objetivo final.
 
----
-
-## ✅ Completados
-
-- [x] Claude Code conectado a OpenRouter (14/04/2026)
-- [x] OpenCode + DeepSeek R1 funcionando (15/04/2026)
-- [x] Scripts de rotacion de modelos con fallback (15/04/2026)
-- [x] Estructura base del repo completa (14/04/2026)
+### pre-commit hook anti-secrets
+**Que hace:** Bloquea commits con `.env`, API keys o credenciales accidentales.  
+**Cuando:** Próxima sesión de mantenimiento del repo.
