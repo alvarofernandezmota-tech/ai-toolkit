@@ -21,33 +21,79 @@ git checkout -- opencode.json && git pull
 
 ---
 
+## ⚠️ Lecciones aprendidas (17/04/2026)
+
+### No pegar output de comandos en el panel de tmux equivocado
+Si pegas el output de `curl /v1/models` directamente en bash, cada nombre de modelo se ejecuta como comando. Solo pegar comandos en el panel correcto de OpenCode.
+
+### El 401 en `/v1/models` es inofensivo
+OpenCode hace un GET sin API key para listar modelos → LiteLLM devuelve 401. No afecta al funcionamiento. Las llamadas de chat llevan `sk-litellm-local` y pasan con 200 OK.
+
+### Modelo por defecto: `gemini-flash`, no `principal`
+`principal` arranca probando Ollama local primero → cold start de 30-60s → parece que se queda pillado. Usar `gemini-flash` como default (respuesta en 1-2s). Cambiar a `principal` o modelos locales solo cuando Ollama ya esté caliente.
+
+### Actualizar OpenCode con regularidad
+```bash
+npm i -g opencode-ai@latest
+~/.npm-global/bin/opencode --version
+```
+Revisar [opencode.ai/changelog](https://opencode.ai/changelog) al inicio de cada semana.
+
+---
+
 ## 🔄 Flujo de trabajo
 
 ```
 1. git pull                    ← sincronizar
-2. Probar / experimentar
-3. Documentar resultado en pruebas/
-4. Si funciona → mover a docs/ o agentes/
-5. git add . && git commit -m "..."
-6. git push
+2. bash scripts/start-colmena.sh
+3. Probar / experimentar / trabajar
+4. Documentar resultado en pruebas/ o diario/
+5. Si funciona → mover a docs/ o agentes/
+6. git add . && git commit -m "..."
+7. git push
 ```
 
-### Formato de commit
+### Formato de commit (Conventional Commits)
 
 ```
-feat:  nueva funcionalidad
-fix:   corrección de error
-docs:  documentación
-test:  prueba nueva
-chore: mantenimiento
+feat:  nueva funcionalidad o agente
+fix:   corrección de error o config rota
+docs:  documentación, MDs, diarios
+chore: mantenimiento, scripts, dependencias
+refactor: reorganización sin cambio funcional
 ```
 
 Ejemplos:
 ```
-feat: añadir modelo deepseek-r1:14b a opencode.json
-fix: corregir ruta litellm en start-colmena.sh
-docs: documentar error openclaw en pruebas/opencode
+feat: añadir agente-opencode.md con ficha completa v1.4.7
+fix: cambiar modelo default a gemini-flash para arranque rápido
+docs: documentar sesión 2026-04-17 en diario y CHANGELOG
 ```
+
+---
+
+## 🌙 Modo trabajo nocturno — dejar OpenCode trabajando solo
+
+Cuando el sistema está estable y quieres dejar tareas largas corriendo:
+
+```bash
+git pull
+~/.npm-global/bin/opencode
+```
+
+Prompt de trabajo autónomo recomendado:
+```
+Lee ROADMAP.md, PENDIENTES.md y todos los archivos de agentes/.
+Trabaja de forma autónoma completando las tareas pendientes prioritarias.
+Haz commits por cada tarea completada con mensajes semánticos.
+Actualiza CHANGELOG.md al final con todo lo que hiciste.
+```
+
+**Condiciones para dejarlo solo:**
+- ✅ `git status` → `working tree clean` antes de salir
+- ✅ LiteLLM corriendo estable (varios 200 OK en los logs)
+- ✅ Modelo: `gemini-flash` o `groq-fallback` (no `principal` ni Ollama solo)
+- ✅ tmux corriendo — el proceso sobrevive al cerrar la terminal
 
 ---
 
@@ -91,28 +137,28 @@ ai-toolkit/
 │
 ├── scripts/                    ← scripts de arranque y utilidades
 │   ├── start-colmena.sh        ← arranque principal (tmux + LiteLLM + OpenCode)
-│   ├── opencode-rotate.sh      ← rotar modelos en OpenCode
-│   └── ...
+│   ├── generar-diario.sh       ← genera entrada de diario desde git log
+│   └── opencode-rotate.sh      ← rotar modelos en OpenCode
 │
 ├── docs/                       ← documentación técnica estable
-│   ├── arranque-rapido.md
-│   ├── setup-servidor-ssh-wsl.md
-│   └── opencode-setup.md
+│   ├── hardware-strategy.md    ← estrategia GPU, límites APIs
+│   ├── sesion-2026-04-17.md    ← sesión documentada
+│   └── opencode-config.md      ← guía de configuración OpenCode
+│
+├── diario/                     ← diario de sesiones (YYYY-MM-DD.md)
+│   └── 2026-04-17.md
+│
+├── agentes/                    ← fichas de agentes documentados
+│   ├── agente-opencode.md
+│   ├── agente-litellm.md
+│   ├── agente-ollama.md
+│   ├── agente-investigacion.md
+│   ├── agente-git-commits.md
+│   └── PENDIENTES.md
 │
 ├── pruebas/                    ← laboratorio: todo lo que probamos
-│   ├── opencode/               ← pruebas con OpenCode
-│   ├── ollama/                 ← pruebas con modelos locales
-│   ├── agentes/                ← pruebas de agentes
-│   └── modelos/                ← comparativas de modelos
-│
-├── agentes/                    ← agentes documentados y validados
-│
 ├── guias/                      ← guías de setup paso a paso
-│
-├── config/                     ← configuraciones (opencode.json, litellm-config.yaml)
-│
 └── opensource/                 ← preparado para publicar a la comunidad
-    └── README.md
 ```
 
 ---
@@ -124,6 +170,7 @@ ai-toolkit/
 - **Sin documentar = no existe** — si no está en GitHub no pasó
 - **Commits pequeños y frecuentes** — mejor 10 commits pequeños que 1 enorme
 - **Nunca modificar opencode.json localmente** — siempre desde GitHub o con `git pull` previo
+- **NUNCA commitear `.env` o API keys** — el `.gitignore` lo previene pero ojo siempre
 
 ---
 
