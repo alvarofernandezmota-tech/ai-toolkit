@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "litellm/principal",
+  "model": "litellm/gemini-flash",
   "provider": {
     "litellm": {
       "npm": "@ai-sdk/openai-compatible",
@@ -12,7 +12,7 @@
       "models": {
         "principal":             { "name": "Principal (auto-fallback)" },
         "gemini-pro":            { "name": "Gemini 2.5 Pro" },
-        "gemini-flash":          { "name": "Gemini 2.0 Flash" },
+        "gemini-flash":          { "name": "Gemini 2.0 Flash ⚡ DEFAULT" },
         "gemini-flash-lite":     { "name": "Gemini 2.0 Flash Lite" },
         "claude-sonnet":         { "name": "Claude Sonnet" },
         "claude-opus":           { "name": "Claude Opus" },
@@ -29,10 +29,13 @@
         "qwen3-235b":            { "name": "Qwen3 235B" },
         "mistral-large":         { "name": "Mistral Large" },
         "codestral":             { "name": "Codestral" },
-        "groq-fallback":         { "name": "Groq Fallback" },
+        "groq-fallback":         { "name": "Groq Fallback ⚡" },
         "cerebras-fallback":     { "name": "Cerebras Fallback" },
         "openrouter-fallback":   { "name": "OpenRouter Fallback" },
-        "gemini-fallback":       { "name": "Gemini Fallback" }
+        "gemini-fallback":       { "name": "Gemini Fallback" },
+        "gemini-lite-fallback":  { "name": "Gemini Lite Fallback" },
+        "together-fallback":     { "name": "Together Fallback" },
+        "sambanova-fallback":    { "name": "SambaNova Fallback" }
       }
     },
     "ollama": {
