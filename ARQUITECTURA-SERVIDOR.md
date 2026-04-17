@@ -1,5 +1,14 @@
 # Arquitectura Servidor — Decisión 2026-04-17
 
+## Hardware real del ecosistema
+
+| Equipo | CPU | GPU | VRAM | RAM | Rol actual |
+|--------|-----|-----|------|-----|------------|
+| **PC Sobremesa** | ⏳ pendiente `lscpu` | GTX 1060 | 6GB | 16GB | Servidor principal + Ollama + todo el dev |
+| **Acer Aspire A515-45** | Ryzen 5 5500U | Radeon integrada | ❌ | 8GB | Cliente SSH ligero — conseguido 16/04/2026 |
+
+---
+
 ## Problema actual
 
 OpenCode corre en local con Ollama. Los modelos locales no tienen límites, pero:
@@ -10,59 +19,72 @@ OpenCode corre en local con Ollama. Los modelos locales no tienen límites, pero
 ## Arquitectura propuesta: Servidor + Local híbrido
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    SERVIDOR (remoto)                     │
+┌───────────────────────────────────────────────────────────┐
+│              PC SOBREMESA (servidor local)                  │
 │                                                         │
 │  ┌─────────────┐    ┌──────────────┐                   │
 │  │   Ollama    │    │  LiteLLM     │                   │
-│  │  (modelos)  │◄───│  Proxy :8000 │                   │
-│  └─────────────┘    └──────────────┘                   │
-│                            ▲                            │
-│  ┌─────────────┐           │                           │
-│  │ Perplexica  │    ┌──────┴───────┐                   │
-│  │ (web search)│    │   OpenCode   │                   │
-│  └─────────────┘    └──────────────┘                   │
-│                            ▲                            │
-└────────────────────────────┼────────────────────────────┘
-                             │ SSH
-┌────────────────────────────┼────────────────────────────┐
-│                    LOCAL (nosotros)                      │
+│  │  GTX 1060   │◄───│  Proxy :4000 │                   │
+│  │  6GB VRAM   │    └──────────────┘                   │
+│  └─────────────┘           ↑                           │
+│                     ┌─────────┘──────┐                   │
+│                     │   OpenCode   │                   │
+│                     └──────────────┘                   │
+│                            ↑                            │
+└───────────────────────────────────────────────────────────┘
+                             │ SSH / Tailscale
+┌───────────────────────────────────────────────────────────┐
+│           ACER ASPIRE (cliente ligero)                   │
 │                                                         │
-│   git pull/push ──► GitHub ◄── OpenCode trabaja         │
-│   revisamos código          en el servidor              │
-│   hacemos commits           hace commits también        │
-└─────────────────────────────────────────────────────────┘
+│   VSCode Remote-SSH ────► GitHub ◄── commits desde PC    │
+│   revisamos código            agente trabaja en PC       │
+└───────────────────────────────────────────────────────────┘
 ```
 
 ## Flujo de trabajo
 
-1. **Servidor** corre OpenCode + Ollama + LiteLLM 24/7
-2. **Nosotros** nos conectamos por SSH cuando queremos revisar
+1. **PC Sobremesa** corre OpenCode + Ollama + LiteLLM 24/7
+2. **Acer Aspire** se conecta por SSH cuando queremos trabajar desde fuera
 3. **OpenCode** (agente) puede hacer commits directamente a GitHub
 4. **Nosotros** hacemos `git pull` en local para revisar lo que hizo el agente
-5. **Perplexica** en el servidor da búsqueda web al agente sin APIs externas
+5. **Tailscale** permite conectar desde cualquier sitio sin abrir puertos
 
 ## Ventajas
 
 - OpenCode trabaja aunque no estemos delante
-- Nosotros controlamos y revisamos los commits
-- Los modelos locales corren en el servidor (más GPU/RAM disponible)
+- Acer como cliente ligero: batería larga, sin carga computacional
+- Los modelos locales corren en el PC con GTX 1060 (6GB VRAM)
 - Sin límites de cuota de ningún tipo
 - Código siempre en GitHub — nunca se pierde nada
 
-## Opciones de servidor
+## Modelos locales óptimos (GTX 1060 6GB)
+
+Ver guía completa: [`guias/modelos-por-hardware.md`](guias/modelos-por-hardware.md)
+
+| Modelo | VRAM | Rol |
+|--------|------|-----|
+| `qwen3:4b` | ~2.5GB | Orquestador rápido |
+| `qwen2.5-coder:7b-instruct-q4_K_M` | ~4.5GB | Coding principal |
+| `phi-4-mini` | ~2.5GB | Razonamiento |
+
+## Opciones de servidor remoto (si se quiere escalar)
 
 | Opción | Coste | GPU | Notas |
 |--------|-------|-----|-------|
-| VPS Hetzner (CAX41) | ~20€/mes | ARM, 16GB RAM | Sin GPU, solo CPU/RAM |
+| PC Sobremesa (actual) | 0€ | GTX 1060 6GB | ✅ Ya funciona — servidor local |
+| Oracle Cloud Free | 0€ | ARM 24GB RAM | Sin GPU, pero CPU potente |
+| VPS Hetzner (CAX41) | ~20€/mes | ARM, 16GB RAM | Sin GPU |
 | RunPod | ~0.3$/h | RTX 3090 | Pagar solo cuando se usa |
-| WSL actual (local) | 0€ | tu GPU | Ya funciona, sin servidor |
-| Oracle Cloud Free | 0€ | ARM 24GB | Free tier permanente |
 
 ## Próximos pasos
 
-- [ ] Decidir opción de servidor (Oracle Free o Hetzner recomendados)
-- [ ] Configurar SSH según `guias/setup-servidor-ssh-wsl.md`
-- [ ] Instalar Perplexica: `docker-compose up perplexica`
-- [ ] Mover LiteLLM + Ollama al servidor
-- [ ] Conectar OpenCode al LiteLLM del servidor vía SSH tunnel
+- [ ] PC: `sudo apt install openssh-server`
+- [ ] PC: `ip a` → anotar IP local
+- [ ] PC: instalar Tailscale
+- [ ] PC: `ollama pull qwen2.5-coder:7b-instruct-q4_K_M`
+- [ ] PC: `ollama pull qwen3:4b`
+- [ ] PC: `nvidia-smi` → verificar VRAM libre
+- [ ] Acer: SSH client + VSCode Remote-SSH
+- [ ] Desarrollar `agents/agente-benchmark.py`
+
+_Actualizado: 17 abril 2026 — hardware real documentado, arquitectura SSH PC+Acer — por Perplexity AI MCP_
