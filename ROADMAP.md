@@ -1,7 +1,7 @@
 # 🗺️ Roadmap — Ecosistema de Agentes IA
 
 > Registro de todo lo que hay que construir, en orden de prioridad.
-> Actualizado: 17 abril 2026 tarde.
+> Actualizado: 17 abril 2026 noche.
 
 ---
 
@@ -33,33 +33,32 @@
 | **`opencode.json` default → `ollama/qwen2.5-coder:14b` (sin cuota)** | 17-04-2026 |
 | **`AGENTS.md` enriquecido con contexto real + reglas computer-mode** | 17-04-2026 |
 | **Sistema Colmena funcional end-to-end (3 paneles tmux)** | 17-04-2026 |
+| **`agentes/agente-creador-agentes.md` creado** | 17-04-2026 |
+| **`herramientas/` operativa — 3 scripts reutilizables** | 17-04-2026 |
+| **`ARQUITECTURA.md` — mapa maestro documentado** | 17-04-2026 |
 
 ---
 
 ## 🔧 Próximos pasos inmediatos
 
-### 🤖 Core del agente — PRIORITARIO
-- [ ] Probar OpenCode con `AGENTS.md` nuevo — dar tarea real y verificar que commitea
-- [ ] `INICIO-AQUI.md` actualizado con instrucciones computer-mode
-- [ ] `scripts/cerrar-sesion.sh` — genera diario automático + commit al cerrar
-- [ ] Probar modo computer: "construye X" → OpenCode ejecuta solo
+### 🤖 Validar lo construido
+- [ ] `git pull` en local y probar `bash herramientas/git-commit-push.sh "test: prueba herramienta"`
+- [ ] Probar `bash herramientas/crear-ficha-agente.sh agente-test "Agente de prueba" "testing"`
+- [ ] Probar `bash herramientas/verificar-archivo.sh agentes/agente-creador-agentes.md`
+- [ ] **Probar agente-creador-agentes end-to-end** en OpenCode computer-mode
+
+### 🏗️ Completar scripts por agente
+- [ ] `scripts/agente-creador-agentes.sh` — lanza OpenCode con la tarea de crear un agente
+- [ ] `scripts/agente-git-commits.sh` — wrapper para commits semánticos automáticos
+- [ ] `scripts/agente-investigacion.sh` — lanza investigación web con Perplexity
 
 ### Orquestador LLM local
 - [ ] `ollama pull qwen3:4b` — modelo router ligero
-- [ ] Actualizar `litellm-config.yaml` con modelos locales confirmados
 - [ ] Probar orquestador real: prompt → router → worker → respuesta
 
 ### Capa 2 — Menú inteligente
 - [ ] `scripts/ai-menu.sh` muestra estado de APIs (rate limit restante)
 - [ ] Rotación automática si un modelo está caído
-
-### Experimento comparativa LLMs
-- [ ] Lanzar prompt estándar en cada modelo
-- [ ] Documentar resultados en `investigacion/comparativa-llms.md`
-
-### Capa 3 — Primer agente real
-- [ ] `scripts/generar-diario.sh` — genera diario con git log + API
-- [ ] Primer uso real de OpenCode sobre THDORA
 
 ---
 
@@ -125,4 +124,4 @@ lunes  → Resumen de la semana llega por Telegram
 
 ---
 
-_Actualizado: 17 abril 2026 tarde — sistema Colmena funcional + AGENTS.md enriquecido_
+_Actualizado: 17 abril 2026 noche — herramientas/ operativa + ARQUITECTURA.md + agente-creador-agentes_
