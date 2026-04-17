@@ -1,6 +1,56 @@
 # CHANGELOG — ai-toolkit
 
-## [2026-04-17] — Sesión servidor + OpenCode primera tarea real
+## [2026-04-17 noche] — Primera sesión de trabajo autónomo nocturno
+
+### 🌟 HITO: OpenCode trabajando de forma autónoma
+- OpenCode v1.4.7 ejecutando tareas sin intervención humana
+- Gemini 2.0 Flash configurado como modelo por defecto (respuesta 1-2s)
+- LiteLLM Colmena con 5+ `POST /v1/chat/completions 200 OK` en paralelo
+- Sistema de cola de tareas funcionando: 11 tareas planificadas esta noche
+
+### ✅ Completado en esta sesión
+- **OpenCode v1.4.7** actualizado y funcionando ✅
+- **Modelo default cambiado** a `gemini-flash` — fin del cold start de Ollama ✅
+- **5 fichas de agentes** creadas y subidas a `agentes/`:
+  - `agentes/agente-opencode.md`
+  - `agentes/agente-litellm.md`
+  - `agentes/agente-ollama.md`
+  - `agentes/agente-investigacion.md`
+  - `agentes/agente-git-commits.md`
+- **`COMO-PROCEDEMOS.md`** actualizado con lecciones del día:
+  - Advertencia tmux / panel equivocado
+  - El 401 en `/v1/models` es inofensivo
+  - Gemini-flash como default, no principal
+  - Sección de modo trabajo nocturno documentada
+- **`opencode.json`** actualizado con `gemini-flash` como default
+- **`agentes/PENDIENTES.md`** reorganizado con estado real
+
+### 🤖 Tareas en cola para OpenCode esta noche (11 tareas)
+1. `scripts/cerrar-sesion.sh` — commit automático con fecha ⏳
+2. `docs/auditoria-repo.md` — auditoría de todos los .md ⏳
+3. `CHANGELOG.md` — actualización sesión completa ⏳
+4. `scripts/investigar.sh` — búsqueda automática con Perplexity ⏳
+5. `agentes/agente-revisor-codigo.md` — ficha revisor para THDORA ⏳
+6. `docs/pre-commit-anti-secrets.md` — protección anti-keys ⏳
+7. `docs/indice.md` — índice navegable de toda la documentación ⏳
+8. `guias/guia-modelos.md` — cuándo usar cada modelo ⏳
+9. `README.md` — reescritura completa con estado real ⏳
+10. `docs/troubleshooting.md` — guía de problemas comunes ⏳
+11. `investigacion/2026-04-17-estado-arte-agentes-ia.md` ⏳
+
+### 💡 Lecciones aprendidas hoy
+- OpenCode planifica tareas bien pero necesita instrucción explícita para escribir archivos al disco
+- `git push` hay que pedírselo explícitamente o hacerlo manual
+- MiniMax M2.5 Free funciona como fallback cuando Gemini no responde
+- El sistema de fallback de LiteLLM es robusto — siempre encuentra un modelo
+
+### ⚠️ Nota técnica
+- OpenCode marca tareas como "completed" en su plan interno aunque no haya escrito los archivos al disco
+- Solución: pedir explícitamente `write_file` o hacer `git status` para verificar
+
+---
+
+## [2026-04-17 mañana] — Sesión servidor + OpenCode primera tarea real
 
 ### ✅ Completado
 - LiteLLM Colmena arrancando correctamente en puerto 8000
@@ -23,11 +73,12 @@
 - OpenCode terminando de generar `scripts/generar-diario.sh` (modelo local tarda ~6 min)
 
 ### ❌ Pendiente próxima sesión
-- Copiar clave SSH del Acer: `type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh -p 2222 alvaro@10.159.182.228 "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"`
+- Copiar clave SSH del Acer
 - Conectar VSCode del Acer via Remote-SSH puerto 2222
 - Verificar que `ollama list` muestre los 5 modelos
-- Probar OpenCode con modelo más rápido (groq-fallback) para tareas cortas
-- Evaluar GPU dedicada para acelerar inferencia local
+- Atacar bugs de THDORA con Claude Code
+- Construir `scripts/cerrar-sesion.sh` y `scripts/investigar.sh`
+- RAG con `nomic-embed-text` + ChromaDB
 
 ---
 
