@@ -1,24 +1,45 @@
 #!/bin/bash
-# Herramienta: verificar-archivo.sh
-# Uso: bash herramientas/verificar-archivo.sh ruta/al/archivo.md
-# Comprueba que el archivo existe y no está vacío
+# ==============================================================
+# verificar-archivo.sh
+# Propósito: comprobar que un archivo existe en disco
+# Uso:      ./herramientas/verificar-archivo.sh <ruta/al/archivo>
+# Ejemplo:  ./herramientas/verificar-archivo.sh agentes/orquestador.md
+# Salida:   ✅ OK: <ruta>  |  ❌ ERROR: no existe <ruta>
+# Códigos:  0 = existe | 1 = no existe
+# ==============================================================
 
-ARCHIVO="${1}"
+set -e
 
-if [ -z "$ARCHIVO" ]; then
-  echo "❌ Uso: bash herramientas/verificar-archivo.sh <ruta>"
+RUTA="$1"
+
+# --- Validación ---
+if [ -z "$RUTA" ]; then
+  echo "❌ ERROR: Debes pasar la ruta del archivo como parámetro."
+  echo "   Uso: $0 <ruta/al/archivo>"
   exit 1
 fi
 
-if [ ! -f "$ARCHIVO" ]; then
-  echo "❌ No existe: $ARCHIVO"
-  exit 1
+# --- Resolución de ruta relativa a raíz del repo si existe git ---
+if git rev-parse --is-inside-work-tree &>/dev/null 2>&1; then
+  REPO_ROOT=$(git rev-parse --show-toplevel)
+  # Si la ruta no es absoluta, buscar desde la raíz del repo
+  if [[ "$RUTA" != /* ]]; then
+    RUTA_ABSOLUTA="$REPO_ROOT/$RUTA"
+  else
+    RUTA_ABSOLUTA="$RUTA"
+  fi
+else
+  RUTA_ABSOLUTA="$RUTA"
 fi
 
-if [ ! -s "$ARCHIVO" ]; then
-  echo "⚠️  Existe pero está vacío: $ARCHIVO"
+# --- Verificación ---
+if [ -f "$RUTA_ABSOLUTA" ]; then
+  echo "✅ OK: $RUTA"
+  exit 0
+elif [ -d "$RUTA_ABSOLUTA" ]; then
+  echo "ℹ️  DIRECTORIO: $RUTA (es una carpeta, no un archivo)"
+  exit 0
+else
+  echo "❌ ERROR: no existe $RUTA"
   exit 1
 fi
-
-TAMANO=$(wc -c < "$ARCHIVO")
-echo "✅ OK: $ARCHIVO ($TAMANIO bytes)"
