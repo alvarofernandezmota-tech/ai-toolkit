@@ -1,133 +1,79 @@
-# 🚀 INICIO AQUÍ — ai-toolkit
+# 🚀 INICIO AQUÍ — Arranque rápido
 
-> **Lee esto primero cada vez que abras el proyecto.**
-> Última actualización: 2026-04-16
+> Última actualización: 2026-04-17 02:00 | Estado: ✅ TODO OPERATIVO
 
----
+## Stack completo
 
-## Estado actual del stack
+| Componente | Puerto | Estado |
+|-----------|--------|--------|
+| Ollama (modelos locales) | :11434 | ✅ Operativo |
+| LiteLLM Colmena (router) | :8000 | ✅ Operativo |
+| OpenCode (editor IA) | — | ✅ Operativo |
 
-| Proveedor | Estado | Variable de entorno | Notas |
-|-----------|--------|---------------------|-------|
-| **Groq Llama 70B** | ✅ OPERATIVO | `GROQ_API_KEY` | Primero. Key renovada 2026-04-16 |
-| **SambaNova Llama-4** | ✅ OPERATIVO | `SAMBANOVA_API_KEY` | Segundo. Gratis |
-| **Together AI Llama-4** | ✅ OPERATIVO | `TOGETHER_API_KEY` | Tercero. $1 crédito |
-| **OpenRouter Scout** | ✅ FALLBACK | `OPENROUTER_API_KEY` | Solo modelos gratuitos |
-| **Gemini 2.0 Flash** | ⚠️ RATE LIMIT | `GOOGLE_GENERATIVE_AI_API_KEY` | Free tier, 1500 req/día |
-| **Gemini 2.0 Flash-Lite** | ✅ OPERATIVO | `GOOGLE_GENERATIVE_AI_API_KEY` | Más cuota gratis que Flash |
-| **Cerebras llama3.1-8b** | ⚠️ LÍMITE DIARIO | `CEREBRAS_API_KEY` | Se resetea cada 24h |
-| **DeepSeek** | ❌ AUTH ERROR | `DEEPSEEK_API_KEY` | Renovar en platform.deepseek.com |
+## Arranque en 3 pasos
 
----
-
-## Arranque rápido
-
-### Opción A — Stack completo con LiteLLM (RECOMENDADO)
-
-```bash
-cd ~/projects/ai-toolkit
-git pull
-bash scripts/start-colmena.sh
-```
-
-> ⚠️ Si ya estás dentro de tmux, el script lo detecta y arranca solo el proxy.
-> Luego abre OpenCode con `Ctrl+B %` en un panel nuevo.
-
-### Opción B — OpenCode directo con Groq (sin LiteLLM)
-
-```bash
-opencode -m groq/llama-3.3-70b-versatile
-```
-
-### Opción C — OpenCode directo con Gemini
-
-```bash
-opencode -m google/gemini-2.0-flash
-```
-
----
-
-## Variables en ~/.bashrc
-
-```bash
-export GROQ_API_KEY="gsk_..."                  # ✅ activa
-export SAMBANOVA_API_KEY="..."                 # ✅ activa
-export TOGETHER_API_KEY="..."                  # ✅ activa (NO TOGETHERAI_API_KEY)
-export GOOGLE_GENERATIVE_AI_API_KEY="AIza..."  # ⚠️ rate limit frecuente
-export CEREBRAS_API_KEY="..."                  # completar
-export OPENROUTER_API_KEY="..."                # completar
-export DEEPSEEK_API_KEY="..."                  # renovar
-```
-
+### 1. Ollama ya corre solo al iniciar (systemd)
 Verificar:
 ```bash
-echo "Groq:      ${GROQ_API_KEY:0:10}..."
-echo "SambaNova: ${SAMBANOVA_API_KEY:0:10}..."
-echo "Together:  ${TOGETHER_API_KEY:0:10}..."
-echo "Gemini:    ${GOOGLE_GENERATIVE_AI_API_KEY:0:10}..."
+curl http://localhost:11434/api/tags
 ```
 
----
-
-## Cadena de fallback automática (via LiteLLM)
-
-```
-OpenCode → LiteLLM:8000
-              ↓ orden de intento
-           1. Groq Llama 70B        (gratis, 6000 req/día, más rápido)
-           2. SambaNova Llama-4     (gratis, alta calidad)
-           3. Together AI Llama-4   (gratis, $1 crédito)
-           4. OpenRouter Scout      (gratis, max 4096 tokens)
-           5. Gemini 2.0 Flash      (1500 req/día, rate limit frecuente)
-           6. Gemini 2.0 Flash-Lite (más cuota que Flash)
-           7. Cerebras llama3.1-8b  (gratis, límite diario)
-```
-
-Los saltos son **automáticos y transparentes** — OpenCode no sabe cuál usa.
-`allowed_fails: 1` → 1 fallo y el modelo entra en cooldown 5 min.
-
----
-
-## Cambiar modelo manualmente dentro de OpenCode
-
-- `Ctrl+P` → escribe `model` → selecciona de la lista
-- Modelos disponibles en el proxy: `principal`, `groq-fallback`, `sambanova-llama4`, `sambanova-deepseek`, `sambanova-deepseek-v3`, `together-llama4`, `together-deepseek`, `gemini-flash`, `gemini-flash-lite`, `cerebras-fallback`
-- Sin LiteLLM: `opencode -m groq/llama-3.3-70b-versatile` al arrancar
-
----
-
-## Diagnóstico si algo falla
-
+### 2. Arrancar LiteLLM Colmena
 ```bash
-# Ver logs de LiteLLM
-tail -30 /tmp/litellm.log
+cd ~/projects/ai-toolkit
+git pull  # siempre actualizar primero
 
-# Probar que LiteLLM responde
-curl http://localhost:8000/health/liveliness
+# Lanzar LiteLLM directamente (forma correcta)
+pkill -f litellm 2>/dev/null; sleep 1
+/home/alvaro/projects/thdora/.venv/bin/litellm \
+  --config /home/alvaro/projects/ai-toolkit/litellm-config.yaml \
+  --port 8000 &
 
-# Ver modelos disponibles
-curl http://localhost:8000/v1/models | jq '.data[].id'
-
-# Reiniciar solo el proxy
-bash scripts/start-colmena.sh --solo-proxy
-
-# OpenCode directo sin proxy (siempre funciona si la key está bien)
-opencode -m groq/llama-3.3-70b-versatile
+# Esperar a que esté listo
+for i in $(seq 1 20); do
+  curl -s http://localhost:8000/health/liveliness &>/dev/null && echo '✅ LiteLLM listo en :8000' && break
+  echo -n '.'; sleep 1
+done
 ```
 
----
+> ⚠️ **NOTA**: NO usar `scripts/start-colmena.sh` todavía — tiene un bug que interpreta el YAML como comandos bash. Usar el comando directo de arriba.
 
-## Protocolo de trabajo estándar
+### 3. Arrancar OpenCode
+```bash
+cd ~/projects/ai-toolkit
+opencode
+```
 
-1. `git pull` en ai-toolkit
-2. `bash scripts/start-colmena.sh`
-3. Espera `✅ LiteLLM listo`
-4. OpenCode arranca solo en el panel izquierdo
-5. Al terminar: documenta en `CHANGELOG.md`
-6. `git add -A && git commit -m "sesion: YYYY-MM-DD resumen" && git push`
+## Modelos disponibles (Ollama local, sin límites)
 
----
+| Modelo | Uso ideal | Tamaño |
+|--------|-----------|--------|
+| `qwen2.5-coder:14b` | Código, análisis repos | 9 GB |
+| `deepseek-r1:14b` | Razonamiento complejo | 9 GB |
+| `qwen3:8b-q4_K_M` | Tareas rápidas | 5.2 GB |
+| `nomic-embed-text` | Embeddings/búsqueda | 274 MB |
 
-## Repos del ecosistema
+## Troubleshooting
 
-Ver [`REPOS-ECOSISTEMA.md`](REPOS-ECOSISTEMA.md) para auditoría completa de las 11 repos.
+### Ollama timeout (primera petición lenta)
+- **Normal**: primera petición tarda 30-60s cargando modelo en RAM
+- **Fix aplicado**: `request_timeout: 120` en litellm-config.yaml ✅
+- **No hacer nada** — simplemente esperar
+
+### Groq 429 RateLimitError
+- Límite TPM: 12000 tokens/min en free tier
+- Con contextos grandes (>12000 tokens) falla siempre
+- **Solución**: Ollama local va primero — Groq solo es fallback de emergencia
+
+### Gemini 429 / cuota agotada
+- Free tier diario agotado
+- **Solución**: está al final de la cadena de fallbacks — no se usa si Ollama funciona
+
+### start-colmena.sh da error "command not found"
+- Bug conocido: el script parsea mal el YAML
+- **Fix temporal**: usar el comando directo del paso 2
+- **TODO**: reescribir el script (tarea pendiente)
+
+## Próxima tarea en curso
+
+OpenCode está creando `scripts/generar-diario.sh` — primera tarea autónoma real del agente.
