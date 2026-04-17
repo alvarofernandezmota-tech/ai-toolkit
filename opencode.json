@@ -11,19 +11,16 @@
       },
       "models": {
         "principal": {
-          "name": "Principal (Cerebras \u2192 OpenRouter)"
-        },
-        "local": {
-          "name": "\ud83c\udfe0 Local (Ollama default)"
-        },
-        "ollama-local": {
-          "name": "\ud83c\udfe0 Ollama gemma3:4b"
+          "name": "🔀 Principal (Ollama → Groq → Nube)"
         },
         "ollama-coder": {
-          "name": "\ud83c\udfe0 Ollama qwen2.5-coder:7b"
+          "name": "🏠 Ollama qwen2.5-coder:14b"
         },
-        "ollama-r1": {
-          "name": "\ud83c\udfe0 Ollama deepseek-r1:8b"
+        "ollama-deepseek": {
+          "name": "🏠 Ollama deepseek-r1:14b"
+        },
+        "ollama-fast": {
+          "name": "🏠 Ollama qwen3:8b (rápido)"
         },
         "gemini-pro": {
           "name": "Gemini 2.5 Pro"
@@ -49,14 +46,29 @@
         "o3-mini": {
           "name": "o3-mini"
         },
+        "sambanova-llama4": {
+          "name": "SambaNova Llama 4 Maverick"
+        },
+        "sambanova-deepseek": {
+          "name": "SambaNova DeepSeek R1"
+        },
+        "sambanova-deepseek-v3": {
+          "name": "SambaNova DeepSeek V3"
+        },
+        "together-llama4": {
+          "name": "Together Llama 4 Maverick"
+        },
+        "together-deepseek": {
+          "name": "Together DeepSeek R1"
+        },
         "llama-4-maverick": {
-          "name": "Llama 4 Maverick"
+          "name": "Llama 4 Maverick (OpenRouter)"
         },
         "llama-4-scout": {
-          "name": "Llama 4 Scout"
+          "name": "Llama 4 Scout (OpenRouter)"
         },
         "qwen3-235b": {
-          "name": "Qwen3 235B"
+          "name": "Qwen3 235B (Cerebras)"
         },
         "mistral-large": {
           "name": "Mistral Large"
@@ -64,11 +76,29 @@
         "codestral": {
           "name": "Codestral"
         },
+        "groq-fallback": {
+          "name": "Groq Fallback (llama3.3-70b)"
+        },
         "cerebras-fallback": {
           "name": "Cerebras Fallback (llama3.1-8b)"
         },
         "openrouter-fallback": {
           "name": "OpenRouter Fallback"
+        },
+        "ollama-fallback": {
+          "name": "🏠 Ollama Fallback"
+        },
+        "gemini-fallback": {
+          "name": "Gemini Flash Fallback"
+        },
+        "gemini-lite-fallback": {
+          "name": "Gemini Lite Fallback"
+        },
+        "together-fallback": {
+          "name": "Together Fallback"
+        },
+        "sambanova-fallback": {
+          "name": "SambaNova Fallback"
         }
       }
     }
