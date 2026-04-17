@@ -4,6 +4,30 @@ Registro conciso de lo que se hace en cada sesión. Para sesiones largas, ver `i
 
 ---
 
+## [2026-04-18] — Sesión madrugada: health-check + auditoría completa del repo
+
+### Añadido
+
+- `scripts/health-check.sh` — diagnóstico completo de todos los proveedores con semáforo visual (ping + chat real + comandos de arreglo). Soporta `--full`, `--fix`. Tests en paralelo. 7 proveedores: LiteLLM, Cerebras, OpenRouter, Groq, Gemini, DeepSeek, Ollama.
+
+### Verificado
+
+- Auditoría completa del repo: todos los archivos del plan de esta semana están presentes y alineados
+- `generar-diario.sh` ✅, `health-check.sh` ✅, `guias/opencode-ollama.md` ✅, `litellm-config.yaml` ✅, `opencode.json` ✅, `ROADMAP.md` ✅
+
+### Actualizado
+
+- `README.md` — refleja el estado real del stack: `health-check.sh` como paso 1 del arranque, tabla de modelos con estado actual, estructura de scripts completa, errores conocidos actualizados
+
+### Pendiente inmediato
+
+- Renovar key Groq en console.groq.com
+- Renovar key DeepSeek en platform.deepseek.com
+- Primer uso real de Claude Code sobre bugs THDORA
+- Integrar `opencode-rotate.sh` en `ai-menu.sh`
+
+---
+
 ## [2026-04-17] — Sesión: Ollama local + script diario automático
 
 ### Añadido
