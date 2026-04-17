@@ -1,7 +1,7 @@
 # 🗺️ Roadmap — Ecosistema de Agentes IA
 
 > Registro de todo lo que hay que construir, en orden de prioridad.
-> Actualizado: 15 abril 2026 (sesión noche).
+> Actualizado: 17 abril 2026.
 
 ---
 
@@ -26,17 +26,28 @@
 | **Dependencias documentadas por capa** | 15-04-2026 |
 | **Script arranque rápido: LiteLLM + OpenCode en una sola línea** | 15-04-2026 |
 | **`docs/errores-frecuentes.md` — 5 errores reales documentados** | 15-04-2026 |
+| **Hardware real documentado (GTX 1060 6GB + Acer Aspire)** | 17-04-2026 |
+| **`guias/modelos-por-hardware.md` — modelos óptimos por hardware** | 17-04-2026 |
+| **`ARQUITECTURA-SERVIDOR.md` — actualizada con hardware real** | 17-04-2026 |
+| **`agentes/orquestador.md` — arquitectura orquestador definida** | 17-04-2026 |
 
 ---
 
-## 🔧 Esta semana (15-20 abril 2026)
+## 🔧 Esta semana (17-20 abril 2026)
+
+### 🤖 Orquestador LLM local — EN PROGRESO
+- [x] Arquitectura definida en `agentes/orquestador.md`
+- [x] Modelos óptimos documentados en `guias/modelos-por-hardware.md`
+- [ ] `ollama pull qwen3:4b` — modelo router
+- [ ] `ollama pull qwen2.5-coder:7b-instruct-q4_K_M` — modelo worker
+- [ ] Actualizar `litellm-config.yaml` con modelos locales Ollama
+- [ ] Probar orquestador real: prompt → router → worker → respuesta
 
 ### Capa 2 — Menú inteligente
 - [ ] Integrar `opencode-rotate.sh` al menú principal (`ai-menu.sh`)
 - [ ] `scripts/ai-menu.sh` muestra estado de APIs (rate limit restante)
 - [ ] Rotación automática si un modelo está caído
 - [ ] Muestra última sesión de OpenCode para continuar
-- [x] Script arranque rápido: LiteLLM + OpenCode en una sola línea → ver `docs/arranque-rapido.md`
 
 ### Experimento comparativa LLMs
 - [ ] Lanzar prompt estándar en cada modelo y rellenar `investigacion/comparativa-llms.md`
@@ -119,3 +130,7 @@ lunes  → Resumen de la semana llega por Telegram
 ```
 
 **Consumo total: <1% CPU, ~370 MB RAM, coste mínimo.**
+
+---
+
+_Actualizado: 17 abril 2026 — sesión tarde — hardware documentado + orquestador iniciado — por Perplexity AI MCP_
