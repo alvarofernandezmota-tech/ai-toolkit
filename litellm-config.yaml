@@ -15,20 +15,16 @@
 #   9. Gemini Flash              → gemini-2.0-flash          ❌  key pendiente renovar en aistudio.google.com
 #  10. Gemini Lite               → gemini-2.0-flash-lite     ❌  key pendiente renovar en aistudio.google.com
 #
-# ESTADO 2026-04-18 01:28:
+# ESTADO 2026-04-17 01:48:
 #   Ollama local     → ✅ operativo, sin límites, código NO sale de la máquina
-#   OpenCode         → ✅ arranca limpio (fix: eliminada clave autosave del schema)
-#   LiteLLM proxy   → ✅ operativo en :8000
-#   Groq             → ⚠️  key pendiente renovar (console.groq.com)
-#   Gemini           → ❌  key pendiente renovar (aistudio.google.com/apikey)
+#   Groq             → ⚠️  429 rate limit (TPM 12000 superado con contextos grandes)
+#   Gemini           → ❌  cuota diaria agotada
 #
 # FIX APLICADO 2026-04-17 01:48:
 #   - request_timeout subido de 15s a 120s
 #   - Ollama tarda ~30-60s en cargar modelo en RAM la primera vez
 #   - Con 15s se agotaba el timeout y caía a APIs de nube innecesariamente
 #   - Con 120s Ollama local responde siempre sin tocar APIs externas
-#
-# VARIABLE GEMINI: GOOGLE_GENERATIVE_AI_API_KEY (no GEMINI_API_KEY ni GOOGLE_API_KEY)
 #
 # PREREQUISITOS OLLAMA:
 #   ollama pull qwen2.5-coder:14b
