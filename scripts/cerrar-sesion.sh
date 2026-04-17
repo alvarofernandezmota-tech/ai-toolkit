@@ -1,47 +1,36 @@
-#!/usr/bin/env bash
-# cerrar-sesion.sh — Cierre de sesión ordenado para ai-toolkit
-# Creado según AGENTS.md — Álvaro / ai-toolkit
+#!/bin/bash
+# cerrar-sesion.sh — Cierre automático de sesión con commit semántico
+# Uso: bash scripts/cerrar-sesion.sh "descripción opcional"
 
-set -euo pipefail
+set -e
 
-REPO_DIR="${REPO_DIR:-/home/alvaro/projects/ai-toolkit}"
+DESC=${1:-"cierre de sesión automático"}
+FECHA=$(date +%Y-%m-%d)
+HORA=$(date +%H:%M)
 
-echo "🔴 Iniciando cierre de sesión ordenado..."
+echo "🔒 Cerrando sesión $FECHA $HORA..."
 
-# 1. Ir al directorio del repo
-cd "$REPO_DIR"
+# Ir a la raíz del repo
+cd "$(git rev-parse --show-toplevel)"
 
-# 2. Estado git antes de cerrar
-echo ""
-echo "📋 Estado git actual:"
-git status
-echo ""
-git log --oneline -3
+# Ver qué hay pendiente
+echo "\n📊 Estado actual:"
+git status --short
 
-# 3. Si hay cambios sin commitear, avisamos
-if ! git diff --quiet || ! git diff --cached --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then
-  echo ""
-  echo "⚠️  HAY CAMBIOS SIN COMMITEAR. Haz commit antes de cerrar:"
-  echo "   git add -A && git commit -m 'wip: cambios pendientes al cerrar sesión' && git push origin main"
-  exit 1
+# Añadir todo
+git add -A
+
+# Si no hay nada que commitear, salir
+if git diff --cached --quiet; then
+  echo "✅ Nada que commitear. Repo limpio."
+  exit 0
 fi
 
-# 4. Actualizar CHANGELOG si existe
-if [ -f "$REPO_DIR/CHANGELOG.md" ]; then
-  FECHA=$(date '+%Y-%m-%d %H:%M')
-  echo "" >> "$REPO_DIR/CHANGELOG.md"
-  echo "## Sesión cerrada: $FECHA" >> "$REPO_DIR/CHANGELOG.md"
-  echo "- Cierre ordenado via cerrar-sesion.sh" >> "$REPO_DIR/CHANGELOG.md"
-  git add CHANGELOG.md
-  git commit -m "docs(diario): registro de cierre de sesión $FECHA"
-  git push origin main
-  echo "✅ CHANGELOG actualizado y pusheado."
-fi
+# Commit semántico con fecha
+git commit -m "chore: $FECHA $HORA — $DESC"
 
-# 5. Confirmar estado limpio
-echo ""
-echo "✅ Sesión cerrada correctamente."
-echo "   Último commit: $(git log --oneline -1)"
-echo "   Repo: $REPO_DIR"
-echo ""
-echo "👋 Hasta la próxima, Álvaro."
+# Push
+git push origin main
+
+echo "\n✅ Sesión cerrada y subida a GitHub."
+echo "🔗 https://github.com/alvarofernandezmota-tech/ai-toolkit"
