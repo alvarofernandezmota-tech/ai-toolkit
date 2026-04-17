@@ -1,46 +1,28 @@
 #!/bin/bash
-# ==============================================================
-# git-commit-push.sh
-# Propósito: hacer git add . + commit semántico + push en una sola llamada
-# Uso:      ./herramientas/git-commit-push.sh "tipo(scope): mensaje"
-# Ejemplo:  ./herramientas/git-commit-push.sh "feat(agentes): añade orquestador.md"
-# Códigos:  0 = éxito | 1 = error
-# ==============================================================
+# Herramienta: git-commit-push.sh
+# Uso: bash herramientas/git-commit-push.sh "feat(agentes): mensaje"
+# Hace git add -A + commit semántico + push a main
 
 set -e
 
-MENSAJE="$1"
+MENSAJE="${1:-'chore: update'}"
+REPO_DIR="${2:-$(git rev-parse --show-toplevel 2>/dev/null || echo $PWD)}"
 
-# --- Validaciones ---
-if [ -z "$MENSAJE" ]; then
-  echo "❌ ERROR: Debes pasar un mensaje de commit como primer parámetro."
-  echo "   Uso: $0 \"tipo(scope): descripción\""
-  echo "   Tipos válidos: feat | fix | docs | refactor | chore | test | style"
-  exit 1
-fi
+cd "$REPO_DIR"
 
-# Validación de formato semántico (soft — avisa pero no bloquea)
-if ! echo "$MENSAJE" | grep -qE '^(feat|fix|docs|refactor|chore|test|style|perf)(\([a-z0-9_-]+\))?: .+'; then
-  echo "⚠️  AVISO: El mensaje no sigue el formato Conventional Commits."
-  echo "   Formato esperado: tipo(scope): descripción"
-  echo "   Continuando de todas formas..."
-fi
-
-# --- Comprobación de repo git ---
 if ! git rev-parse --is-inside-work-tree &>/dev/null; then
-  echo "❌ ERROR: No estás dentro de un repositorio git."
+  echo "❌ No es un repositorio git: $REPO_DIR"
   exit 1
 fi
 
-# --- Ejecución ---
-echo "📦 Haciendo git add ..."
-git add .
+git add -A
 
-echo "📝 Commiteando: '$MENSAJE'"
+if git diff --cached --quiet; then
+  echo "⚠️  Nada que commitear en $REPO_DIR"
+  exit 0
+fi
+
 git commit -m "$MENSAJE"
+git push origin main
 
-BRANCH=$(git symbolic-ref --short HEAD)
-echo "🚀 Push a origin/$BRANCH..."
-git push origin "$BRANCH"
-
-echo "✅ Listo. Commit pushed: '$MENSAJE' → $BRANCH"
+echo "✅ Commit y push OK: $MENSAJE"
