@@ -2,7 +2,7 @@
 
 > Este archivo es leído automáticamente por OpenCode al inicio de cada sesión.
 > Son las instrucciones que SIEMPRE debes seguir, sin excepción.
-> Última actualización: 17 abril 2026 tarde.
+> Última actualización: 17 abril 2026 noche.
 
 ---
 
@@ -14,7 +14,7 @@ Este repo es **ai-toolkit**: infraestructura de IA local para un servidor Ubuntu
 - **LiteLLM Colmena** — proxy multi-modelo en `localhost:8000`
 - **OpenCode v1.4.7** — tú, el agente de código (este programa)
 - **Ollama** — modelos locales en `localhost:11434`
-- **Modelo default** — `qwen2.5-coder:14b` (Ollama local, GTX 1060 6GB + RAM)
+- **Modelo default** — `Llama 3.3 70B` vía Groq/LiteLLM
 - **Hardware** — Dell Inspiron, Intel i5, 16GB RAM, GTX 1060 6GB, WSL2 Ubuntu
 
 ### Repos relacionados
@@ -39,20 +39,18 @@ Cuando una tarea implica crear o modificar un archivo:
 
 ---
 
-## 🔴 REGLA #2 — Commit por cada tarea completada
+## 🔴 REGLA #2 — USA SIEMPRE las herramientas del repo para commits
 
-Después de crear o modificar cualquier archivo:
+Para commits usa **obligatoriamente** el script del repo, NO git directo:
 
 ```bash
-git add [archivo]
-git commit -m "tipo(scope): descripción corta"
-git push origin main
+bash herramientas/git-commit-push.sh "tipo(scope): descripción corta"
 ```
 
 Ejemplos correctos:
-- `feat(scripts): crear cerrar-sesion.sh con commit automático`
-- `docs(diario): sesión 17-abril-tarde documentada`
-- `fix(config): corregir timeout de Ollama en litellm-config.yaml`
+- `bash herramientas/git-commit-push.sh "feat(agentes): crear ficha agente-test"`
+- `bash herramientas/git-commit-push.sh "docs(diario): sesión 17-abril documentada"`
+- `bash herramientas/git-commit-push.sh "fix(config): corregir timeout Ollama"`
 
 **NUNCA** acumules varios archivos sin commitear. Un commit por tarea.
 
@@ -61,11 +59,11 @@ Ejemplos correctos:
 ## 🔴 REGLA #3 — Verifica antes de declarar éxito
 
 ```bash
-git status            # debe mostrar el archivo
+bash herramientas/verificar-archivo.sh ruta/al/archivo.md
 git log --oneline -1  # debe mostrar tu commit
 ```
 
-Si `git status` dice `nothing to commit` → algo falló. Repite el Write.
+Si el archivo no existe → algo falló. Repite el Write.
 
 ---
 
@@ -74,53 +72,65 @@ Si `git status` dice `nothing to commit` → algo falló. Repite el Write.
 Cuando Álvaro diga "modo computer" o "hazlo todo":
 1. Escribe un plan con TodoWrite ANTES de empezar
 2. Ejecuta tarea por tarea en orden
-3. Cada tarea = 1 archivo creado + 1 commit + 1 push
+3. Cada tarea = 1 archivo creado + verificar + 1 commit con herramientas/git-commit-push.sh
 4. Al final: actualiza `CHANGELOG.md` con todo lo hecho
 5. Reporta resumen al usuario
 
 ---
 
-## 🟡 REGLA #5 — Estructura del repo
+## 🔴 REGLA #5 — Crear fichas de agente
+
+Para crear nuevos agentes usa **obligatoriamente** el script:
+
+```bash
+bash herramientas/crear-ficha-agente.sh "nombre-agente" "descripción" "tag1, tag2"
+```
+
+Esto crea automáticamente el .md en `agentes/` con el formato correcto.
+NUNCA crees fichas de agente a mano.
+
+---
+
+## 🟡 REGLA #6 — Estructura del repo
 
 ```
 ai-toolkit/
-├── AGENTS.md              ← tus reglas (este archivo)
-├── AGENTS.md.en           ← versión inglés para Claude/Codex
+├── AGENTS.md              ← tus reglas (este archivo) — leer SIEMPRE al inicio
+├── ARQUITECTURA.md        ← mapa maestro del ecosistema — leer antes de cualquier tarea
 ├── CHANGELOG.md           ← actualizar al final de cada sesión
 ├── ROADMAP.md             ← qué hay que construir
 ├── README.md              ← estado público del proyecto
 ├── INICIO-AQUI.md         ← brújula personal de Álvaro
-├── ECOSISTEMA.md          ← mapa completo del ecosistema
-├── ALVARO.md              ← perfil y contexto del dueño
 ├── opencode.json          ← tu configuración
 ├── litellm-config.yaml    ← configuración LiteLLM proxy
-├── scripts/               ← scripts bash ejecutables (chmod +x)
+├── scripts/               ← arranque y gestión del ecosistema
+├── herramientas/          ← TUS herramientas para operar el repo
+│   ├── git-commit-push.sh ← USAR para todos los commits
+│   ├── crear-ficha-agente.sh ← USAR para nuevos agentes
+│   └── verificar-archivo.sh  ← USAR para verificar archivos
 ├── docs/                  ← documentación técnica
 ├── agentes/               ← fichas de cada agente
 ├── guias/                 ← guías de uso
-├── investigacion/         ← notas de investigación
 └── diario/                ← diario de sesiones (YYYY-MM-DD-momento.md)
 ```
 
 ---
 
-## 🟡 REGLA #6 — Modelos disponibles
+## 🟡 REGLA #7 — Modelos disponibles
 
-### Locales (siempre disponibles, sin cuota)
+### Nube vía LiteLLM (disponibles mientras Colmena esté arriba)
 | Modelo | Uso ideal |
 |--------|----------|
-| `ollama/qwen2.5-coder:14b` | **DEFAULT** — código, refactoring |
-| `ollama/qwen2.5-coder:7b` | rápido, tareas simples |
-| `ollama/qwen3:8b-q4_K_M` | razonamiento, planning |
-| `ollama/deepseek-r1:14b` | thinking, problemas difíciles |
+| `groq-fallback` | **DEFAULT** — Llama 3.3 70B, rápido |
+| `sambanova-llama4` | Llama 4 Maverick, tareas complejas |
+| `sambanova-deepseek` | DeepSeek R1, razonamiento |
+| `qwen3-235b` | Qwen3, código y análisis |
 
-### Nube (fallback, pueden tener cuota)
+### Locales (sin cuota, requieren Ollama)
 | Modelo | Nota |
 |--------|------|
-| `groq-fallback` | Llama 3.3 70B, muy rápido |
-| `sambanova-llama4` | Llama 4 Maverick |
-| `gemini-flash` | ⚠️ cuota puede agotarse |
-| `claude-sonnet` | requiere key de pago |
+| `ollama/qwen2.5-coder:14b` | código, sin cuota |
+| `ollama/deepseek-r1:14b` | thinking offline |
 
 ---
 
@@ -129,13 +139,15 @@ ai-toolkit/
 ```
 Recibo tarea
     ↓
+Leo ARQUITECTURA.md para entender el contexto
+    ↓
 Planfico con TodoWrite (in_progress)
     ↓
 Escribo archivo con Write() ← OBLIGATORIO
     ↓
-Verificar con Read() que existe
+bash herramientas/verificar-archivo.sh ← OBLIGATORIO
     ↓
-git add + git commit + git push ← OBLIGATORIO
+bash herramientas/git-commit-push.sh ← OBLIGATORIO
     ↓
 Marcar tarea completed (TodoWrite: completed)
     ↓
@@ -144,37 +156,36 @@ Siguiente tarea
 
 ---
 
-## 🟢 COMANDOS GIT ÚTILES
+## 🟢 HITO CONFIRMADO — 17 abril 2026
 
-```bash
-# Ver estado
-git status
-git log --oneline -5
+Esta sesión confirmó que OpenCode puede:
+- ✅ Leer ARQUITECTURA.md y entender el contexto
+- ✅ Ejecutar bash scripts del repo con tool calls reales
+- ✅ Encadenar 3 scripts en secuencia: crear → verificar → commit
+- ✅ Operar de forma autónoma sin intervención de Álvaro
 
-# Commit estándar
-git add -A && git commit -m "docs: descripción" && git push origin main
-
-# Si hay conflicto
-git pull --rebase origin main && git push origin main
-```
+**Pendiente mejorar:**
+- El script `git-commit-push.sh` debe verificar si hay cambios antes de commitear
+- OpenCode tarda entre tool calls (latencia Llama 3.3 70B vía Groq) — es normal
+- Para tareas grandes usar `sambanova-deepseek` que es más rápido en razonamiento
 
 ---
 
 ## 🟢 ARRANQUE DEL SISTEMA
 
 ```bash
-# Desde FUERA de tmux:
+# Diagnóstico primero:
+bash scripts/check-colmena.sh
+
+# Arrancar desde FUERA de tmux:
 cd ~/projects/ai-toolkit
 bash scripts/start-colmena.sh
 
-# Si da Permission denied:
-chmod +x scripts/start-colmena.sh
-bash scripts/start-colmena.sh
-
-# Navegar paneles tmux:
-Ctrl+B → flecha
+# Navegar paneles tmux: Ctrl+B → flecha
+# Salir sin cerrar: Ctrl+B D
+# Volver: tmux attach -t colmena
 ```
 
 ---
 
-*Actualizado: 2026-04-17 tarde — Perplexity AI MCP + Álvaro*
+*Actualizado: 2026-04-17 noche — hito OpenCode end-to-end confirmado*
