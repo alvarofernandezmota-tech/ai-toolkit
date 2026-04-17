@@ -4,6 +4,25 @@ Registro conciso de lo que se hace en cada sesión. Para sesiones largas, ver `i
 
 ---
 
+## [2026-04-18] — Sesión madrugada 2: fix opencode.json + unificación variables
+
+### Corregido
+- `opencode.json` — eliminada clave `autosave` que no existe en el schema de OpenCode (causaba error al arrancar: "Unrecognized key: autosave")
+- `litellm-config.yaml` — confirmado que la variable de Gemini es `GOOGLE_GENERATIVE_AI_API_KEY` (coherente con .env.example)
+
+### Estado actual del stack
+- Ollama local → ✅ operativo (qwen2.5-coder:14b, deepseek-r1:14b, qwen3:8b)
+- LiteLLM proxy → ✅ operativo en :8000
+- OpenCode → ✅ arranca limpio tras fix autosave
+- Gemini → ❌ cuota agotada, pendiente nueva key en aistudio.google.com/apikey
+
+### Pendiente inmediato
+- Crear nueva GOOGLE_GENERATIVE_AI_API_KEY y ponerla en .env
+- Renovar key Groq en console.groq.com
+- Primer uso real de OpenCode con Ollama local para tareas de código
+
+---
+
 ## [2026-04-18] — Sesión madrugada: health-check + auditoría completa del repo
 
 ### Añadido
