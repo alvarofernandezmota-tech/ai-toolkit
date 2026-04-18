@@ -2,7 +2,7 @@
 
 Registro de todo lo que hay que construir, en orden de prioridad.
 
-> Actualizado: 17 abril 2026.
+> Actualizado: **18 abril 2026**.
 
 ---
 
@@ -16,10 +16,10 @@ Registro de todo lo que hay que construir, en orden de prioridad.
 | Scripts rotación modelos con fallback | 15-04-2026 |
 | ai-menu.sh — menú interactivo de agentes | 15-04-2026 |
 | README público para la comunidad (EN) | 15-04-2026 |
-| INICIO-AQUI.md — brujula personal | 15-04-2026 |
+| INICIO-AQUI.md — brújula personal | 15-04-2026 |
 | docs/VISION-SISTEMA.md — norte del sistema | 15-04-2026 |
 | agentes/PENDIENTES.md — lista viva de agentes | 15-04-2026 |
-| guias/opencode-deepseek.md — guia personal | 15-04-2026 |
+| guias/opencode-deepseek.md — guía personal | 15-04-2026 |
 | OpenCode + LiteLLM proxy multi-modelo | 15-04-2026 |
 | 18 modelos en LiteLLM config | 15-04-2026 |
 | Fichas comparativa 14 LLMs | 15-04-2026 |
@@ -30,33 +30,46 @@ Registro de todo lo que hay que construir, en orden de prioridad.
 | scripts/generar-diario.sh — diario automático desde git log | 17-04-2026 |
 | Ollama integrado en LiteLLM — modelos 100% locales | 17-04-2026 |
 | guias/opencode-ollama.md — guía modelos locales | 17-04-2026 |
+| health-check.sh — diagnóstico completo de proveedores | 17-04-2026 |
+| benchmark-runner.sh — tests de rendimiento entre modelos | 17-04-2026 |
+| opencode-rotate.sh — rotación de modelos para OpenCode | 17-04-2026 |
+| Fix autosave opencode.json — schema válido | 18-04-2026 |
+| opencode-rotate.sh integrado en ai-menu.sh (opción 2) | 18-04-2026 |
+| Auditoría completa del repo — bugs y desincronizaciones identificados | 18-04-2026 |
+| CLAUDE.md actualizado con estado real del stack | 18-04-2026 |
+| ECOSISTEMA.md actualizado con Ollama + Cerebras + estado real | 18-04-2026 |
 
 ---
 
 ## 🔧 Esta semana (15-20 abril 2026)
 
-### Capa 2 — Menú inteligente
-
-- [ ] Integrar opencode-rotate.sh al menú principal (ai-menu.sh) — mostrar estado APIs
-- [ ] ai-menu.sh muestra rate limit restante de cada API
-- [ ] Rotación automática si un modelo está caído
-- [ ] Muestra última sesión de OpenCode para continuar
-
-### Experimento comparativa LLMs
-
-- [ ] Lanzar prompt estándar en cada modelo → rellenar investigacion/comparativa-llms.md
-- [ ] Documentar resultados reales con puntuaciones
-- [ ] Actualizar ranking de principal con el mejor modelo verificado
-
-### Keys pendientes de renovar
+### Keys pendientes de renovar — URGENTE
 
 - [ ] Renovar GROQ_API_KEY → console.groq.com/keys
 - [ ] Renovar DEEPSEEK_API_KEY → platform.deepseek.com
+- [ ] Nueva GEMINI_API_KEY → aistudio.google.com/apikey
+
+### Capa 2 — Menú inteligente
+
+- [x] Integrar opencode-rotate.sh al menú principal (ai-menu.sh) ✅ 18-04-2026
+- [ ] ai-menu.sh muestra estado de cada API (activo/caducado)
+- [ ] Rotación automática si un modelo está caído
+- [ ] Muestra última sesión de OpenCode para continuar
+
+### Seguridad del repo
+
+- [ ] Limpiar historial git — eliminar .env~ del historial con git filter-repo
+- [ ] Verificar que no hay keys reales en ningún fichero trackeado
 
 ### Capa 3 — Primer agente real
 
 - [ ] Probar generar-diario.sh en sesión real y ajustar si hace falta
 - [ ] Primer uso real de Claude Code sobre THDORA (bugs en agentes/thdora-primera-sesion.md)
+
+### Experimento comparativa LLMs
+
+- [ ] Lanzar prompt estándar en cada modelo → rellenar investigacion/comparativa-llms.md
+- [ ] Documentar resultados reales con puntuaciones
 
 ---
 
