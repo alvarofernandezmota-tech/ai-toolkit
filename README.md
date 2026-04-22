@@ -19,8 +19,7 @@ git clone https://github.com/alvarofernandezmota-tech/ai-toolkit
 cd ai-toolkit
 git pull                              # SIEMPRE antes de arrancar
 bash scripts/health-check.sh         # semáforo: qué proveedores funcionan
-bash scripts/start-colmena.sh        # levanta LiteLLM + Ollama
-opencode                              # agente de coding
+bash scripts/ai-menu.sh              # menú interactivo con todo el stack
 ```
 
 Necesitas al menos una key gratuita:
@@ -40,8 +39,8 @@ PC grande (WSL Ubuntu + GTX 1060 6GB)
  │   ├── Cerebras (principal — verificado ✅)
  │   ├── OpenRouter (fallback — llama-4-maverick, qwen3-235b)
  │   ├── Google Gemini (fallback)
- │   ├── Groq (renovar key pendiente)
- │   └── DeepSeek (renovar key pendiente)
+ │   ├── Groq (⚠️ renovar key)
+ │   └── DeepSeek (⚠️ renovar key)
  │
  ├── Ollama local (:11434)        ← modelos sin internet, sin coste
  │   ├── qwen3:8b-q4_K_M         (5.2 GB — thinking general)
@@ -61,39 +60,35 @@ Coste nube: $0/mes. CPU idle: <1%. RAM proxy: ~370 MB.
 
 ```
 ai-toolkit/
-├── COMO-PROCEDEMOS.md          ← flujo de trabajo, reglas, cómo hacemos todo
+├── INICIO-AQUI.md              ← brújula personal — leer al empezar cada sesión
+├── COMO-PROCEDEMOS.md          ← flujo de trabajo, reglas
 ├── CHANGELOG.md                ← historial: éxitos, errores, pendientes
 ├── ROADMAP.md                  ← qué viene, qué está en curso
 ├── README.md                   ← este archivo
 │
 ├── scripts/                    ← scripts de arranque y utilidades
-│   ├── health-check.sh         ← 🩺 semáforo de APIs (NUEVO) — úsalo al arrancar
-│   ├── start-colmena.sh        ← arranque principal (tmux + LiteLLM + OpenCode)
+│   ├── ai-menu.sh              ← 🎮 menú interactivo 12 opciones — punto de entrada principal
+│   ├── health-check.sh         ← 🩺 semáforo de APIs — 1º paso de cada sesión
+│   ├── start-colmena.sh        ← arranque tmux + LiteLLM + OpenCode
+│   ├── ensemble.sh             ← mismo prompt a varios modelos en paralelo
 │   ├── generar-diario.sh       ← genera entrada de diario desde git log + IA
-│   ├── opencode-rotate.sh      ← rotar modelos en OpenCode
-│   ├── claude-rotate.sh        ← rotar modelos en Claude Code
-│   ├── check-colmena.sh        ← diagnóstico de la colmena
-│   ├── benchmark-runner.sh     ← comparativa de modelos
-│   └── ai-menu.sh              ← menú principal interactivo
+│   ├── benchmark-runner.sh     ← comparativa de modelos automática
+│   └── opencode-rotate.sh      ← rotar modelos en OpenCode
 │
 ├── guias/                      ← guías de setup paso a paso
-│   ├── opencode-ollama.md      ← OpenCode con modelos locales vía Ollama (NUEVO)
+│   ├── opencode-ollama.md      ← OpenCode con modelos locales vía Ollama
 │   ├── opencode-deepseek.md
-│   ├── litellm-colmena.md
-│   ├── modelos-thinking.md
-│   └── modelos-por-hardware.md
+│   └── litellm-colmena.md
 │
 ├── docs/                       ← documentación técnica estable
-│   ├── arranque-rapido.md
+│   ├── errores-frecuentes.md   ← errores reales + soluciones
 │   ├── troubleshooting-proveedores.md
 │   └── dependencias.md
 │
 ├── agentes/                    ← agentes documentados y validados
 ├── prompts/                    ← prompts reutilizables
 ├── investigacion/              ← research verificado con fuentes
-├── pruebas/                    ← laboratorio: todo lo que probamos
-│
-└── opensource/                 ← preparado para publicar a la comunidad
+└── pruebas/                    ← laboratorio: todo lo que probamos
 ```
 
 ---
@@ -131,23 +126,18 @@ Ver guía completa: [`guias/opencode-ollama.md`](./guias/opencode-ollama.md)
 
 | Alias | Modelo real | Proveedor | Estado |
 |-------|-------------|----------|--------|
-| `principal` | gpt-oss-120b (multi-fallback) | Cerebras | ✅ operativo |
-| `llama-4-maverick` | llama-4-maverick | OpenRouter | ✅ operativo |
+| `principal` | gpt-oss-120b | Cerebras | ✅ operativo |
+| `openrouter-fallback` | llama-4-maverick | OpenRouter | ✅ operativo |
 | `gemini-flash` | gemini-2.0-flash | Google | ✅ (rate limit a veces) |
-| `qwen3-235b` | qwen3-235b-a22b | OpenRouter | ✅ operativo |
-| `llama-groq` | llama-3.3-70b-versatile | Groq | ⚠ renovar key |
-| `deepseek-r1` | deepseek-reasoner | DeepSeek | ⚠ renovar key |
+| `qwen3-235b` | qwen3-235b-a22b | Cerebras | ✅ operativo |
+| `llama-groq` | llama-3.3-70b-versatile | Groq | ⚠️ renovar key |
+| `deepseek-r1` | deepseek-reasoner | DeepSeek | ⚠️ renovar key |
 | `local` | qwen3:8b (Ollama) | Local | ✅ sin coste |
 | `ollama-coder` | qwen2.5-coder:14b (Ollama) | Local | ✅ sin coste |
 
 ---
 
 ## 🔥 Errores conocidos y soluciones
-
-**git pull bloqueado por opencode.json local:**
-```bash
-git checkout -- opencode.json && git pull
-```
 
 **Puerto 8000 ocupado (uvicorn de otro proyecto):**
 ```bash
@@ -159,22 +149,28 @@ lsof -ti:8000 | xargs kill -9
 ollama serve &
 ```
 
-**LiteLLM proxy no levanta:**
+**Groq/DeepSeek 401 (key caducada):**
 ```bash
-bash scripts/start-colmena.sh
+# Renovar en console.groq.com / platform.deepseek.com
+export GROQ_API_KEY="nueva_key"
+source ~/.bashrc
 ```
 
-Ver diagnóstico completo: [`docs/troubleshooting-proveedores.md`](./docs/troubleshooting-proveedores.md)
+**start-colmena.sh no encuentra litellm:**
+```bash
+bash scripts/start-colmena.sh --solo-proxy
+```
+
+Ver diagnóstico completo: [`docs/errores-frecuentes.md`](./docs/errores-frecuentes.md)
 
 ---
 
-## 🗺️ Próximos pasos (ROADMAP)
+## 🗺️ Próximos pasos
 
 - [ ] Renovar key Groq → [console.groq.com/keys](https://console.groq.com/keys)
 - [ ] Renovar key DeepSeek → [platform.deepseek.com](https://platform.deepseek.com)
 - [ ] Primer uso real de Claude Code sobre bugs THDORA
-- [ ] Integrar `opencode-rotate.sh` en `ai-menu.sh`
-- [ ] Sistema de diario automático con `generar-diario.sh`
+- [ ] Ejecutar `bash scripts/benchmark-runner.sh` — script listo, falta correrlo
 
 Ver roadmap completo: [`ROADMAP.md`](./ROADMAP.md)
 
@@ -186,4 +182,4 @@ Toolkit personal construido en público. Si algo funciona para ti, abre un PR. S
 
 ---
 
-*Construido y mantenido por [Álvaro Fernández Mota](https://github.com/alvarofernandezmota-tech) · Abril 2026*
+*Construido y mantenido por [Álvaro Fernández Mota](https://github.com/alvarofernandezmota-tech) · Actualizado 22 abril 2026*
