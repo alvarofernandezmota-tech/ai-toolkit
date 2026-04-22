@@ -1,7 +1,7 @@
 # 🤖 Ecosistema Personal de Agentes IA
 
 > Agentes que trabajan para ti: en tu código, en tu vida, en tu información. Coste = 0€.
-> Última actualización: **18 abril 2026**
+> Última actualización: **22 abril 2026**
 
 ---
 
@@ -33,17 +33,17 @@ La infraestructura ya existe. El trabajo es conectarla bien y documentar lo que 
 
 ---
 
-## 📡 Estado actual del stack — 18 Abril 2026
+## 📡 Estado actual del stack — 22 Abril 2026
 
 ```
 ✅ Ollama local     → operativo (qwen2.5-coder:14b, deepseek-r1:14b, qwen3:8b)
-✅ LiteLLM proxy    → operativo en :8000
-✅ OpenCode         → operativo (fix autosave aplicado)
+✅ LiteLLM proxy    → operativo en :8000 (fix puerto uvicorn aplicado)
+✅ OpenCode         → operativo
 ✅ Cerebras         → operativo (principal en LiteLLM)
-✅ OpenRouter       → operativo (max_tokens: 4096)
-❌ Groq             → key caducada → renovar en console.groq.com
-❌ DeepSeek API     → key inválida → renovar en platform.deepseek.com
-❌ Gemini           → cuota agotada → nueva key en aistudio.google.com/apikey
+✅ OpenRouter       → operativo (llama-4-maverick, qwen3-235b)
+✅ Google Gemini    → operativo (rate limit ocasional)
+⚠️ Groq             → key caducada → renovar en console.groq.com
+⚠️ DeepSeek API     → key caducada → renovar en platform.deepseek.com
 ```
 
 | Bloque | Estado | Notas |
@@ -51,13 +51,15 @@ La infraestructura ya existe. El trabajo es conectarla bien y documentar lo que 
 | THDORA bot (citas + hábitos) | ✅ Funcionando | v0.14.0 en producción |
 | THDORA NLP Groq (modo Toki) | ⚠️ Degradado | Groq key caducada |
 | Claude Code + OpenRouter | ✅ Funciona | Variables de entorno directas, sin ccr |
-| OpenCode + LiteLLM proxy | ✅ Funciona | Fix autosave aplicado 18 abril |
+| OpenCode + LiteLLM proxy | ✅ Funciona | Fix puerto uvicorn aplicado 22 abril |
 | Ollama modelos locales | ✅ Funciona | qwen2.5-coder:14b, deepseek-r1:14b, qwen3:8b |
 | Cerebras (LiteLLM) | ✅ Funciona | Principal para tareas rápidas |
+| **ai-menu.sh** | ✅ Nuevo | Menú interactivo 12 opciones — punto de entrada |
 | Scripts de rotación de modelos | ✅ Listo | model-rotate.sh, opencode-rotate.sh, aider-rotate.sh |
 | health-check.sh | ✅ Listo | Diagnóstico completo de proveedores |
 | generar-diario.sh | ✅ Listo | Diario automático desde git log |
-| setup.sh instalador | ✅ Listo | 1 comando instala todo |
+| benchmark-runner.sh | ✅ Listo | Script listo — falta ejecutarlo con datos reales |
+| ensemble.sh | ✅ Listo | Mismo prompt a varios modelos en paralelo |
 | Agente revisor de código | 🛠 Borrador | Necesita prueba real en THDORA |
 | n8n self-hosted | ❌ Mayo 2026 | Docker ya documentado |
 | Búsqueda web en THDORA | ❌ Junio 2026 | DuckDuckGo o Tavily |
@@ -167,31 +169,34 @@ La infraestructura ya existe. El trabajo es conectarla bien y documentar lo que 
 
 ## 🚀 Cómo arrancar en cada sesión
 
+### Punto de entrada principal (nuevo — 22 abril)
+```bash
+cd ~/projects/ai-toolkit
+git pull
+bash scripts/ai-menu.sh     # menú interactivo con todo el stack
+```
+
 ### Claude Code (agente coding principal)
 ```bash
-# Rotación automática de modelos (RECOMENDADO)
-cc
-
-# ⛔ NO usar ccr (claude-code-router) — rompe el formato de mensajes en v2.1.108+
+cc   # rotación automática de modelos
+# ⛔ NO usar ccr — rompe mensajes en v2.1.108+
 ```
 
 ### OpenCode + LiteLLM proxy
 ```bash
-# LiteLLM proxy debe estar activo en :8000
-litellm --config ~/projects/ai-toolkit/litellm-config.yaml &
-
-# Rotación automática de modelos
-bash ~/projects/ai-toolkit/scripts/opencode-rotate.sh
+bash scripts/start-colmena.sh   # tmux con 3 paneles: OpenCode + logs + bash
 ```
 
 ### Diagnóstico completo del ecosistema
 ```bash
-bash ~/projects/ai-toolkit/scripts/health-check.sh
+bash scripts/health-check.sh
+bash scripts/health-check.sh --full   # test con llamada real
+bash scripts/health-check.sh --fix    # muestra comandos de arreglo
 ```
 
-### Aider (alternativa ligera)
+### Ensemble (mismo prompt a varios modelos)
 ```bash
-bash scripts/aider-rotate.sh
+bash scripts/ensemble.sh "¿Cuál es la mejor arquitectura para X?"
 ```
 
 ---
@@ -217,9 +222,11 @@ Abril 2026 (AHORA)
   ├── ✅ Scripts rotación modelos listos
   ├── ✅ health-check.sh operativo
   ├── ✅ generar-diario.sh operativo
-  ├── ❌ Renovar Groq key → console.groq.com
-  ├── ❌ Renovar DeepSeek key → platform.deepseek.com
-  ├── ❌ Nueva Gemini key → aistudio.google.com/apikey
+  ├── ✅ ai-menu.sh — menú interactivo nuevo
+  ├── ✅ Fix puerto uvicorn en start-colmena.sh
+  ├── ⚠️ Renovar Groq key → console.groq.com
+  ├── ⚠️ Renovar DeepSeek key → platform.deepseek.com
+  ├── ❌ Ejecutar benchmark-runner.sh con datos reales
   └── 🔧 Siguiente: primer uso real de Claude Code en THDORA
 
 Mayo 2026
@@ -242,9 +249,9 @@ Otoño 2026
 |---|---|---|---|
 | **OpenRouter** | Claude Code + modelos thinking | ✅ Activo | [openrouter.ai](https://openrouter.ai) |
 | **Cerebras** | LiteLLM proxy principal | ✅ Activo | [cerebras.ai](https://cerebras.ai) |
-| **Groq** | NLP THDORA + Aider | ❌ Renovar | [console.groq.com](https://console.groq.com) |
-| **DeepSeek** | API remota | ❌ Renovar | [platform.deepseek.com](https://platform.deepseek.com) |
-| **Gemini** | Modelos Google | ❌ Renovar | [aistudio.google.com](https://aistudio.google.com/apikey) |
+| **Google Gemini** | Fallback en LiteLLM | ✅ Activo | [aistudio.google.com](https://aistudio.google.com/apikey) |
+| **Groq** | NLP THDORA + Aider | ⚠️ Renovar | [console.groq.com](https://console.groq.com) |
+| **DeepSeek** | API remota | ⚠️ Renovar | [platform.deepseek.com](https://platform.deepseek.com) |
 | **Ollama** | Modelos locales | ✅ Activo | Local, sin key |
 | **Telegram Bot** | THDORA | ✅ Activo | [@BotFather](https://t.me/BotFather) |
 
@@ -270,4 +277,4 @@ Consumo total: <1% CPU, ~370 MB RAM, 0€/mes
 
 ---
 
-*Última actualización: 18 abril 2026 — Ollama integrado, LiteLLM proxy operativo, OpenCode fix autosave, Cerebras como principal.*
+*Última actualización: 22 abril 2026 — ai-menu.sh añadido, fix puerto uvicorn, estado APIs actualizado, Gemini operativo.*
