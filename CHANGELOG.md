@@ -1,6 +1,31 @@
 # CHANGELOG — ai-toolkit
 
-Registro conciso de lo que se hace en cada sesión. Para sesiones largas, ver `investigacion/diario/`.
+Registro conciso de lo que se hace en cada sesión. Para sesiones largas, ver `diario/`.
+
+---
+
+## [2026-04-22] — Sesión noche 2: colmena operativa, bashrc fix, LiteLLM + OpenCode
+
+### Contexto
+Sesión de puesta en marcha real completa. LiteLLM arrancó con todos los modelos. Se corrigió el conflicto de auth de Claude Code y se actualizó `~/.bashrc`.
+
+### Hecho
+- **Claude Code v2.1.117** — conflicto de auth corregido (`unset ANTHROPIC_API_KEY` en ~/.bashrc)
+- **OPENROUTER_API_KEY** — añadida definitivamente a `~/.bashrc`
+- **LiteLLM :8000** — arrancando correctamente con todos los modelos (gpt-4o, llama-4-maverick, qwen3-235b, groq-fallback, ollama-fallback, etc.)
+- **SSH :2222** — confirmado operativo desde Windows (IP: 10.202.77.228)
+- **Colmena tmux** — 3 paneles corriendo: Claude Code + LiteLLM + bash libre
+
+### Problemas identificados
+- `401 Unauthorized` en health-check → LiteLLM tiene auth pero health-check no manda key
+- `--colmena-full` no arrancó esta noche (key no estaba en bashrc al lanzar) → arreglado
+- `qwen2.5-coder:14b` muy lento en 6GB VRAM → script ya usa `qwen3:8b` por defecto
+
+### Pendiente mañana
+- Desactivar `master_key` en `litellm-config.yaml` O pasar key en health-check
+- Probar `--colmena-full` con los dos agentes a la vez
+- Primera sesión real de Claude Code en THDORA
+- Renovar GROQ_API_KEY, DEEPSEEK_API_KEY, GEMINI_API_KEY
 
 ---
 
@@ -11,7 +36,7 @@ Sesión de verificación real del stack. SSH al servidor WSL2 (Ubuntu 22.04, 10.
 
 ### Confirmado funcionando
 - **Claude Code v2.1.117** operativo (actualización desde v2.1.108)
-- **OPENROUTER_API_KEY** activa: `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`
+- **OPENROUTER_API_KEY** activa confirmada
 - **meta-llama/llama-4-maverick:free** — modelo gratuito confirmado funcional via OpenRouter
 - **start-colmena.sh** — arranca litellm correctamente en sesión tmux detached
 - **SSH directo** al servidor en puerto 2222 (puerto 22 bloqueado/reseteado)
@@ -142,12 +167,6 @@ Sesión de auditoría y corrección del repo. Se revisaron todos los archivos cl
 
 - `litellm-config.yaml` — comentarios de estado actualizados (Groq/DeepSeek pendientes de renovar key)
 
-### Roadmap avanzado
-
-- ✅ `scripts/generar-diario.sh` — completado
-- ✅ Ollama en LiteLLM proxy — completado
-- ✅ Guía modelos locales — completada
-
 ---
 
 ## [2026-04-16] — Sesión madrugada: diagnóstico real de proveedores + fix config
@@ -163,11 +182,6 @@ Sesión de auditoría y corrección del repo. Se revisaron todos los archivos cl
 
 - `docs/troubleshooting-proveedores.md` — guía diagnóstico rápido con comandos curl reales
 
-### Lección aprendida
-
-- Error 402 OpenRouter = request demasiado grande para saldo (no "sin créditos")
-- Siempre verificar con curl directo antes de asumir proveedor caído
-
 ---
 
 ## [2026-04-15] — Sesión noche: OpenCode + LiteLLM multi-modelo funcionando
@@ -182,11 +196,6 @@ Sesión de auditoría y corrección del repo. Se revisaron todos los archivos cl
 - `litellm-config.yaml` — puerto unificado a 8000, 18 modelos, fallbacks
 - `scripts/opencode-rotate.sh` — permisos de ejecución
 
-### Problemas resueltos
-
-- OpenCode ignoraba LiteLLM por falta de campo `models` → solucionado
-- Puerto 8000 ocupado por THDORA → kill -9 PID
-
 ---
 
 ## [2026-04-15] — Sesión tarde: rotación de modelos funcionando
@@ -195,10 +204,6 @@ Sesión de auditoría y corrección del repo. Se revisaron todos los archivos cl
 
 - `scripts/opencode-rotate.sh`, `investigacion/apis-verificadas-15abril.md`
 - `docs/VISION-SISTEMA.md`, `INICIO-AQUI.md`, `agentes/PENDIENTES.md`
-
-### Corregido
-
-- `scripts/ai-menu.sh` — opción 2 llama a opencode-rotate.sh, muestra estado de keys
 
 ---
 

@@ -1,185 +1,92 @@
-# 🧭 INICIO AQUÍ — La brújula del ecosistema
+# INICIO AQUÍ — ai-toolkit
 
-> Lee esto al principio de cada sesión. Tiene todo lo que necesitas para arrancar.
-> Última actualización: 22 abril 2026
-
----
-
-## ¿Qué es esto?
-
-Este repo es el **cerebro del ecosistema**. Aquí se documenta todo lo que se construye, se prueba y se aprende. El objetivo es tener agentes de IA trabajando en paralelo mientras yo (Alvaro) tomo decisiones de alto nivel.
-
-**Arquitectura objetivo:**
-```
-Alvaro + Claude.ai (chat)      →  estrategia, diseño, decisiones
-        ↓
-OpenCode + LiteLLM (terminal)  →  ejecución, código, commits
-        ↓
-Agentes especializados          →  tareas concretas en paralelo
-```
+> Lee esto primero cada vez que abras una nueva sesión.
 
 ---
 
-## ▶️ Arranque en 3 pasos (cada sesión)
-
-```bash
-# 1. Ir al proyecto y actualizar
-cd ~/projects/ai-toolkit && git pull
-
-# 2. Diagnóstico rápido — ¿qué APIs funcionan hoy?
-bash scripts/health-check.sh
-
-# 3. Arrancar la colmena completa
-bash scripts/start-colmena.sh
-```
-
-> Si hay fallos en el health check: `bash scripts/health-check.sh --fix`
-> Sin tmux: `bash scripts/start-colmena.sh --solo-proxy`
-
----
-
-## 📊 Estado del stack — 22 Abril 2026
+## Estado actual — 2026-04-22 noche
 
 | Componente | Estado | Notas |
 |---|---|---|
-| LiteLLM proxy | ✅ Funcionando | puerto 8000, 20 modelos |
-| OpenCode | ✅ Funcionando | v1.4.6 |
-| Claude Code | ✅ Instalado | v2.1.108 |
-| Ollama (local) | ✅ Configurado | necesita `ollama serve` |
-| health-check.sh | ✅ Activo | diagnóstico antes de cada sesión |
-| ensemble.sh | ✅ Activo | comparar modelos en paralelo |
-| benchmark-runner.sh | ✅ Activo | rellena comparativa-llms.md solo |
-| generar-diario.sh | ✅ Activo | diario automático desde git log |
-| ai-menu.sh | ✅ Nuevo S16 | menú interactivo 12 opciones |
-| start-colmena.sh | ✅ Fix E1 | busca litellm sin depender de thdora |
-| THDORA API | ⚠️ Conflicto puerto 8000 | matar antes de litellm |
-| n8n | ⏳ Mayo 2026 | Docker documentado |
-
-**Modelos activos:**
-- Principal: Cerebras gpt-oss-120b (→ OpenRouter fallback)
-- Local: Ollama gemma3:4b (necesita `ollama serve`)
-- Groq: ⚠️ renovar key en console.groq.com
-- DeepSeek: ⚠️ renovar key en platform.deepseek.com
+| Claude Code v2.1.117 | ✅ Operativo | Auth fix en ~/.bashrc |
+| OpenCode | ✅ Operativo | Via OpenRouter GRATIS |
+| LiteLLM proxy :8000 | ⚠️ Arranca OK, health 401 | master_key activo — fix pendiente |
+| OpenRouter | ✅ Key en ~/.bashrc | llama-4-maverick:free funcional |
+| SSH :2222 | ✅ Operativo | IP: 10.202.77.228 |
+| Ollama local | ✅ qwen3:8b | 6GB VRAM, NO usar 14B |
+| Groq | ⚠️ Key caducada | Renovar en console.groq.com |
+| DeepSeek | ⚠️ Key caducada | Renovar en platform.deepseek.com |
+| Gemini | ⚠️ Cuota agotada | Renovar en aistudio.google.com |
 
 ---
 
-## 🤖 Modelos disponibles en LiteLLM
+## Arranque rápido mañana
 
-| Alias OpenCode | Modelo real | Gratis | Estado |
-|---|---|---|---|
-| `principal` | Cerebras gpt-oss-120b | ✅ | Activo |
-| `local` | Ollama gemma3:4b | ✅ | Requiere ollama serve |
-| `ollama-coder` | Ollama qwen2.5-coder:7b | ✅ | Requiere download |
-| `ollama-r1` | Ollama deepseek-r1:8b | ✅ | Requiere download |
-| `gemini-flash` | gemini/gemini-2.0-flash | ✅ limitado | 429 si hay rate limit |
-| `gemini-pro` | gemini/gemini-2.5-pro-exp | ✅ limitado | 429 si hay rate limit |
-| `deepseek-r1` | deepseek/deepseek-reasoner | 💳 barato | ⚠️ renovar key |
-| `claude-sonnet` | anthropic/claude-3-5-sonnet | 💳 | Disponible |
-| `gpt-4o` | openai/gpt-4o | 💳 | Disponible |
-| `qwen3-235b` | Cerebras qwen-3-235b | ✅ | Activo |
-| `openrouter-fallback` | llama-4-maverick via OR | ✅ | Activo |
-
-Cambiar modelo en OpenCode: `Ctrl+P` → escribir `model`
-
----
-
-## 🛠️ Scripts disponibles
-
-| Script | Para qué | Cuándo usarlo |
-|---|---|---|
-| `health-check.sh` | Semáforo de APIs | **Primer paso de cada sesión** |
-| `health-check.sh --fix` | Ver cómo arreglar fallos | Cuando algo da rojo |
-| `start-colmena.sh` | Arrancar LiteLLM + OpenCode | Cada sesión |
-| `start-colmena.sh --solo-proxy` | Solo LiteLLM, sin tmux | Sin tmux instalado |
-| `ensemble.sh "prompt"` | Mismo prompt → varios modelos | Decisiones de arquitectura |
-| `ensemble.sh --save` | ídem + guarda en investigacion/ | Investigación formal |
-| `benchmark-runner.sh` | Rellenar comparativa-llms.md | Semanal |
-| `generar-diario.sh` | Diario automático desde git log | Al acabar sesión |
-| `ai-menu.sh` | Menú interactivo con todo | Cuando no recuerdas los comandos |
-| `opencode-rotate.sh` | Mejor modelo disponible | Alternativa a start-colmena |
-
----
-
-## ⚠️ Problemas conocidos y soluciones
-
-### Puerto 8000 ocupado (thdora u otro)
 ```bash
-lsof -i :8000
-kill -9 <PID>
+cd ~/projects/ai-toolkit
+source ~/.bashrc          # carga OPENROUTER_API_KEY y unset ANTHROPIC_API_KEY
+bash scripts/start-colmena.sh --colmena-full
 ```
 
-### Google 429 (quota agotada)
-Usar `cerebras-fallback` o `openrouter-fallback` en OpenCode (`Ctrl+P → model`).
+Eso abre **tmux con 3 paneles**:
+- Izquierdo: Claude Code → LiteLLM → modelos
+- Derecho arriba: OpenCode → OpenRouter → llama-3.3-70b free
+- Derecho abajo: bash libre
 
-### Groq 401 (key caducada)
+---
+
+## Modos disponibles
+
 ```bash
-# 1. Renovar en: https://console.groq.com/keys
-# 2. Actualizar ~/.bashrc:
-export GROQ_API_KEY="nueva_key"
-source ~/.bashrc
-```
-
-### Ollama no arranca
-```bash
-ollama serve &   # arrancar en background
-ollama list      # ver modelos descargados
-ollama pull gemma3:4b  # si no hay ninguno
-```
-
-### OpenCode muestra modelo incorrecto
-- Verificar `opencode.json` en la raíz del repo
-- El campo `models` dentro del provider es obligatorio
-
----
-
-## 📂 Mapa del repo
-
-```
-ai-toolkit/
-├── INICIO-AQUI.md           ← estás aquí
-├── ROADMAP.md               ← qué hay que construir
-├── CHANGELOG.md             ← qué se ha hecho y cuándo
-├── ECOSISTEMA.md            ← visión grande del sistema
-├── .env.example             ← plantilla de keys (copia a .env)
-├── .gitignore               ← excluye .env, keys, logs, aider
-├── litellm-config.yaml      ← proxy con 20 modelos + Ollama
-├── opencode.json            ← config OpenCode con todos los aliases
-├── docs/
-│   ├── errores-frecuentes.md
-│   ├── troubleshooting-proveedores.md
-│   └── diario/              ← generados por generar-diario.sh
-├── investigacion/
-│   ├── comparativa-llms.md  ← rellena benchmark-runner.sh
-│   ├── ensemble/            ← comparaciones guardadas
-│   └── benchmark-results/   ← resultados individuales
-├── agentes/
-│   ├── PENDIENTES.md
-│   └── thdora-primera-sesion.md
-└── scripts/
-    ├── health-check.sh      ← diagnóstico APIs
-    ├── ensemble.sh          ← comparar modelos
-    ├── benchmark-runner.sh  ← benchmark automático
-    ├── generar-diario.sh    ← diario desde git log
-    ├── start-colmena.sh     ← arranque tmux (fix E1)
-    ├── ai-menu.sh           ← menú interactivo 12 opciones
-    └── opencode-rotate.sh   ← rotación de modelos
+bash scripts/start-colmena.sh                  # colmena normal: LiteLLM + Claude Code
+bash scripts/start-colmena.sh --colmena-full   # 3 paneles: Claude Code + OpenCode + bash ← PRINCIPAL
+bash scripts/start-colmena.sh --opencode       # solo OpenCode (más rápido, gratis)
+bash scripts/start-colmena.sh --claude-local   # Claude Code con Ollama local (qwen3:8b)
+bash scripts/start-colmena.sh --claude-thdora  # Claude Code en ~/projects/thdora
+bash scripts/start-colmena.sh --solo-proxy     # solo LiteLLM proxy
 ```
 
 ---
 
-## 🎯 Flujo de trabajo ideal
+## Lo más urgente
 
-```
-1. git pull                 →  sincronizar
-2. health-check.sh          →  ver qué APIs funcionan hoy
-3. start-colmena.sh         →  arrancar LiteLLM + OpenCode
-4. [trabajar]
-5. generar-diario.sh        →  documentar lo hecho
-6. git push                 →  guardar todo
-```
-
-**Regla de oro:** todo lo que se aprende, se falla o se construye va en el repo.
+1. **Arreglar health-check 401** — quitar `master_key` de `litellm-config.yaml` o pasarlo en el script
+2. **Primera sesión THDORA** — `bash scripts/start-colmena.sh --claude-thdora`
+3. **Renovar keys** — Groq, DeepSeek, Gemini
+4. **Benchmarks** — `bash scripts/benchmark-runner.sh`
 
 ---
 
-*Última actualización: 22 abril 2026 — auditoría S16 completa (10 fixes)*
+## Scripts disponibles
+
+| Script | Qué hace |
+|---|---|
+| `scripts/start-colmena.sh` | Arranque completo (varios modos) |
+| `scripts/health-check.sh` | Diagnóstico de todos los proveedores |
+| `scripts/ai-menu.sh` | Menú interactivo con 12 opciones |
+| `scripts/generar-diario.sh` | Genera entrada de diario desde git log |
+| `scripts/benchmark-runner.sh` | Benchmarks de velocidad/calidad |
+| `scripts/opencode-rotate.sh` | Rota modelos en OpenCode |
+
+---
+
+## Archivos clave
+
+| Archivo | Para qué |
+|---|---|
+| `CLAUDE.md` | Contexto para Claude Code al arrancar |
+| `AGENTS.md` | Contexto para OpenCode al arrancar |
+| `ALVARO.md` | Quién eres, proyectos, decisiones |
+| `litellm-config.yaml` | Config del proxy LiteLLM |
+| `opencode.json` | Config de OpenCode |
+| `.env.example` | Variables de entorno necesarias |
+| `agentes/thdora-primera-sesion.md` | Plan para los bugs de THDORA |
+| `diario/` | Registro de sesiones |
+
+---
+
+## Repo
+
+- GitHub: https://github.com/alvarofernandezmota-tech/ai-toolkit
+- Rama principal: `main`
+- Ruta local: `~/projects/ai-toolkit`
