@@ -3,8 +3,8 @@
 > Ecosistema personal de agentes IA — coding, investigación, automatización. Coste: $0/mes.
 
 Stack probado y documentado para developers que quieren:
-- Usar **OpenCode, Claude Code y Aider** con modelos gratuitos vía OpenRouter/Groq/Cerebras
-- Correr **modelos locales** (Qwen3, DeepSeek, Qwen2.5-Coder) con Ollama sin gastar APIs
+- Usar **Claude Code, OpenCode y Aider** con modelos gratuitos vía OpenRouter/Groq
+- Correr **modelos locales** (Qwen2.5-Coder, DeepSeek-R1) con Ollama sin gastar APIs
 - Construir agentes que trabajan en codebases reales y automatizan tareas
 - Documentar todo para no perder trabajo entre sesiones
 
@@ -23,8 +23,8 @@ bash scripts/ai-menu.sh              # menú interactivo con todo el stack
 ```
 
 Necesitas al menos una key gratuita:
-- `GROQ_API_KEY` → [console.groq.com](https://console.groq.com) (gratis)
-- `OPENROUTER_API_KEY` → [openrouter.ai](https://openrouter.ai) (gratis)
+- `OPENROUTER_API_KEY` → [openrouter.ai](https://openrouter.ai) (gratis — la más importante)
+- `GROQ_API_KEY` → [console.groq.com](https://console.groq.com) (gratis — fallback rápido)
 - `CEREBRAS_API_KEY` → [cloud.cerebras.ai](https://cloud.cerebras.ai) (gratis)
 - `GOOGLE_GENERATIVE_AI_API_KEY` → [aistudio.google.com](https://aistudio.google.com) (gratis)
 
@@ -33,26 +33,29 @@ Necesitas al menos una key gratuita:
 ## 🏗️ El stack
 
 ```
-PC grande (WSL Ubuntu + GTX 1060 6GB)
+PC (WSL Ubuntu)
  │
- ├── LiteLLM Colmena (:8000)     ← proxy unificado para todos los proveedores
- │   ├── Cerebras (principal — verificado ✅)
- │   ├── OpenRouter (fallback — llama-4-maverick, qwen3-235b)
- │   ├── Google Gemini (fallback)
- │   ├── Groq (⚠️ renovar key)
- │   └── DeepSeek (⚠️ renovar key)
+ ├── Claude Code                  ← agente principal — cd repo && claude
+ │   └── OpenRouter (:443)            ANTHROPIC_BASE_URL=https://openrouter.ai/api/v1
+ │       ├── claude-sonnet-4-5 (principal)
+ │       └── devstral-2:free / llama-4-maverick:free (fallback)
  │
- ├── Ollama local (:11434)        ← modelos sin internet, sin coste
- │   ├── qwen3:8b-q4_K_M         (5.2 GB — thinking general)
- │   ├── qwen2.5-coder:7b        (4.7 GB — código rápido)
- │   ├── qwen2.5-coder:14b       (9.0 GB — código potente)
- │   ├── deepseek-r1:14b         (9.0 GB — razonamiento profundo)
- │   └── nomic-embed-text        (274 MB — RAG/embeddings)
+ ├── OpenCode                     ← agente TUI — bash scripts/opencode-rotate.sh
+ │   ├── devstral-2:free (principal)
+ │   ├── qwen3-coder-480b:free
+ │   ├── deepseek-r1:free
+ │   └── Ollama local (fallback sin internet)
  │
- └── OpenCode                    ← agente de coding apuntando a todo lo anterior
+ ├── LiteLLM Colmena (:8000)      ← solo para benchmark/ensemble multi-modelo
+ │   bash scripts/start-colmena.sh
+ │
+ └── Ollama local (:11434)        ← sin internet, sin coste
+     ├── qwen2.5-coder:14b
+     ├── deepseek-r1:14b
+     └── nomic-embed-text
 ```
 
-Coste nube: $0/mes. CPU idle: <1%. RAM proxy: ~370 MB.
+Coste nube: $0/mes. CPU idle: <1%. Para uso diario no necesitas LiteLLM.
 
 ---
 
@@ -60,6 +63,7 @@ Coste nube: $0/mes. CPU idle: <1%. RAM proxy: ~370 MB.
 
 ```
 ai-toolkit/
+├── CLAUDE.md                   ← instrucciones para Claude Code (leer al arrancar)
 ├── INICIO-AQUI.md              ← brújula personal — leer al empezar cada sesión
 ├── COMO-PROCEDEMOS.md          ← flujo de trabajo, reglas
 ├── CHANGELOG.md                ← historial: éxitos, errores, pendientes
@@ -69,22 +73,14 @@ ai-toolkit/
 ├── scripts/                    ← scripts de arranque y utilidades
 │   ├── ai-menu.sh              ← 🎮 menú interactivo 12 opciones — punto de entrada principal
 │   ├── health-check.sh         ← 🩺 semáforo de APIs — 1º paso de cada sesión
-│   ├── start-colmena.sh        ← arranque tmux + LiteLLM + OpenCode
+│   ├── opencode-rotate.sh      ← OpenCode con rotación automática de modelos
+│   ├── start-colmena.sh        ← arranque LiteLLM (solo para benchmark)
 │   ├── ensemble.sh             ← mismo prompt a varios modelos en paralelo
 │   ├── generar-diario.sh       ← genera entrada de diario desde git log + IA
-│   ├── benchmark-runner.sh     ← comparativa de modelos automática
-│   └── opencode-rotate.sh      ← rotar modelos en OpenCode
+│   └── benchmark-runner.sh     ← comparativa de modelos automática
 │
 ├── guias/                      ← guías de setup paso a paso
-│   ├── opencode-ollama.md      ← OpenCode con modelos locales vía Ollama
-│   ├── opencode-deepseek.md
-│   └── litellm-colmena.md
-│
 ├── docs/                       ← documentación técnica estable
-│   ├── errores-frecuentes.md   ← errores reales + soluciones
-│   ├── troubleshooting-proveedores.md
-│   └── dependencias.md
-│
 ├── agentes/                    ← agentes documentados y validados
 ├── prompts/                    ← prompts reutilizables
 ├── investigacion/              ← research verificado con fuentes
@@ -108,38 +104,35 @@ Semáforo:
 
 ---
 
-## 🧪 Modelos locales (Ollama)
+## ☁️ Modelos nube gratuitos (via OpenRouter)
 
-| Modelo | Tamaño | VRAM | Uso |
-|--------|--------|------|-----|
-| `qwen3:8b-q4_K_M` | 5.2 GB | Cabe entero | Chat + thinking general |
-| `qwen2.5-coder:7b` | 4.7 GB | Cabe entero | Código rápido |
-| `qwen2.5-coder:14b` | 9.0 GB | VRAM+RAM offload | Código potente |
-| `deepseek-r1:14b` | 9.0 GB | VRAM+RAM offload | Razonamiento profundo |
-| `nomic-embed-text` | 274 MB | Mínimo | RAG / embeddings |
+| Modelo | Uso principal | SWE-bench |
+|--------|--------------|----------|
+| `mistralai/devstral-2:free` | Coding agentic (principal OpenCode) | 72.2% |
+| `anthropic/claude-sonnet-4-5` | Claude Code (via OpenRouter) | — |
+| `qwen/qwen3-coder-480b:free` | Coding alternativa | top open-source |
+| `deepseek/deepseek-r1:free` | Razonamiento / arquitectura | — |
+| `meta-llama/llama-4-maverick:free` | Fallback general | — |
+| `meta-llama/llama-3.3-70b-versatile` | Fallback rápido (Groq) | — |
+
+---
+
+## 🧠 Modelos locales (Ollama)
+
+| Modelo | Tamaño | Uso |
+|--------|--------|-----|
+| `qwen2.5-coder:14b` | 9.0 GB | Código potente |
+| `qwen2.5-coder:7b` | 4.7 GB | Código rápido |
+| `deepseek-r1:14b` | 9.0 GB | Razonamiento profundo |
+| `nomic-embed-text` | 274 MB | RAG / embeddings |
 
 Ver guía completa: [`guias/opencode-ollama.md`](./guias/opencode-ollama.md)
 
 ---
 
-## ☁️ Modelos nube (via LiteLLM proxy)
-
-| Alias | Modelo real | Proveedor | Estado |
-|-------|-------------|----------|--------|
-| `principal` | gpt-oss-120b | Cerebras | ✅ operativo |
-| `openrouter-fallback` | llama-4-maverick | OpenRouter | ✅ operativo |
-| `gemini-flash` | gemini-2.0-flash | Google | ✅ (rate limit a veces) |
-| `qwen3-235b` | qwen3-235b-a22b | Cerebras | ✅ operativo |
-| `llama-groq` | llama-3.3-70b-versatile | Groq | ⚠️ renovar key |
-| `deepseek-r1` | deepseek-reasoner | DeepSeek | ⚠️ renovar key |
-| `local` | qwen3:8b (Ollama) | Local | ✅ sin coste |
-| `ollama-coder` | qwen2.5-coder:14b (Ollama) | Local | ✅ sin coste |
-
----
-
 ## 🔥 Errores conocidos y soluciones
 
-**Puerto 8000 ocupado (uvicorn de otro proyecto):**
+**Puerto 8000 ocupado:**
 ```bash
 lsof -ti:8000 | xargs kill -9
 ```
@@ -149,16 +142,18 @@ lsof -ti:8000 | xargs kill -9
 ollama serve &
 ```
 
-**Groq/DeepSeek 401 (key caducada):**
+**Claude Code — modelo no encontrado en OpenRouter:**
 ```bash
-# Renovar en console.groq.com / platform.deepseek.com
-export GROQ_API_KEY="nueva_key"
-source ~/.bashrc
+claude --model anthropic/claude-3.5-sonnet
+# o con modelo gratuito:
+claude --model openrouter/meta-llama/llama-4-maverick:free
 ```
 
-**start-colmena.sh no encuentra litellm:**
+**OpenRouter 401 (key inválida):**
 ```bash
-bash scripts/start-colmena.sh --solo-proxy
+# Rotar key en openrouter.ai/settings/keys
+export OPENROUTER_API_KEY="nueva_key"
+source ~/.bashrc
 ```
 
 Ver diagnóstico completo: [`docs/errores-frecuentes.md`](./docs/errores-frecuentes.md)
@@ -167,10 +162,9 @@ Ver diagnóstico completo: [`docs/errores-frecuentes.md`](./docs/errores-frecuen
 
 ## 🗺️ Próximos pasos
 
-- [ ] Renovar key Groq → [console.groq.com/keys](https://console.groq.com/keys)
-- [ ] Renovar key DeepSeek → [platform.deepseek.com](https://platform.deepseek.com)
-- [ ] Primer uso real de Claude Code sobre bugs THDORA
-- [ ] Ejecutar `bash scripts/benchmark-runner.sh` — script listo, falta correrlo
+- [ ] Probar Claude Code sobre bugs THDORA (ver `agentes/thdora-primera-sesion.md`)
+- [ ] Ejecutar `bash scripts/benchmark-runner.sh` con nuevos modelos
+- [ ] Renovar key Groq si caduca → [console.groq.com/keys](https://console.groq.com/keys)
 
 Ver roadmap completo: [`ROADMAP.md`](./ROADMAP.md)
 
