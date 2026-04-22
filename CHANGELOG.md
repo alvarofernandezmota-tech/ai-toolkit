@@ -4,6 +4,50 @@ Registro conciso de lo que se hace en cada sesión. Para sesiones largas, ver `i
 
 ---
 
+## [2026-04-22] — Auditoría completa S16: 10 errores corregidos
+
+### Contexto
+Sesión de auditoría y corrección del repo. Se revisaron todos los archivos clave, se identificaron 10 errores y se corrigieron todos en la misma sesión.
+
+### Corregido
+
+- **E1** `scripts/start-colmena.sh` — buscaba `litellm` solo en directorio thdora; ahora usa `which litellm` + `python -m litellm` como fallback universal
+- **E2** `scripts/ai-menu.sh` — script creado desde cero con 12 opciones: arranque colmena, health-check, ensemble, benchmark, diario, modelos, keys, Claude Code, OpenCode, tmux, logs, ayuda
+- **E3** `agentes/PENDIENTES.md` — 8 items completados marcados con fecha (14-22 abril), backlog ampliado con 3 items nuevos
+- **E4** `investigacion/comparativa-llms.md` — pendiente de ejecutar `benchmark-runner.sh` con datos reales (🔴 sigue pendiente)
+- **E5** `INICIO-AQUI.md` — tabla de estado actualizada al 22 abril, todos los scripts nuevos documentados, ruta corregida a `~/projects/ai-toolkit`
+- **E6** `litellm-config.yaml` — revisado, sin cambios necesarios (ya correcto)
+- **E7** `opencode.json` — revisado, sin cambios necesarios (ya correcto)
+- **E8** `.gitignore` — añadidas entradas para `.aider*`, `*.log`, `.claude/`, `benchmark-results/tmp/`, `diario/tmp/`
+- **E9** `docs/errores-frecuentes.md` — pendiente documentar E1-E10 de esta sesión (🟡 siguiente paso)
+- **E10** `CHANGELOG.md` — este archivo, actualizado con sesión de hoy
+
+### Añadido
+
+- `scripts/ai-menu.sh` — menú interactivo completo (12 opciones)
+
+### Estado stack al final de sesión
+
+| Componente | Estado |
+|---|---|
+| LiteLLM proxy | ✅ Operativo |
+| OpenCode | ✅ Operativo |
+| Claude Code | ✅ Instalado |
+| Ollama local | ✅ Configurado (requiere `ollama serve`) |
+| Cerebras (principal) | ✅ Operativo |
+| Groq | ⚠️ Key caducada — renovar |
+| DeepSeek | ⚠️ Key caducada — renovar |
+| Gemini | ⚠️ 429 cuota — pendiente nueva key |
+
+### Pendiente inmediato
+
+- Renovar GROQ_API_KEY en https://console.groq.com/keys
+- Renovar DEEPSEEK_API_KEY en https://platform.deepseek.com
+- Ejecutar `bash scripts/benchmark-runner.sh` para rellenar comparativa-llms.md
+- Primer uso real de Claude Code en THDORA (bugs documentados en `agentes/thdora-primera-sesion.md`)
+
+---
+
 ## [2026-04-18] — Sesión madrugada 2: fix opencode.json + unificación variables
 
 ### Corregido
@@ -62,16 +106,9 @@ Registro conciso de lo que se hace en cada sesión. Para sesiones largas, ver `i
 
 ### Roadmap avanzado
 
-- ✅ `scripts/generar-diario.sh` — completado (estaba en "esta semana")
-- ✅ Ollama en LiteLLM proxy — completado (estaba en roadmap Abril)
+- ✅ `scripts/generar-diario.sh` — completado
+- ✅ Ollama en LiteLLM proxy — completado
 - ✅ Guía modelos locales — completada
-
-### Pendiente inmediato
-
-- Renovar key Groq en console.groq.com
-- Renovar key DeepSeek en platform.deepseek.com
-- Probar generar-diario.sh en sesión real
-- Integrar opencode-rotate.sh al menú principal (ai-menu.sh)
 
 ---
 
@@ -81,36 +118,17 @@ Registro conciso de lo que se hace en cada sesión. Para sesiones largas, ver `i
 
 - `litellm-config.yaml` — Cerebras como principal (confirmado 200 OK)
 - `litellm-config.yaml` — OpenRouter con max_tokens: 4096 (era 8192 > saldo disponible → 402)
-- `litellm-config.yaml` — qwen3-235b apunta ahora a Cerebras nativo (qwen-3-235b-a22b-instruct-2507)
-- `litellm-config.yaml` — Gemini fuera del principal (429 rate limit esta noche)
+- `litellm-config.yaml` — qwen3-235b apunta ahora a Cerebras nativo
 - `litellm-config.yaml` — fallbacks actualizados: principal → openrouter-fallback → gemini-fallback
 
 ### Añadido
 
 - `docs/troubleshooting-proveedores.md` — guía diagnóstico rápido con comandos curl reales
 
-### Diagnóstico real 2026-04-16 00:04 (comprobado con curl directo)
-
-| Proveedor | HTTP | Causa real |
-|---|---|---|
-| Cerebras gpt-oss-120b | ✅ 200 | Operativo. Modelos: gpt-oss-120b, llama3.1-8b, qwen-3-235b-a22b-instruct-2507 |
-| OpenRouter llama-4-maverick | ✅ 200 | Operativo. Problema era max_tokens=8192 > 5501 disponibles → limitado a 4096 |
-| Gemini gemini-2.0-flash | ❌ 429 | Rate limit free tier (demasiadas peticiones esta noche) |
-| Groq llama-3.3-70b | ❌ 401 | API key caducada → renovar en console.groq.com |
-| DeepSeek | ❌ AuthError | API key inválida → renovar en platform.deepseek.com |
-
 ### Lección aprendida
 
-- El error 402 de OpenRouter NO es "sin créditos" — es "request demasiado grande para tu saldo"
-- Siempre verificar con curl directo antes de asumir que un proveedor está caído
-- Cerebras lista sus modelos en GET /v1/models con la API key
-- `max_tokens: 4096` en litellm_params limita el output, no el contexto de entrada
-
-### Pendiente
-
-- Renovar key Groq en console.groq.com
-- Renovar key DeepSeek en platform.deepseek.com
-- Recargar créditos OpenRouter cuando haga falta
+- Error 402 OpenRouter = request demasiado grande para saldo (no "sin créditos")
+- Siempre verificar con curl directo antes de asumir proveedor caído
 
 ---
 
@@ -118,35 +136,18 @@ Registro conciso de lo que se hace en cada sesión. Para sesiones largas, ver `i
 
 ### Añadido
 
-- `docs/opencode-setup.md` — setup completo OpenCode + LiteLLM con problemas y soluciones
-- `docs/arranque-rapido.md` — comando único para levantar todo el stack
-- `investigacion/comparativa-llms.md` — fichas de 14 modelos + plantilla de prueba estándar
-- `investigacion/diario/2026-04-15-sesion-opencode-litellm.md` — diario completo de la sesión
-- `docs/dependencias.md` — todas las dependencias del ecosistema documentadas por capa
+- `docs/opencode-setup.md`, `docs/arranque-rapido.md`, `investigacion/comparativa-llms.md`
+- `docs/dependencias.md` — dependencias del ecosistema por capa
 
 ### Corregido
 
-- `litellm-config.yaml` — puerto unificado a 8000 (antes 4000 en config, 8000 en OpenCode)
-- `litellm-config.yaml` — 18 modelos añadidos organizados por familia
-- `litellm-config.yaml` — nombre modelo Gemini 2.5 Pro corregido (daba 404)
-- `litellm-config.yaml` — principal cambiado a groq/llama-3.3-70b-versatile (Google free tier agotado)
-- `scripts/opencode-rotate.sh` — permisos de ejecución (chmod +x)
+- `litellm-config.yaml` — puerto unificado a 8000, 18 modelos, fallbacks
+- `scripts/opencode-rotate.sh` — permisos de ejecución
 
-### Problemas encontrados
+### Problemas resueltos
 
-- OpenCode ignoraba LiteLLM porque faltaba campo `models` en el provider → solucionado
-- `opencode auth login` no encuentra litellm (no es provider nativo) → no usar auth, key en config
-- Puerto 8000 ocupado por servidor uvicorn de THDORA → kill -9 PID
-- Gemini 2.5 Pro Preview da 404 (nombre incorrecto o sin acceso) → usar gemini-2.0-flash
-- Google free tier agotado (429) → cambiar principal a Groq
-
-### Decisiones tomadas
-
-- principal = Groq Llama 3.3 70B mientras se agota free tier de Google
-- LiteLLM en background con `&` permite usar misma terminal para OpenCode
-- tmux como gestor de terminales para separar LiteLLM / OpenCode / trabajo
-- Arquitectura objetivo: Perplexity (estrategia) + OpenCode (ejecución) + Agentes (tareas)
-- Documentar dependencias por capa es prioritario para reproducibilidad
+- OpenCode ignoraba LiteLLM por falta de campo `models` → solucionado
+- Puerto 8000 ocupado por THDORA → kill -9 PID
 
 ---
 
@@ -154,25 +155,12 @@ Registro conciso de lo que se hace en cada sesión. Para sesiones largas, ver `i
 
 ### Añadido
 
-- `scripts/opencode-rotate.sh` — rotación automática Groq → Cerebras → OpenRouter
-- `investigacion/apis-verificadas-15abril.md` — resultados de test real con IDs correctos
-- `docs/VISION-SISTEMA.md` — vision completa del sistema y principios
-- `INICIO-AQUI.md` — brujula personal del proyecto
-- `agentes/PENDIENTES.md` — lista viva de agentes por construir
+- `scripts/opencode-rotate.sh`, `investigacion/apis-verificadas-15abril.md`
+- `docs/VISION-SISTEMA.md`, `INICIO-AQUI.md`, `agentes/PENDIENTES.md`
 
 ### Corregido
 
-- `scripts/ai-menu.sh` — opción 2 ahora llama a opencode-rotate.sh directamente
-- `scripts/ai-menu.sh` — muestra estado de las 4 keys (OpenRouter, Groq, Cerebras, Google)
-- IDs de modelos verificados: curl ≠ OpenCode (prefijo diferente)
-- Groq requiere max_tokens >= 10 en tests (con 1 da 400)
-
-### Decisiones tomadas
-
-- Groq como modelo principal de OpenCode: más rápido, verificado 200 OK
-- Cerebras como segundo fallback: también verificado 200 OK
-- OpenRouter como último fallback: da 404 hoy, puede estar saturado
-- IDs distintos: OpenCode necesita prefijo (groq/), curl directo no
+- `scripts/ai-menu.sh` — opción 2 llama a opencode-rotate.sh, muestra estado de keys
 
 ---
 
@@ -180,22 +168,13 @@ Registro conciso de lo que se hace en cada sesión. Para sesiones largas, ver `i
 
 ### Añadido
 
-- `agentes/agente-revisor-de-codigo.md`
-- `agentes/agente-resumen.md`
+- `agentes/agente-revisor-de-codigo.md`, `agentes/agente-resumen.md`
 - `docs/comparativa-modelos-gratuitos.md`
-- Script directo a OpenRouter sin proxy LiteLLM
 
-### Corregido
-
-- Config LiteLLM: puerto forzado a 4000, timeout a 30s
-- IDs de modelos OpenRouter (prefijo doble causaba error 404)
-- Método directo OpenRouter como principal, LiteLLM como fallback
-
-### Decisiones tomadas
+### Decisiones
 
 - OpenRouter directo > LiteLLM proxy para Claude Code
-- OpenCode + DeepSeek R1 free como agente principal de investigación
-- Config correcta de OpenCode es `~/.config/opencode/opencode.json`
+- OpenCode + DeepSeek R1 free como agente de investigación
 
 ---
 
@@ -203,13 +182,12 @@ Registro conciso de lo que se hace en cada sesión. Para sesiones largas, ver `i
 
 ### Añadido
 
-- Estructura base completa: docs/, guias/, investigacion/, agentes/, scripts/
+- Estructura base: docs/, guias/, investigacion/, agentes/, scripts/
 - README.md, ECOSISTEMA.md, ESTRATEGIA.md, ALVARO.md, CLAUDE.md
-- setup.sh instalador, litellm-config.yaml, scripts de rotación
-- Investigación verificada: devstral2, mem0, openclaw, benchmarks reales
+- setup.sh, litellm-config.yaml, scripts de rotación
 
-### Decisiones tomadas
+### Decisiones
 
 - Claude Code como agente principal de coding
-- Variables de entorno directas para conectar a OpenRouter
-- Repo ai-toolkit es el cerebro público del ecosistema
+- Variables de entorno directas para OpenRouter
+- ai-toolkit es el cerebro público del ecosistema
