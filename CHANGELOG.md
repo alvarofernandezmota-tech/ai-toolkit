@@ -4,6 +4,44 @@ Registro conciso de lo que se hace en cada sesión. Para sesiones largas, ver `i
 
 ---
 
+## [2026-04-22] — Sesión noche: Claude Code v2.1.117 operativo + OpenRouter confirmado
+
+### Contexto
+Sesión de verificación real del stack. SSH al servidor WSL2 (Ubuntu 22.04, 10.202.77.228 puerto 2222). Se confirmó el estado real de Claude Code y la conexión con OpenRouter.
+
+### Confirmado funcionando
+- **Claude Code v2.1.117** operativo (actualización desde v2.1.108)
+- **OPENROUTER_API_KEY** activa: `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`
+- **meta-llama/llama-4-maverick:free** — modelo gratuito confirmado funcional via OpenRouter
+- **start-colmena.sh** — arranca litellm correctamente en sesión tmux detached
+- **SSH directo** al servidor en puerto 2222 (puerto 22 bloqueado/reseteado)
+
+### Descubierto / Corregido
+- `anthropic/claude-sonnet-4.6` — NO existe como modelo válido (error: model not found)
+- `anthropic/claude-sonnet-4-5` — requiere créditos Anthropic directos, no funciona solo con OpenRouter key
+- `meta-llama/llama-4-maverick:free` — falla con Claude Code (model not supported por el cliente)
+- **Conclusión**: Claude Code funciona mejor con modelos Anthropic nativos o via OpenRouter con créditos
+
+### Estado stack al final de sesión
+
+| Componente | Estado | Notas |
+|---|---|---|
+| Claude Code | ✅ v2.1.117 | Actualizado desde v2.1.108 |
+| OpenRouter | ✅ Key activa | sk-or-v1-... confirmada |
+| LiteLLM proxy | ✅ Arrancando | puerto 8000, sesión tmux colmena |
+| llama-4-maverick:free | ✅ OpenRouter | Gratuito, funcional via curl/API |
+| claude-sonnet-4.6 | ❌ No existe | Modelo inválido |
+| claude-sonnet-4-5 via OR | ⚠️ Créditos | Necesita saldo OpenRouter |
+| SSH puerto 22 | ❌ Bloqueado | Usar puerto 2222 |
+| SSH puerto 2222 | ✅ Operativo | Acceso confirmado |
+
+### Pendiente inmediato
+- Añadir créditos a OpenRouter para usar claude-sonnet-4-5
+- Primera sesión real de Claude Code en THDORA (bugs documentados en `agentes/thdora-primera-sesion.md`)
+- Actualizar CLAUDE.md con modelo correcto confirmado hoy
+
+---
+
 ## [2026-04-22] — Auditoría completa S16: 10 errores corregidos
 
 ### Contexto
