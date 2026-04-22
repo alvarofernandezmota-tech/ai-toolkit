@@ -15,7 +15,7 @@ NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# ─── Setup de keys ──────────────────────────────────────────────────────────────────────
+# ─── Setup de keys ────────────────────────────────────────────────────────────────────────
 setup_keys() {
   if [ -n "$OPENROUTER_API_KEY" ]; then
     export OPENAI_API_KEY="$OPENROUTER_API_KEY"
@@ -25,7 +25,7 @@ setup_keys() {
   fi
 }
 
-# ─── Estado de keys (una línea por key) ───────────────────────────────────────────
+# ─── Estado de keys (una línea por key) ─────────────────────────────────────────────────────────────────────────────────────────
 key_status() {
   local name="$1"
   local var="$2"
@@ -37,7 +37,7 @@ key_status() {
   fi
 }
 
-# ─── Menú principal ───────────────────────────────────────────────────────────────────
+# ─── Menú principal ───────────────────────────────────────────────────────────────────────────────────────
 show_menu() {
   clear
   echo ""
@@ -52,9 +52,9 @@ show_menu() {
   echo ""
 
   echo -e "  ${BOLD}🤖 Agentes de coding${NC}"
-  echo -e "  ${GREEN}3)${NC} OpenCode         — rotación automática de modelos"
-  echo -e "  ${GREEN}4)${NC} Claude Code      — claude-3.5-sonnet via OpenRouter"
-  echo -e "  ${GREEN}5)${NC} Aider            — fixes rápidos con Groq"
+  echo -e "  ${GREEN}3)${NC} OpenCode         — Devstral 2 / rotación automática"
+  echo -e "  ${GREEN}4)${NC} Claude Code      — Sonnet 4.6 via OpenRouter (directo)"
+  echo -e "  ${GREEN}5)${NC} Aider            — fixes rápidos con Groq/OpenRouter"
   echo ""
 
   echo -e "  ${BOLD}🔀 Comparación de modelos${NC}"
@@ -86,7 +86,7 @@ show_menu() {
   echo -n "  Elige [1-12 o q]: "
 }
 
-# ─── Acciones ─────────────────────────────────────────────────────────────────────
+# ─── Acciones ─────────────────────────────────────────────────────────────────────────────────────────
 run_health_check() {
   local mode="${1:-}"
   echo ""
@@ -105,9 +105,10 @@ run_opencode() {
 }
 
 run_claude_code() {
-  echo -e "\n${GREEN}Lanzando Claude Code...${NC}\n"
+  echo -e "\n${GREEN}Lanzando Claude Code (OpenRouter directo)...${NC}\n"
+  # Claude Code usa ANTHROPIC_API_KEY y ANTHROPIC_BASE_URL — setup_keys() ya los exporta
   sleep 1
-  claude --model anthropic/claude-3.5-sonnet
+  claude
 }
 
 run_aider() {
@@ -210,7 +211,7 @@ run_ollama_serve() {
   read -rp "  [Enter para volver]"
 }
 
-# ─── Main loop ───────────────────────────────────────────────────────────────────
+# ─── Main loop ─────────────────────────────────────────────────────────────────────────────────────────
 
 setup_keys
 
