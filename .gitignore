@@ -1,40 +1,74 @@
-# OpenCode
-tui.json
-opencode.json.tui-migration.bak
+# =============================================================================
+# .gitignore — ai-toolkit
+# =============================================================================
 
-# Secrets y entornos
+# ─── Keys y secretos (NUNCA a GitHub) ───────────────────────────────────────
 .env
-.env.*
+.env.local
+.env.*.local
 *.key
-*.pem
+*_key.txt
+secrets/
 
-# Python
+# ─── Python ──────────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
-*.pyo
+*$py.class
+*.so
+.Python
 .venv/
 venv/
+env/
 *.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
-# Node
+# ─── Node.js ─────────────────────────────────────────────────────────────────
 node_modules/
 npm-debug.log*
+yarn-error.log*
+.npm/
 
-# Logs
+# ─── Logs ────────────────────────────────────────────────────────────────────
 *.log
 logs/
+/tmp/
 
-# Sistema
+# ─── LiteLLM ─────────────────────────────────────────────────────────────────
+litellm_cache/
+.litellm/
+proxy_server_config.yaml.bak
+
+# ─── OpenCode / Aider ────────────────────────────────────────────────────────
+.aider/
+.aider.tags.cache.v3/
+.aider.chat.history.md
+
+# ─── Resultados de benchmark (los individuales, no el resumen) ───────────────
+investigacion/benchmark-results/*.json
+investigacion/benchmark-results/*.tmp
+
+# ─── macOS ───────────────────────────────────────────────────────────────────
 .DS_Store
-Thumbs.db
+.AppleDouble
+.LSOverride
 
-# Editores
+# ─── Editor ──────────────────────────────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# Temporales
+# ─── Sistema ─────────────────────────────────────────────────────────────────
+Thumbs.db
+ehthumbs.db
+
+# ─── Archivos temporales de scripts ──────────────────────────────────────────
+/tmp/
 *.tmp
 *.bak
-*.orig
+AUDITORIA-*.md
