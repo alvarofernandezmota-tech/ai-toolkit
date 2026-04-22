@@ -1,88 +1,64 @@
-# CLAUDE.md
+# CLAUDE.md — ai-toolkit
 
-Este fichero proporciona contexto a Claude Code cuando trabaja en este repositorio.
+Instrucciones para Claude Code al arrancar en este repo. Léelo todo antes de tocar nada.
 
 ---
 
-## ⚠️ Reglas críticas — leer antes de nada
+## ⚠️ Reglas críticas
 
-- ⛔ NUNCA usar `ccr` (claude-code-router) — rompe los mensajes en Claude Code v2.1.108+
-- ⛔ Las keys NUNCA van en GitHub — solo en `~/.bashrc` o `~/.claude/settings.json` local
-- ✅ Usar siempre `cc` en lugar de `claude` para aprovechar rotación de modelos
-- ✅ Las sesiones de trabajo van en `diario/sesion-DD-mes-YYYY.md` (NO en docs/)
-- ✅ El primer comando en cualquier repo nuevo es `bash setup.sh`
-- ✅ Para commits usar convención: feat/fix/docs/chore/config
+- ⛔ Las keys NUNCA van en GitHub — solo en `~/.bashrc`
+- ✅ NUNCA tocar `main` directamente — siempre rama `feature/`
+- ✅ Un PR por tarea
+- ✅ Commits en inglés: `feat/fix/refactor/docs/chore: descripción corta`
+- ✅ No modificar `CHANGELOG.md`, `ROADMAP.md`, `INICIO-AQUI.md` sin pedirlo explícitamente
+- ✅ Los scripts deben ser ejecutables: `chmod +x scripts/*.sh`
 
 ---
 
 ## ⚡ Comandos rápidos
 
 ```bash
-# Claude Code con rotación automática (RECOMENDADO)
-cc
+# Claude Code (directo, sin proxy)
+cd ~/projects/ai-toolkit && claude
 
-# OpenCode con rotación automática
-bash ~/projects/ai-toolkit/scripts/opencode-rotate.sh
+# OpenCode con rotación automática de modelos
+bash scripts/opencode-rotate.sh
 
-# Aider con rotación automática
-bash ~/projects/ai-toolkit/scripts/aider-rotate.sh
+# Menú interactivo completo
+bash scripts/ai-menu.sh
 
-# Health check completo de todos los proveedores
-bash ~/projects/ai-toolkit/scripts/health-check.sh
+# Health check de todos los proveedores
+bash scripts/health-check.sh
 
-# Generar diario automático desde git log
-bash ~/projects/ai-toolkit/scripts/generar-diario.sh
-
-# Ver qué modelo está activo ahora
-cat ~/.claude/settings.json
-
-# Ver log de rotaciones
-cat ~/.claude/rotate.log
+# LiteLLM colmena (SOLO para benchmark/ensemble, no para coding diario)
+bash scripts/start-colmena.sh
 ```
 
 ---
 
-## 📡 Estado actual del stack (18 abril 2026)
+## 📡 Stack activo (22 abril 2026)
 
 ```
-✅ Ollama local     → operativo (qwen2.5-coder:14b, deepseek-r1:14b, qwen3:8b)
-✅ LiteLLM proxy    → operativo en :8000
-✅ OpenCode         → operativo (fix autosave aplicado)
-✅ Cerebras         → operativo (principal en LiteLLM)
-✅ OpenRouter       → operativo (max_tokens: 4096)
-❌ Groq             → key caducada → renovar en console.groq.com
-❌ DeepSeek API     → key inválida → renovar en platform.deepseek.com
-❌ Gemini           → cuota agotada → nueva key en aistudio.google.com/apikey
+✅ Claude Code      → claude-sonnet-4-5 via OpenRouter (ANTHROPIC_BASE_URL)
+✅ OpenCode         → devstral-2:free via OpenRouter (directo, sin LiteLLM)
+✅ OpenRouter       → operativo — modelo principal para todo
+✅ Ollama local     → qwen2.5-coder:14b, deepseek-r1:14b (fallback sin internet)
+⚠️  Groq             → renovar key si falla (console.groq.com)
+⚠️  LiteLLM proxy    → solo arrancar para benchmark, no para uso diario
 ```
 
 ---
 
-## 🧠 Modelos recomendados hoy
+## 🧠 Modelos recomendados
 
-| Tarea | Modelo recomendado | Proveedor |
-|---|---|---|
-| Código del día a día | qwen2.5-coder:14b | Ollama local |
-| Razonamiento profundo | deepseek-r1:14b | Ollama local |
-| Tareas rápidas | llama-4-maverick:free | OpenRouter |
-| Sin conexión | cualquier modelo Ollama | Local |
-
-### Modelos disponibles — OpenRouter (Claude Code)
-
-| Modelo | ID exacto | Para qué |
-|---|---|---|
-| DeepSeek R1 | `deepseek/deepseek-r1:free` | Razonamiento profundo |
-| Qwen3 235B | `qwen/qwen3-235b-a22b:free` | Código avanzado |
-| Llama 4 Maverick | `meta-llama/llama-4-maverick:free` | Código del día a día |
-| Gemini 2.5 Pro | `google/gemini-2.5-pro-exp-03-25:free` | Arquitectura |
-| Llama 3.3 70B | `meta-llama/llama-3.3-70b-instruct:free` | Fallback final |
-
-### Modelos disponibles — Ollama local
-
-| Modelo | Para qué |
-|---|---|
-| qwen2.5-coder:14b | Código (principal local) |
-| deepseek-r1:14b | Razonamiento (principal local) |
-| qwen3:8b | Tareas rápidas locales |
+| Tarea | Modelo | Vía |
+|-------|--------|-----|
+| Coding agentic (principal) | `mistralai/devstral-2:free` | OpenRouter |
+| Claude Code | `anthropic/claude-sonnet-4-5` | OpenRouter |
+| Razonamiento / arquitectura | `deepseek/deepseek-r1:free` | OpenRouter |
+| Fallback general | `meta-llama/llama-4-maverick:free` | OpenRouter |
+| Fallback rápido | `llama-3.3-70b-versatile` | Groq |
+| Sin internet | `qwen2.5-coder:14b` | Ollama local |
 
 ---
 
@@ -90,71 +66,61 @@ cat ~/.claude/rotate.log
 
 ```
 ai-toolkit/
-├── CLAUDE.md              → contexto para agentes (este fichero)
-├── ECOSISTEMA.md          → visión completa del ecosistema
-├── CHANGELOG.md           → historial de sesiones
-├── ROADMAP.md             → qué viene
-├── ALVARO.md              → quién soy yo, cómo pienso
-├── AGENTES.md             → definición de agentes (ES)
-├── AGENTS.md              → definición de agentes (EN)
-├── ARQUITECTURA.md        → diseño del sistema
-├── CEREBRO.md             → principios y valores
-├── INICIO-AQUI.md         → brújula del proyecto
-├── COMO-PROCEDEMOS.md     → reglas de trabajo
-├── REPOS-ECOSISTEMA.md    → mapa de repos
-├── ESTRATEGIA.md          → estrategia general
-├── setup.sh               → instalador en 1 comando
-├── litellm-config.yaml    → config proxy multi-modelo
-├── opencode.json          → config OpenCode
-├── tui.json               → config TUI
-├── .env.example           → plantilla de keys (nunca keys reales)
-├── agentes/               → definiciones y workflows de agentes
-├── diario/                → sesiones de trabajo (formato: sesion-DD-mes-YYYY.md)
-├── docs/                  → documentación técnica
-├── guias/                 → guías de modelos y herramientas
-├── herramientas/          → herramientas del ecosistema
-├── investigacion/         → experimentos y comparativas
-├── opensource/            → referencias open source
-├── prompts/               → prompts reutilizables
-├── pruebas/               → experimentos y tests
-├── scripts/               → automatización
-│   ├── ai-menu.sh
-│   ├── aider-rotate.sh
-│   ├── opencode-rotate.sh
-│   ├── model-rotate.sh
-│   ├── generar-diario.sh
-│   ├── health-check.sh
-│   └── benchmark-runner.sh
-└── setup/                 → guías de instalación por herramienta
+├── CLAUDE.md                   ← este fichero (instrucciones para Claude Code)
+├── INICIO-AQUI.md              ← brújula — leer al empezar sesión
+├── COMO-PROCEDEMOS.md          ← flujo de trabajo y reglas
+├── CHANGELOG.md                ← historial de sesiones
+├── ROADMAP.md                  ← backlog y próximos pasos
+├── scripts/
+│   ├── ai-menu.sh              ← menú interactivo (punto de entrada)
+│   ├── health-check.sh         ← semáforo de APIs
+│   ├── opencode-rotate.sh      ← OpenCode con rotación de modelos
+│   ├── start-colmena.sh        ← LiteLLM (solo benchmark)
+│   ├── ensemble.sh             ← mismo prompt a varios modelos
+│   ├── benchmark-runner.sh     ← comparativa automática
+│   └── generar-diario.sh       ← diario desde git log + IA
+├── agentes/                    ← sesiones documentadas con agentes
+├── docs/                       ← documentación técnica estable
+├── guias/                      ← guías de setup
+└── investigacion/              ← research con fuentes
 ```
 
 ---
 
-## ⚙️ Configuración Claude Code
+## ⚙️ Variables de entorno necesarias
 
-`~/.claude/settings.json` (gestionado por `model-rotate.sh`):
-```json
-{
-  "env": {
-    "ANTHROPIC_BASE_URL": "https://openrouter.ai/api/v1",
-    "ANTHROPIC_AUTH_TOKEN": "$OPENROUTER_API_KEY",
-    "ANTHROPIC_API_KEY": "",
-    "ANTHROPIC_MODEL": "meta-llama/llama-4-maverick:free"
-  }
-}
+```bash
+# En ~/.bashrc
+export OPENROUTER_API_KEY="sk-or-v1-..."
+export GROQ_API_KEY="gsk_..."
+export ANTHROPIC_API_KEY="$OPENROUTER_API_KEY"   # Claude Code gratis via OpenRouter
+export ANTHROPIC_BASE_URL="https://openrouter.ai/api/v1"
+export OPENAI_API_KEY="$OPENROUTER_API_KEY"      # OpenCode
+export OPENAI_BASE_URL="https://openrouter.ai/api/v1"
+
+# Aliases útiles
+alias cc-toolkit='cd ~/projects/ai-toolkit && claude'
+alias cc-thdora='cd ~/projects/thdora && claude'
+alias oc='OPENAI_API_KEY="$OPENROUTER_API_KEY" OPENAI_BASE_URL="https://openrouter.ai/api/v1" opencode'
 ```
-> ⚠️ Nunca pongas la key real aquí. Usa `~/.bashrc` o `~/.claude/settings.json` local.
 
 ---
 
-## 🌐 Ecosistema de repos
+## 🌎 Ecosistema de repos
 
 | Repo | Propósito | Visibilidad |
-|---|---|---|
-| ai-toolkit | Cerebro público — guías, scripts, configs | Público |
-| thdora | Asistente Telegram — producción, keys reales | Privado |
-| personal | Diarios, finanzas, tracking de vida | Privado |
+|------|-----------|-------------|
+| ai-toolkit | Scripts, configs, guías de agentes IA | Público |
+| thdora | Asistente Telegram (Python, FastAPI, SQLite) | Privado |
 
 ---
 
-_Última actualización: 18 abril 2026_
+## 📋 Tareas pendientes
+
+- Primera sesión real de Claude Code en THDORA (4 bugs documentados en `agentes/thdora-primera-sesion.md`)
+- Ejecutar `benchmark-runner.sh` con Devstral 2 y Qwen3 Coder
+- Ver backlog completo: `ROADMAP.md`
+
+---
+
+_Última actualización: 22 abril 2026_
