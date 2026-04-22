@@ -2,7 +2,7 @@
 
 Registro de todo lo que hay que construir, en orden de prioridad.
 
-> Actualizado: **18 abril 2026**.
+> Actualizado: **22 abril 2026**.
 
 ---
 
@@ -14,62 +14,64 @@ Registro de todo lo que hay que construir, en orden de prioridad.
 | Claude Code + OpenRouter funcionando | 15-04-2026 |
 | OpenCode + DeepSeek R1 funcionando | 15-04-2026 |
 | Scripts rotación modelos con fallback | 15-04-2026 |
-| ai-menu.sh — menú interactivo de agentes | 15-04-2026 |
 | README público para la comunidad (EN) | 15-04-2026 |
 | INICIO-AQUI.md — brújula personal | 15-04-2026 |
-| docs/VISION-SISTEMA.md — norte del sistema | 15-04-2026 |
-| agentes/PENDIENTES.md — lista viva de agentes | 15-04-2026 |
-| guias/opencode-deepseek.md — guía personal | 15-04-2026 |
+| docs/VISION-SISTEMA.md | 15-04-2026 |
+| agentes/PENDIENTES.md — lista viva | 15-04-2026 |
+| guias/opencode-deepseek.md | 15-04-2026 |
 | OpenCode + LiteLLM proxy multi-modelo | 15-04-2026 |
 | 18 modelos en LiteLLM config | 15-04-2026 |
 | Fichas comparativa 14 LLMs | 15-04-2026 |
 | Diario de sesiones estructurado | 15-04-2026 |
 | Dependencias documentadas por capa | 15-04-2026 |
 | Script arranque rápido: LiteLLM + OpenCode | 15-04-2026 |
-| docs/errores-frecuentes.md — 5 errores reales | 15-04-2026 |
-| scripts/generar-diario.sh — diario automático desde git log | 17-04-2026 |
+| docs/errores-frecuentes.md | 15-04-2026 |
+| scripts/generar-diario.sh | 17-04-2026 |
 | Ollama integrado en LiteLLM — modelos 100% locales | 17-04-2026 |
-| guias/opencode-ollama.md — guía modelos locales | 17-04-2026 |
+| guias/opencode-ollama.md | 17-04-2026 |
 | health-check.sh — diagnóstico completo de proveedores | 17-04-2026 |
 | benchmark-runner.sh — tests de rendimiento entre modelos | 17-04-2026 |
-| opencode-rotate.sh — rotación de modelos para OpenCode | 17-04-2026 |
+| opencode-rotate.sh — rotación de modelos | 17-04-2026 |
 | Fix autosave opencode.json — schema válido | 18-04-2026 |
-| opencode-rotate.sh integrado en ai-menu.sh (opción 2) | 18-04-2026 |
-| Auditoría completa del repo — bugs y desincronizaciones identificados | 18-04-2026 |
+| opencode-rotate.sh integrado en ai-menu.sh | 18-04-2026 |
+| Auditoría completa del repo (18 abril) | 18-04-2026 |
 | CLAUDE.md actualizado con estado real del stack | 18-04-2026 |
-| ECOSISTEMA.md actualizado con Ollama + Cerebras + estado real | 18-04-2026 |
+| ECOSISTEMA.md actualizado con Ollama + Cerebras | 18-04-2026 |
+| **Auditoría S16 — 10 errores identificados y corregidos** | 22-04-2026 |
+| **ai-menu.sh — menú interactivo 12 opciones (rebuild completo)** | 22-04-2026 |
+| **start-colmena.sh — fix E1, ya no depende de thdora** | 22-04-2026 |
+| **INICIO-AQUI.md — actualizado al estado real 22 abril** | 22-04-2026 |
+| **agentes/PENDIENTES.md — sincronizado con completados reales** | 22-04-2026 |
+| **.gitignore — añadidas entradas .aider*, .claude/, logs** | 22-04-2026 |
+| **CHANGELOG.md — sesión 22 abril documentada** | 22-04-2026 |
+| **ROADMAP.md — este archivo, actualizado** | 22-04-2026 |
 
 ---
 
-## 🔧 Esta semana (15-20 abril 2026)
+## 🔧 Próxima sesión — urgente
 
-### Keys pendientes de renovar — URGENTE
+### Keys pendientes de renovar — BLOQUEA modelos
 
-- [ ] Renovar GROQ_API_KEY → console.groq.com/keys
-- [ ] Renovar DEEPSEEK_API_KEY → platform.deepseek.com
-- [ ] Nueva GEMINI_API_KEY → aistudio.google.com/apikey
+- [ ] Renovar GROQ_API_KEY → https://console.groq.com/keys
+- [ ] Renovar DEEPSEEK_API_KEY → https://platform.deepseek.com
+- [ ] Nueva GEMINI_API_KEY → https://aistudio.google.com/apikey
 
-### Capa 2 — Menú inteligente
+### Primer uso real de Claude Code en THDORA
 
-- [x] Integrar opencode-rotate.sh al menú principal (ai-menu.sh) ✅ 18-04-2026
-- [ ] ai-menu.sh muestra estado de cada API (activo/caducado)
-- [ ] Rotación automática si un modelo está caído
-- [ ] Muestra última sesión de OpenCode para continuar
+- [ ] `cd ~/projects/thdora && claude --model anthropic/claude-3.5-sonnet`
+- [ ] Atacar bug #1 de la lista en `agentes/thdora-primera-sesion.md`
+- [ ] Estimación: 1-2 horas
 
-### Seguridad del repo
+### Benchmark real de modelos
 
-- [ ] Limpiar historial git — eliminar .env~ del historial con git filter-repo
-- [ ] Verificar que no hay keys reales en ningún fichero trackeado
+- [ ] `bash scripts/benchmark-runner.sh` — script listo, falta ejecutarlo
+- [ ] Rellenar `investigacion/comparativa-llms.md` con datos reales
+- [ ] Tiempo estimado: ~20 minutos
 
-### Capa 3 — Primer agente real
+### Documentación pendiente de esta sesión
 
-- [ ] Probar generar-diario.sh en sesión real y ajustar si hace falta
-- [ ] Primer uso real de Claude Code sobre THDORA (bugs en agentes/thdora-primera-sesion.md)
-
-### Experimento comparativa LLMs
-
-- [ ] Lanzar prompt estándar en cada modelo → rellenar investigacion/comparativa-llms.md
-- [ ] Documentar resultados reales con puntuaciones
+- [ ] `docs/errores-frecuentes.md` — añadir errores E1-E10 encontrados hoy
+- [ ] `ECOSISTEMA.md` — mencionar ai-menu.sh y fix colmena
 
 ---
 
@@ -79,8 +81,7 @@ Registro de todo lo que hay que construir, en orden de prioridad.
 - [ ] prompts/ — prompts que funcionan bien guardados para reutilizar
 - [ ] Alias en .bashrc: `aitoolkit` lanza el menú desde cualquier directorio
 - [ ] tmux config guardada en repo para reproducir setup de terminales
-- [ ] Investigar arquitectura ensemble (múltiples LLMs en paralelo)
-- [x] Añadir Ollama al proxy para modelos 100% locales ✅ 17-04-2026
+- [ ] Limpiar historial git — eliminar .env~ con git filter-repo
 
 ---
 
@@ -90,9 +91,10 @@ Registro de todo lo que hay que construir, en orden de prioridad.
 - [ ] n8n arrancando en localhost:5678
 - [ ] Workflow 1: Brief diario 08:00 → Telegram
 - [ ] Workflow 2: Alerta hábitos 22:00 → Telegram
-- [ ] Workflow 3: Diario automático 23:00 → commit en repo (usar generar-diario.sh como base)
+- [ ] Workflow 3: Diario automático 23:00 → commit en repo
 - [ ] Workflow 4: Resumen semanal lunes → Telegram
 - [ ] Endpoints THDORA API para n8n
+- [ ] toki-bot repo público
 
 ---
 
@@ -103,6 +105,7 @@ Registro de todo lo que hay que construir, en orden de prioridad.
 - [ ] Intent busqueda_web en NLP router
 - [ ] Tests para web_search.py
 - [ ] Key Tavily si DuckDuckGo no es suficiente
+- [ ] Agente de investigación web automático (OpenCode + Tavily)
 
 ---
 
