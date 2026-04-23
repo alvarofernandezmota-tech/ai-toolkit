@@ -1,29 +1,40 @@
 #!/bin/bash
-# start-colmena.sh — Arranque completo con tmux
+# start-colmena.sh — Arranque del ecosistema AI
 #
-# MODOS DISPONIBLES:
-#   bash scripts/start-colmena.sh                  # colmena completa: LiteLLM + Claude Code Ollama
+# ═══════════════════════════════════════════════════════════════════
+# ORDENADOR GRANDE — OpenCode + LiteLLM proxy
+# ═══════════════════════════════════════════════════════════════════
+#   bash scripts/start-colmena.sh --colmena-full    ← PRINCIPAL (3 paneles)
 #   bash scripts/start-colmena.sh --solo-proxy      # solo LiteLLM proxy
-#   bash scripts/start-colmena.sh --claude-local    # Claude Code con Ollama (qwen3:8b, 6GB VRAM)
-#   bash scripts/start-colmena.sh --claude-thdora   # Claude Code en thdora toda la noche
-#   bash scripts/start-colmena.sh --opencode        # OpenCode con OpenRouter (GRATIS, recomendado)
-#   bash scripts/start-colmena.sh --groq            # Claude Code via LiteLLM + Groq (GRATIS, rápido)
-#   bash scripts/start-colmena.sh --colmena-full    # 3 paneles: Claude Code + OpenCode + bash
+#   bash scripts/start-colmena.sh --opencode        # solo OpenCode
 #
-# REQUISITOS POR MODO:
-#   --claude-local:  Ollama corriendo, modelo qwen3:8b descargado
-#   --opencode:      OPENROUTER_API_KEY en ~/.bashrc
-#   --groq:          GROQ_API_KEY en ~/.bashrc + litellm instalado
-#   --colmena-full:  OPENROUTER_API_KEY + Ollama + litellm
-#
-# Layout tmux (colmena-full):
+# Layout --colmena-full:
 #  ┌────────────────────┬─────────────────────┐
-#  │                    │  OPENCODE           │
-#  │  CLAUDE CODE       │  (llama-3.3-70b     │
-#  │  (qwen3:8b local)  │   OpenRouter free)  │
-#  │                    ├─────────────────────┤
-#  │                    │  BASH LIBRE         │
+#  │                    │  LiteLLM proxy      │
+#  │  OpenCode          │  logs/status        │
+#  │  (izquierda)       ├─────────────────────┤
+#  │                    │  bash libre         │
 #  └────────────────────┴─────────────────────┘
+#
+# ═══════════════════════════════════════════════════════════════════
+# ACER (vía SSH) — Claude Code + OpenRouter
+# ═══════════════════════════════════════════════════════════════════
+#   bash scripts/start-colmena.sh --claude-acer     ← PRINCIPAL ACER (2 paneles)
+#   bash scripts/start-colmena.sh --claude-thdora   # Claude Code en thdora
+#
+# Layout --claude-acer:
+#  ┌────────────────────┬─────────────────────┐
+#  │                    │                     │
+#  │  Claude Code       │  bash libre         │
+#  │  (izquierda)       │  (git, curl, etc.)  │
+#  │                    │                     │
+#  └────────────────────┴─────────────────────┘
+#
+# ═══════════════════════════════════════════════════════════════════
+# OTROS MODOS
+# ═══════════════════════════════════════════════════════════════════
+#   bash scripts/start-colmena.sh --claude-local    # Claude Code con Ollama local
+#   bash scripts/start-colmena.sh --groq            # Claude Code via Groq directo
 #
 # Navegar entre paneles: Ctrl+B luego flecha
 # Salir sin matar sesión: Ctrl+B D
@@ -33,64 +44,16 @@ CONFIG="$DIR/litellm-config.yaml"
 PUERTO=8000
 SESSION="colmena"
 
-# ─── Variables Claude Code + Ollama ──────────────────────────────────────────
-export ANTHROPIC_BASE_URL="http://localhost:11434"
-export ANTHROPIC_AUTH_TOKEN="ollama"
-export ANTHROPIC_API_KEY=""
-MODELO_LOCAL="qwen3:8b"   # 14B se cuelga con 6GB VRAM → usamos 8B
+MODELO_LOCAL="qwen3:8b"   # 14B no cabe en 6GB VRAM → solo 8B
 
-# ─── Modo --opencode (OpenCode + OpenRouter GRATIS) ──────────────────────────
-if [ "${1:-}" = "--opencode" ]; then
-  if [ -z "${OPENROUTER_API_KEY:-}" ]; then
-    echo "❌ OPENROUTER_API_KEY no está definida."
-    echo "   Añade a ~/.bashrc: export OPENROUTER_API_KEY=\"sk-or-v1-...\""
-    exit 1
-  fi
-  echo ""
-  echo "🌐 Arrancando OpenCode con OpenRouter (GRATIS)..."
-  echo "   Modelo: meta-llama/llama-3.3-70b-instruct:free"
-  echo ""
-  cd "$DIR"
-  exec env OPENAI_API_KEY="$OPENROUTER_API_KEY" \
-           OPENAI_BASE_URL="https://openrouter.ai/api/v1" \
-           opencode
-fi
+# ═══════════════════════════════════════════════════════════════════
+# ORDENADOR GRANDE — OpenCode
+# ═══════════════════════════════════════════════════════════════════
 
-# ─── Modo --groq (Claude Code via LiteLLM + Groq GRATIS) ────────────────────
-if [ "${1:-}" = "--groq" ]; then
-  if [ -z "${GROQ_API_KEY:-}" ]; then
-    echo "❌ GROQ_API_KEY no está definida."
-    echo "   Regístrate gratis en https://console.groq.com"
-    echo "   Añade a ~/.bashrc: export GROQ_API_KEY=\"gsk_...\""
-    exit 1
-  fi
-  echo ""
-  echo "⚡ Modo GROQ — Claude Code via LiteLLM + Groq (GRATIS)"
-  echo "   Modelo: llama-3.3-70b-versatile (Groq)"
-  echo ""
-
-  # Arrancar LiteLLM apuntando a Groq
-  GROQ_API_KEY="$GROQ_API_KEY" litellm \
-    --model groq/llama-3.3-70b-versatile \
-    --port 8000 \
-    --drop_params \
-    &
-  LITELLM_PID=$!
-  echo "   LiteLLM arrancando (PID $LITELLM_PID)..."
-  sleep 5
-
-  # Claude Code apuntando a LiteLLM
-  export ANTHROPIC_BASE_URL="http://localhost:8000"
-  export ANTHROPIC_AUTH_TOKEN="$GROQ_API_KEY"
-  unset ANTHROPIC_API_KEY
-  cd "$DIR"
-  exec claude --model groq/llama-3.3-70b-versatile
-fi
-
-# ─── Modo --colmena-full (3 paneles: Claude Code + OpenCode + bash) ──────────
+# ─── Modo --colmena-full (PRINCIPAL ordenador grande) ────────────────────────
 if [ "${1:-}" = "--colmena-full" ]; then
   if [ -z "${OPENROUTER_API_KEY:-}" ]; then
-    echo "❌ OPENROUTER_API_KEY necesaria para el panel OpenCode"
+    echo "❌ OPENROUTER_API_KEY no definida en ~/.bashrc"
     exit 1
   fi
 
@@ -98,28 +61,23 @@ if [ "${1:-}" = "--colmena-full" ]; then
   tmux new-session -d -s colmena-full -x 240 -y 55
   tmux rename-window -t colmena-full:0 'colmena'
 
-  # Panel derecha arriba: OpenCode
+  # Panel derecha arriba: LiteLLM proxy
   tmux split-window -t colmena-full:0 -h
-  tmux send-keys -t colmena-full:0.1 "cd $DIR && OPENAI_API_KEY='$OPENROUTER_API_KEY' OPENAI_BASE_URL='https://openrouter.ai/api/v1' opencode" Enter
+  tmux send-keys -t colmena-full:0.1 "cd $DIR && echo '🔀 Arrancando LiteLLM proxy...' && litellm --config '$CONFIG' --port $PUERTO" Enter
 
   # Panel derecha abajo: bash libre
   tmux split-window -t colmena-full:0.1 -v
-  tmux send-keys -t colmena-full:0.2 "cd $DIR && echo '🐝 Bash libre — usa para git log, ollama ps, etc.'" Enter
+  tmux send-keys -t colmena-full:0.2 "cd $DIR && echo '👀 Espera ~8s a que LiteLLM arranque...' && for i in \$(seq 1 20); do curl -s http://localhost:$PUERTO/health &>/dev/null && bash scripts/health-check.sh && break; echo -n '.'; sleep 1; done" Enter
 
-  # Panel izquierda: Claude Code con Ollama
-  if pgrep -x ollama &>/dev/null; then
-    tmux send-keys -t colmena-full:0.0 "cd $DIR && unset ANTHROPIC_API_KEY && export ANTHROPIC_BASE_URL=http://localhost:11434 && export ANTHROPIC_AUTH_TOKEN=ollama && claude --model $MODELO_LOCAL" Enter
-  else
-    tmux send-keys -t colmena-full:0.0 "echo '⚠️  Ollama no está corriendo. Arranca con: ollama serve'" Enter
-  fi
-
+  # Panel izquierda: OpenCode vía LiteLLM proxy
+  tmux send-keys -t colmena-full:0.0 "cd $DIR && sleep 10 && opencode" Enter
   tmux select-pane -t colmena-full:0.0
 
   echo ""
   echo "✅ Colmena completa arrancada (3 paneles)"
-  echo "   Claude Code (izq): qwen3:8b via Ollama"
-  echo "   OpenCode (der-arr): llama-3.3-70b via OpenRouter"
-  echo "   Bash (der-abj):    libre"
+  echo "   OpenCode   (izq):      vía LiteLLM proxy :8000"
+  echo "   LiteLLM    (der-arr):  proxy logs/status"
+  echo "   Bash libre (der-abj):  git, curl, etc."
   echo ""
   echo "   Adjunta: tmux attach -t colmena-full"
   echo "   Salir sin matar: Ctrl+B D"
@@ -130,13 +88,88 @@ if [ "${1:-}" = "--colmena-full" ]; then
   exit 0
 fi
 
-# ─── Modo --claude-local (Claude Code en ai-toolkit con Ollama) ──────────────
+# ─── Modo --opencode (OpenCode solo, sin proxy) ──────────────────────────────
+if [ "${1:-}" = "--opencode" ]; then
+  if [ -z "${OPENROUTER_API_KEY:-}" ]; then
+    echo "❌ OPENROUTER_API_KEY no está definida."
+    echo "   Añade a ~/.bashrc: export OPENROUTER_API_KEY=\"sk-or-v1-...\""
+    exit 1
+  fi
+  echo ""
+  echo "🌐 Arrancando OpenCode con LiteLLM proxy..."
+  echo ""
+  cd "$DIR"
+  exec opencode
+fi
+
+# ═══════════════════════════════════════════════════════════════════
+# ACER — Claude Code
+# ═══════════════════════════════════════════════════════════════════
+
+# ─── Modo --claude-acer (PRINCIPAL Acer vía SSH) ─────────────────────────────
+if [ "${1:-}" = "--claude-acer" ]; then
+  if [ -z "${OPENROUTER_API_KEY:-}" ]; then
+    echo "❌ OPENROUTER_API_KEY no definida."
+    echo "   Añade a ~/.bashrc: export OPENROUTER_API_KEY=\"sk-or-v1-...\""
+    exit 1
+  fi
+
+  tmux kill-session -t claude-acer 2>/dev/null || true
+  tmux new-session -d -s claude-acer -x 220 -y 50
+  tmux rename-window -t claude-acer:0 'claude-acer'
+
+  # Panel derecha: bash libre
+  tmux split-window -t claude-acer:0 -h
+  tmux send-keys -t claude-acer:0.1 "cd $DIR && echo '🐝 Bash libre — git, curl, ls, etc.'" Enter
+
+  # Panel izquierda: Claude Code vía OpenRouter
+  tmux send-keys -t claude-acer:0.0 "cd $DIR && unset ANTHROPIC_API_KEY && unset ANTHROPIC_AUTH_TOKEN && export ANTHROPIC_BASE_URL=https://openrouter.ai/api/v1 && export ANTHROPIC_API_KEY=\$OPENROUTER_API_KEY && claude" Enter
+  tmux select-pane -t claude-acer:0.0
+
+  echo ""
+  echo "✅ Claude Code arrancado (2 paneles)"
+  echo "   Claude Code (izq): vía OpenRouter"
+  echo "   Bash libre  (der): git, curl, etc."
+  echo ""
+  echo "   Adjunta: tmux attach -t claude-acer"
+  echo "   Salir sin matar: Ctrl+B D"
+
+  if [ -z "${TMUX:-}" ]; then
+    tmux attach-session -t claude-acer
+  fi
+  exit 0
+fi
+
+# ─── Modo --groq (Claude Code via Groq directo) ──────────────────────────────
+if [ "${1:-}" = "--groq" ]; then
+  if [ -z "${GROQ_API_KEY:-}" ]; then
+    echo "❌ GROQ_API_KEY no definida."
+    echo "   Regístrate gratis en https://console.groq.com"
+    exit 1
+  fi
+  echo ""
+  echo "⚡ Modo GROQ — Claude Code via LiteLLM + Groq (GRATIS)"
+  echo ""
+
+  GROQ_API_KEY="$GROQ_API_KEY" litellm \
+    --model groq/llama-3.3-70b-versatile \
+    --port 8000 \
+    --drop_params \
+    &
+  sleep 5
+
+  unset ANTHROPIC_API_KEY
+  export ANTHROPIC_BASE_URL="http://localhost:8000"
+  export ANTHROPIC_AUTH_TOKEN="$GROQ_API_KEY"
+  cd "$DIR"
+  exec claude --model groq/llama-3.3-70b-versatile
+fi
+
+# ─── Modo --claude-local (Claude Code con Ollama local) ──────────────────────
 if [ "${1:-}" = "--claude-local" ]; then
   echo ""
   echo "🦙 Arrancando Claude Code con Ollama local..."
   echo "   Modelo: $MODELO_LOCAL (qwen3:8b — cabe en 6GB VRAM)"
-  echo "   Base URL: $ANTHROPIC_BASE_URL"
-  echo "   ⚠️  NOTA: Si se cuelga, usa --opencode o --groq en su lugar"
   echo ""
   if ! pgrep -x ollama &>/dev/null; then
     echo "⚠️  Ollama no está corriendo. Arrancando..."
@@ -145,10 +178,12 @@ if [ "${1:-}" = "--claude-local" ]; then
   fi
   cd "$DIR"
   unset ANTHROPIC_API_KEY
+  export ANTHROPIC_BASE_URL="http://localhost:11434"
+  export ANTHROPIC_AUTH_TOKEN="ollama"
   exec claude --model "$MODELO_LOCAL"
 fi
 
-# ─── Modo --claude-thdora (Claude Code en THDORA toda la noche) ──────────────
+# ─── Modo --claude-thdora (Claude Code en THDORA) ────────────────────────────
 if [ "${1:-}" = "--claude-thdora" ]; then
   THDORA_DIR="$HOME/projects/thdora"
   if [ ! -d "$THDORA_DIR" ]; then
@@ -156,24 +191,17 @@ if [ "${1:-}" = "--claude-thdora" ]; then
     exit 1
   fi
   echo ""
-  echo "🦙 Modo THDORA — Claude Code + Ollama local en sesión tmux"
-  echo "   Modelo: $MODELO_LOCAL"
-  echo "   Repo:   $THDORA_DIR"
+  echo "🦙 Modo THDORA — Claude Code + OpenRouter"
+  echo "   Repo: $THDORA_DIR"
   echo ""
-
-  if ! pgrep -x ollama &>/dev/null; then
-    echo "⚠️  Arrancando Ollama..."
-    ollama serve &>/dev/null &
-    sleep 3
-  fi
 
   tmux kill-session -t thdora 2>/dev/null || true
   tmux new-session -d -s thdora -x 220 -y 50
   tmux rename-window -t thdora:0 'claude-thdora'
 
   tmux split-window -t thdora:0 -h
-  tmux send-keys -t thdora:0.1 "echo '🟢 Ollama logs:' && ollama serve 2>&1 | tail -f" Enter
-  tmux send-keys -t thdora:0.0 "cd $THDORA_DIR && unset ANTHROPIC_API_KEY && claude --model $MODELO_LOCAL" Enter
+  tmux send-keys -t thdora:0.1 "cd $THDORA_DIR && echo '🐝 Bash libre THDORA'" Enter
+  tmux send-keys -t thdora:0.0 "cd $THDORA_DIR && unset ANTHROPIC_API_KEY && unset ANTHROPIC_AUTH_TOKEN && export ANTHROPIC_BASE_URL=https://openrouter.ai/api/v1 && export ANTHROPIC_API_KEY=\$OPENROUTER_API_KEY && claude" Enter
   tmux select-pane -t thdora:0.0
 
   echo "✅ Sesión 'thdora' arrancada. Adjunta: tmux attach -t thdora"
@@ -184,7 +212,10 @@ if [ "${1:-}" = "--claude-thdora" ]; then
   exit 0
 fi
 
-# ─── Localizar litellm ───────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════
+# MODO POR DEFECTO — colmena normal con LiteLLM
+# ═══════════════════════════════════════════════════════════════════
+
 find_litellm() {
   command -v litellm 2>/dev/null && return
   for p in \
@@ -203,21 +234,16 @@ if [ -z "$LITELLM" ]; then
   echo "❌ litellm no encontrado. Instala: pip install 'litellm[proxy]'"
   exit 1
 fi
-echo "✅ litellm encontrado: $LITELLM"
 
-# ─── LIMPIEZA ────────────────────────────────────────────────────────────────
-echo "🧹 Limpiando puerto $PUERTO y procesos litellm..."
+echo "🧹 Limpiando puerto $PUERTO..."
 pkill -9 -f litellm 2>/dev/null || true
 lsof -ti :$PUERTO | xargs kill -9 2>/dev/null || true
 sleep 2
-echo "✅ Puerto $PUERTO libre"
 
-# ─── Modo --solo-proxy ───────────────────────────────────────────────────────
 if [ "${1:-}" = "--solo-proxy" ]; then
   exec "$LITELLM" --config "$CONFIG" --port $PUERTO
 fi
 
-# ─── Colmena normal (tmux 3 paneles con LiteLLM) ────────────────────────────
 if ! command -v tmux &>/dev/null; then
   echo "❌ tmux no instalado: sudo apt install tmux -y"
   exit 1
@@ -234,7 +260,7 @@ tmux split-window -t $SESSION:0.1 -v
 tmux send-keys -t $SESSION:0.2 "cd $DIR" Enter
 tmux send-keys -t $SESSION:0.2 "echo '👀 Espera ~8s...' && for i in \$(seq 1 20); do curl -s http://localhost:$PUERTO/health &>/dev/null && bash scripts/health-check.sh && break; echo -n '.'; sleep 1; done" Enter
 
-tmux send-keys -t $SESSION:0.0 "cd $DIR && sleep 10 && unset ANTHROPIC_API_KEY && claude --model $MODELO_LOCAL" Enter
+tmux send-keys -t $SESSION:0.0 "cd $DIR && sleep 10 && opencode" Enter
 tmux select-pane -t $SESSION:0.0
 
 if [ -n "${TMUX:-}" ]; then
