@@ -13,7 +13,7 @@ This repo is **ai-toolkit**: AI infrastructure for an Ubuntu/WSL server.
 ### Current Stack (April 2026)
 - **LiteLLM Colmena** — multi-model proxy at `localhost:8000`
 - **OpenCode** — code agent (this program)
-- **Claude Code v2.1.117** — via LiteLLM or OpenRouter directly
+- **Claude Code v2.1.117** — via OpenRouter directly
 - **Ollama** — local models at `localhost:11434`
 - **Main model** — Devstral 2 via OpenRouter (OpenCode) | groq-fallback (Claude Code)
 - **Hardware** — Dell Inspiron, Intel i5, 16GB RAM, GTX 1060 6GB, WSL2 Ubuntu
@@ -42,6 +42,37 @@ This repo is **ai-toolkit**: AI infrastructure for an Ubuntu/WSL server.
 
 ---
 
+## 📂 PARA STRUCTURE (since 23 April 2026)
+
+The repo now uses the PARA method as a second brain:
+
+```
+ai-toolkit/
+├── CLAUDE.md              ← Claude Code reads this first
+├── AGENTS.md              ← OpenCode reads this (you are here)
+├── context/               ← who Álvaro is and how the stack works
+│   ├── about-alvaro.md    ← master profile, projects, rules
+│   └── stack.md           ← services, models, ports, env vars
+├── projects/              ← active projects with deadlines
+│   ├── thdora.md          ← F9.4, open issues, next steps
+│   └── ai-toolkit.md      ← current state, roadmap
+├── areas/                 ← ongoing responsibilities
+│   └── ia-desarrollo.md   ← KPIs, habits, horizon
+├── diario/                ← session memory (YYYY-MM-DD[-moment].md)
+├── agentes/               ← agent cards
+├── docs/                  ← technical documentation
+├── prompts/               ← prompts/commands for tasks
+├── scripts/               ← automation
+└── herramientas/          ← YOUR tools to operate the repo
+```
+
+**Always read at session start:**
+1. `context/about-alvaro.md` — who Álvaro is, active projects, ecosystem rules
+2. `context/stack.md` — services, models, env variables, ports
+3. `projects/thdora.md` or `projects/ai-toolkit.md` depending on the task
+
+---
+
 ## 🔴 RULE #1 — Files to disk, always
 
 When a task involves creating or modifying a file:
@@ -63,7 +94,7 @@ bash herramientas/git-commit-push.sh "type(scope): short description"
 
 Correct examples:
 - `bash herramientas/git-commit-push.sh "feat(agents): create agent-test card"`
-- `bash herramientas/git-commit-push.sh "docs(diary): session 17-april documented"`
+- `bash herramientas/git-commit-push.sh "docs(diary): session 23-april documented"`
 - `bash herramientas/git-commit-push.sh "fix(config): fix Ollama timeout"`
 
 **NEVER** accumulate multiple files without committing. One commit per task.
@@ -105,28 +136,14 @@ NEVER create agent cards manually.
 
 ---
 
-## 🟡 RULE #6 — Repo structure
+## 🟡 RULE #6 — Routine scripts
 
-```
-ai-toolkit/
-├── CLAUDE.md              ← your context (always read first)
-├── AGENTS.md              ← your rules (this file)
-├── ARQUITECTURA.md        ← ecosystem master map
-├── CHANGELOG.md           ← update at end of each session
-├── ROADMAP.md             ← what needs to be built
-├── README.md              ← public project status
-├── INICIO-AQUI.md         ← Alvaro's personal compass
-├── opencode.json          ← your configuration
-├── litellm-config.yaml    ← LiteLLM proxy configuration
-├── scripts/               ← startup and ecosystem management
-├── herramientas/          ← YOUR tools to operate the repo
-│   ├── git-commit-push.sh ← USE for all commits
-│   ├── crear-ficha-agente.sh ← USE for new agents
-│   └── verificar-archivo.sh  ← USE to verify files
-├── docs/                  ← technical documentation
-├── agentes/               ← each agent's card
-├── guias/                 ← usage guides
-└── diario/                ← session diary (YYYY-MM-DD-moment.md)
+```bash
+bash scripts/morning.sh           # start of session — services + diary + urgents
+bash scripts/day-close.sh         # end of day — 3 wins + error + priority + auto commit
+bash scripts/weekly-planning.sh   # every Monday — plan from ROADMAP
+bash scripts/health-check.sh      # API diagnosis (auth fix included)
+bash scripts/bootstrap.sh         # ecosystem status in 30s
 ```
 
 ---
@@ -140,23 +157,18 @@ ai-toolkit/
 | `qwen/qwen3-coder:free` | **Best for code** — free via OpenRouter |
 | `meta/llama-3.3-70b-instruct:free` | Reasoning, free via OpenRouter |
 | `sambanova-llama4` | Llama 4 Maverick, complex tasks |
-| `sambanova-deepseek` | DeepSeek R1, reasoning |
 
 ### Local (no quota, requires Ollama)
 | Model | Note |
 |-------|------|
 | `ollama/qwen3:8b` | 6GB VRAM — default local |
-| `ollama/qwen2.5-coder:14b` | code, no quota |
 
 ### If Ollama is not running
-```
-/model groq-fallback
-```
-Or start Ollama first:
 ```bash
+/model groq-fallback
+# or start Ollama:
 ollama serve &
-sleep 5
-bash scripts/start-colmena.sh
+sleep 5 && bash scripts/start-colmena.sh
 ```
 
 ---
@@ -166,7 +178,9 @@ bash scripts/start-colmena.sh
 ```
 Receive task
     ↓
-Read CLAUDE.md + ARQUITECTURA.md for context
+Read context/about-alvaro.md + context/stack.md
+    ↓
+Read relevant project file (projects/thdora.md etc)
     ↓
 Plan with TodoWrite (in_progress)
     ↓
@@ -189,6 +203,7 @@ Next task
 - ✅ 22 abril 2026: Claude Code via OpenRouter + Devstral 2 operational
 - ✅ 22 abril 2026: LiteLLM + OpenCode + Claude Code colmena running
 - ✅ 23 abril 2026: 4-entity ecosystem documented, prompts prepared
+- ✅ 23 abril 2026: PARA structure implemented — context/ projects/ areas/ scripts/
 
 ---
 
@@ -196,7 +211,8 @@ Next task
 
 ```bash
 # Diagnosis first:
-bash scripts/check-colmena.sh
+bash scripts/morning.sh
+bash scripts/health-check.sh
 
 # Start from OUTSIDE tmux:
 cd ~/projects/ai-toolkit
@@ -209,4 +225,4 @@ bash scripts/start-colmena.sh
 
 ---
 
-*Updated: 2026-04-23 — merged AGENTS.md + AGENTES.md, added 4-entity ecosystem documentation*
+*Updated: 2026-04-23 — PARA structure added, routine scripts documented, context/ as primary knowledge source*
