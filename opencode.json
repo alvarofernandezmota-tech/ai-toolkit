@@ -13,14 +13,11 @@
         "principal": {
           "name": "🔀 Principal (Ollama → Groq → Nube)"
         },
-        "ollama-coder": {
-          "name": "🏠 Ollama qwen2.5-coder:14b"
-        },
-        "ollama-deepseek": {
-          "name": "🏠 Ollama deepseek-r1:14b"
+        "kimi-k2": {
+          "name": "🌙 Kimi K2 (MoE 1T, razonamiento)"
         },
         "ollama-fast": {
-          "name": "🏠 Ollama qwen3:8b (rápido)"
+          "name": "🏠 Ollama qwen3:8b (rápido, local)"
         },
         "gemini-pro": {
           "name": "Gemini 2.5 Pro"
