@@ -32,9 +32,9 @@ SHOW_FIX=false
 [[ "$MODE" == "--fix"  ]] && SHOW_FIX=true
 
 # ─── Resultados globales ──────────────────────────────────────────────────────
-declare -A STATUS   # ok | warn | fail | skip
-declare -A DETAIL   # mensaje por proveedor
-declare -A LATENCY  # ms por proveedor
+declare -A STATUS
+declare -A DETAIL
+declare -A LATENCY
 AVAILABLE=0
 TOTAL=0
 
@@ -136,11 +136,11 @@ test_openrouter() {
   fi
   if $FULL_TEST; then
     local result
-    result=$(chat_api "https://openrouter.ai/api/v1" "Authorization: Bearer $key" "meta-llama/llama-4-maverick")
+    result=$(chat_api "https://openrouter.ai/api/v1" "Authorization: Bearer $key" "meta-llama/llama-3.3-70b-instruct:free")
     local code="${result%%|*}"; local lat="${result##*|}"
     LATENCY[$name]="${lat}ms"
     if [[ "$code" == "200" ]]; then
-      STATUS[$name]="ok"; DETAIL[$name]="llama-4-maverick · ${lat}ms"; AVAILABLE=$((AVAILABLE+1))
+      STATUS[$name]="ok"; DETAIL[$name]="llama-3.3-70b:free · ${lat}ms"; AVAILABLE=$((AVAILABLE+1))
     else
       STATUS[$name]="fail"; DETAIL[$name]="HTTP $code"
     fi
@@ -272,16 +272,20 @@ test_litellm() {
   TOTAL=$((TOTAL+1))
   local start
   start=$(date +%s%3N)
+  # FIX: añadir header Authorization para evitar 401
   local code
   code=$(curl -s -o /dev/null -w "%{http_code}" \
     --max-time 3 \
+    -H "Authorization: Bearer sk-litellm-local" \
     "http://localhost:8000/health" 2>/dev/null || echo "000")
   local lat
   lat=$(ms_since "$start")
   LATENCY[$name]="${lat}ms"
   if [[ "$code" == "200" ]]; then
     local model_count
-    model_count=$(curl -s http://localhost:8000/v1/models 2>/dev/null | \
+    model_count=$(curl -s \
+      -H "Authorization: Bearer sk-litellm-local" \
+      http://localhost:8000/v1/models 2>/dev/null | \
       python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d.get('data',[])))" 2>/dev/null || echo "?")
     STATUS[$name]="ok"
     DETAIL[$name]="${model_count} modelo(s) en proxy · ${lat}ms"
@@ -289,6 +293,9 @@ test_litellm() {
   elif [[ "$code" == "000" ]]; then
     STATUS[$name]="warn"
     DETAIL[$name]="proxy no está corriendo → bash scripts/start-colmena.sh"
+  elif [[ "$code" == "401" ]]; then
+    STATUS[$name]="fail"
+    DETAIL[$name]="auth fallida — verificar LITELLM_MASTER_KEY en .env"
   else
     STATUS[$name]="fail"
     DETAIL[$name]="HTTP $code"
@@ -352,6 +359,10 @@ print_fixes() {
         OpenRouter)
           echo -e "  ${RED}OpenRouter:${NC} Verificar en https://openrouter.ai/keys"
           echo "        export OPENROUTER_API_KEY=\"nueva_key\" && source ~/.bashrc"
+          ;;
+        LiteLLM)
+          echo -e "  ${RED}LiteLLM:${NC} Verificar LITELLM_MASTER_KEY en .env"
+          echo "        grep LITELLM_MASTER_KEY .env"
           ;;
       esac
     elif [[ "${STATUS[$name]}" == "warn" ]]; then
