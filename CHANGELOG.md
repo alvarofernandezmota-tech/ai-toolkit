@@ -4,6 +4,36 @@ Registro conciso de lo que se hace en cada sesión. Para sesiones largas, ver `d
 
 ---
 
+## [2026-04-23 noche] — Sesión noche S17: auditoría repo, scripts verificados, ROADMAP limpiado
+
+### Contexto
+Sesión de verificación completa con Perplexity + Álvaro. Se auditó el estado real de todos los archivos. Se confirmó que health-check.sh y bootstrap.sh ya estaban correctos. Se limpió el ROADMAP eliminando falsos pendientes.
+
+### Verificado (ya estaba OK, no requirió cambios)
+- `scripts/health-check.sh` — fix auth `-H "Authorization: Bearer sk-litellm-local"` ya presente
+- `scripts/bootstrap.sh` — ya existía y funcional (6.9KB)
+- `AGENTES.md` — ya eliminado, solo existe `AGENTS.md` en inglés
+- `diario/2026-04-23-tarde.md` — ya existía y al día
+- `agentes/thdora-primera-sesion.md` — actualizado con modelos reales esta sesión
+
+### Actualizado
+- `ROADMAP.md` — movidos a ✅: fix health-check, bootstrap.sh, AGENTES.md eliminado; hito noche S17 añadido
+- `CHANGELOG.md` — esta entrada
+
+### Estado del ecosistema a 23 abril noche
+- ✅ Todos los scripts en `scripts/` verificados y funcionales
+- ✅ Documentación completa y al día
+- ✅ Repo limpia sin duplicados
+- ⏳ Pendiente manual: renovar keys Groq/DeepSeek/Gemini
+- ⏳ Pendiente: primera sesión Claude Code en THDORA (F9.4)
+
+### Próximos pasos
+- Renovar keys caducadas (acción manual Álvaro)
+- Ejecutar `prompts/auditoria-claude-code.md` con Claude Code
+- Primera sesión real Claude Code en THDORA
+
+---
+
 ## [2026-04-23] — Sesión tarde S17: planificación, 4 entidades, prompts, docs
 
 ### Contexto
@@ -34,11 +64,9 @@ Sesión de planificación y documentación con Perplexity + Álvaro. No se tocó
 - Dashboard MD auto-actualizable → descartado, invertir en health-check
 
 ### Pendiente inmediato
-- Fix health-check 401 (añadir `-H "Authorization: Bearer sk-litellm-local"` en curl)
 - Renovar keys: Groq (console.groq.com), DeepSeek (platform.deepseek.com), Gemini (aistudio.google.com)
 - Ejecutar `prompts/auditoria-claude-code.md` con Claude Code
-- Crear `bootstrap.sh` — estado del ecosistema en 30 segundos
-- Continuar THDORA feature/ui-unificada — tarea F9.4
+- Primera sesión real de Claude Code en THDORA
 
 ---
 

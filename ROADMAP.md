@@ -1,6 +1,6 @@
 # ROADMAP — ai-toolkit
 
-> Estado: 23 abril 2026
+> Estado: 23 abril 2026 (noche)
 > Para el detalle completo de cada tarea ver `docs/plan-evolucion-ai-toolkit.md`
 
 ---
@@ -15,41 +15,43 @@
 - [x] SSH :2222 operativo desde Windows
 - [x] Colmena tmux con 3 paneles
 - [x] `scripts/start-colmena.sh` — arranque multi-modo
-- [x] `scripts/health-check.sh` — diagnóstico de proveedores
+- [x] `scripts/health-check.sh` — diagnóstico de proveedores (fix auth ✓)
+- [x] `scripts/bootstrap.sh` — estado del ecosistema en 30 segundos
 - [x] `scripts/ai-menu.sh` — menú interactivo 12 opciones
 - [x] `scripts/generar-diario.sh` — diario desde git log
 - [x] `scripts/benchmark-runner.sh` — benchmarks velocidad/calidad
 
 ### Documentación
 - [x] CLAUDE.md como índice maestro para Claude Code
-- [x] AGENTS.md fusionado en inglés (AGENTES.md retirado)
+- [x] AGENTS.md fusionado en inglés (AGENTES.md retirado ✓)
 - [x] INICIO-AQUI.md actualizado con estado real
 - [x] docs/entidades-ecosistema.md — las 4 entidades documentadas
 - [x] docs/plan-evolucion-ai-toolkit.md — plan priorizado
 - [x] prompts/contexto-claude-ia.md — prompt de contexto
 - [x] prompts/auditoria-claude-code.md — prompt de auditoría
+- [x] agentes/thdora-primera-sesion.md — modelos reales y estado F9.4
 
 ### Hitos confirmados
 - [x] 17 abril: OpenCode end-to-end (leer → escribir → verificar → commit)
 - [x] 22 abril: Claude Code v2.1.117 + OpenRouter operativo
 - [x] 22 abril: LiteLLM + OpenCode + Claude Code colmena corriendo
-- [x] 23 abril: Ecosistema 4 entidades documentado
+- [x] 23 abril mañana: Ecosistema 4 entidades documentado
+- [x] 23 abril noche: Repo auditada y limpiada — todos los scripts verificados OK
 
 ---
 
-## 🔴 Urgente — próxima sesión
+## 🔴 Urgente — requiere acción manual de Álvaro
 
-- [ ] **Fix health-check 401** — añadir `-H "Authorization: Bearer sk-litellm-local"` en `scripts/health-check.sh`
-- [ ] **Renovar keys** — Groq (console.groq.com), DeepSeek (platform.deepseek.com), Gemini (aistudio.google.com) — acción manual de Álvaro
-- [ ] **Ejecutar auditoría** — usar `prompts/auditoria-claude-code.md` con Claude Code + groq-fallback o qwen3-coder:free
+- [ ] **Renovar keys caducadas** — Groq (console.groq.com), DeepSeek (platform.deepseek.com), Gemini (aistudio.google.com)
+- [ ] **Ejecutar auditoría** — usar `prompts/auditoria-claude-code.md` con Claude Code en el servidor
 
 ---
 
-## 🟡 Alta prioridad — S17/S18
+## 🟡 Alta prioridad — S18
 
-- [ ] **bootstrap.sh** — script que da el estado completo del ecosistema en 30 segundos
-  - Qué está corriendo, qué keys funcionan, en qué rama está cada repo, tareas pendientes
-  - Complejidad: media | Claude Code solo: sí
+- [ ] **Primera sesión real Claude Code en THDORA**
+  - `bash scripts/start-colmena.sh --claude-thdora`
+  - Tarea: bugs documentados en `agentes/thdora-primera-sesion.md`
 - [ ] **Auto-diario mejorado** — verificar/mejorar `scripts/generar-diario.sh` con git log real
   - Complejidad: media | Claude Code solo: sí
 - [ ] **Health-check con detección de keys caducadas** — distinguir entre "servicio caído" y "key caducada"
@@ -62,9 +64,6 @@
 
 ## 🟢 Media prioridad — S18+
 
-- [ ] **Primera sesión real Claude Code en THDORA**
-  - `bash scripts/start-colmena.sh --claude-thdora`
-  - Tarea: bugs documentados en `agentes/thdora-primera-sesion.md`
 - [ ] **benchmark-runner real** — ejecutar con datos reales, rellenar `investigacion/comparativa-llms.md`
 - [ ] **docs/errores-frecuentes.md** — documentar errores E1-E10 de sesión auditoría S16
 
@@ -86,4 +85,4 @@
 
 ---
 
-_Actualizado: 23 abril 2026 — Perplexity + Álvaro_
+_Actualizado: 23 abril 2026 noche — Perplexity + Álvaro_
