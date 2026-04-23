@@ -1,145 +1,89 @@
-# 🗺️ Roadmap — Ecosistema de Agentes IA
+# ROADMAP — ai-toolkit
 
-Registro de todo lo que hay que construir, en orden de prioridad.
-
-> Actualizado: **22 abril 2026**.
+> Estado: 23 abril 2026
+> Para el detalle completo de cada tarea ver `docs/plan-evolucion-ai-toolkit.md`
 
 ---
 
 ## ✅ Completado
 
-| Logro | Fecha |
-|---|---|
-| Estructura base del repo | 14-04-2026 |
-| Claude Code + OpenRouter funcionando | 15-04-2026 |
-| OpenCode + DeepSeek R1 funcionando | 15-04-2026 |
-| Scripts rotación modelos con fallback | 15-04-2026 |
-| README público para la comunidad (EN) | 15-04-2026 |
-| INICIO-AQUI.md — brújula personal | 15-04-2026 |
-| docs/VISION-SISTEMA.md | 15-04-2026 |
-| agentes/PENDIENTES.md — lista viva | 15-04-2026 |
-| guias/opencode-deepseek.md | 15-04-2026 |
-| OpenCode + LiteLLM proxy multi-modelo | 15-04-2026 |
-| 18 modelos en LiteLLM config | 15-04-2026 |
-| Fichas comparativa 14 LLMs | 15-04-2026 |
-| Diario de sesiones estructurado | 15-04-2026 |
-| Dependencias documentadas por capa | 15-04-2026 |
-| Script arranque rápido: LiteLLM + OpenCode | 15-04-2026 |
-| docs/errores-frecuentes.md | 15-04-2026 |
-| scripts/generar-diario.sh | 17-04-2026 |
-| Ollama integrado en LiteLLM — modelos 100% locales | 17-04-2026 |
-| guias/opencode-ollama.md | 17-04-2026 |
-| health-check.sh — diagnóstico completo de proveedores | 17-04-2026 |
-| benchmark-runner.sh — tests de rendimiento entre modelos | 17-04-2026 |
-| opencode-rotate.sh — rotación de modelos | 17-04-2026 |
-| Fix autosave opencode.json — schema válido | 18-04-2026 |
-| opencode-rotate.sh integrado en ai-menu.sh | 18-04-2026 |
-| Auditoría completa del repo (18 abril) | 18-04-2026 |
-| CLAUDE.md actualizado con estado real del stack | 18-04-2026 |
-| ECOSISTEMA.md actualizado con Ollama + Cerebras | 18-04-2026 |
-| **Auditoría S16 — 10 errores identificados y corregidos** | 22-04-2026 |
-| **ai-menu.sh — menú interactivo 12 opciones (rebuild completo)** | 22-04-2026 |
-| **start-colmena.sh — fix E1, ya no depende de thdora** | 22-04-2026 |
-| **INICIO-AQUI.md — actualizado al estado real 22 abril** | 22-04-2026 |
-| **agentes/PENDIENTES.md — sincronizado con completados reales** | 22-04-2026 |
-| **.gitignore — añadidas entradas .aider*, .claude/, logs** | 22-04-2026 |
-| **CHANGELOG.md — sesión 22 abril documentada** | 22-04-2026 |
-| **ROADMAP.md — este archivo, actualizado** | 22-04-2026 |
+### Infraestructura base
+- [x] LiteLLM proxy multi-modelo en :8000 (18+ modelos)
+- [x] OpenCode operativo con Devstral 2 via OpenRouter
+- [x] Claude Code v2.1.117 operativo con OpenRouter
+- [x] Ollama local con qwen3:8b (6GB VRAM)
+- [x] SSH :2222 operativo desde Windows
+- [x] Colmena tmux con 3 paneles
+- [x] `scripts/start-colmena.sh` — arranque multi-modo
+- [x] `scripts/health-check.sh` — diagnóstico de proveedores
+- [x] `scripts/ai-menu.sh` — menú interactivo 12 opciones
+- [x] `scripts/generar-diario.sh` — diario desde git log
+- [x] `scripts/benchmark-runner.sh` — benchmarks velocidad/calidad
+
+### Documentación
+- [x] CLAUDE.md como índice maestro para Claude Code
+- [x] AGENTS.md fusionado en inglés (AGENTES.md retirado)
+- [x] INICIO-AQUI.md actualizado con estado real
+- [x] docs/entidades-ecosistema.md — las 4 entidades documentadas
+- [x] docs/plan-evolucion-ai-toolkit.md — plan priorizado
+- [x] prompts/contexto-claude-ia.md — prompt de contexto
+- [x] prompts/auditoria-claude-code.md — prompt de auditoría
+
+### Hitos confirmados
+- [x] 17 abril: OpenCode end-to-end (leer → escribir → verificar → commit)
+- [x] 22 abril: Claude Code v2.1.117 + OpenRouter operativo
+- [x] 22 abril: LiteLLM + OpenCode + Claude Code colmena corriendo
+- [x] 23 abril: Ecosistema 4 entidades documentado
 
 ---
 
-## 🔧 Próxima sesión — urgente
+## 🔴 Urgente — próxima sesión
 
-### Keys pendientes de renovar — BLOQUEA modelos
-
-- [ ] Renovar GROQ_API_KEY → https://console.groq.com/keys
-- [ ] Renovar DEEPSEEK_API_KEY → https://platform.deepseek.com
-- [ ] Nueva GEMINI_API_KEY → https://aistudio.google.com/apikey
-
-### Primer uso real de Claude Code en THDORA
-
-- [ ] `cd ~/projects/thdora && claude --model anthropic/claude-3.5-sonnet`
-- [ ] Atacar bug #1 de la lista en `agentes/thdora-primera-sesion.md`
-- [ ] Estimación: 1-2 horas
-
-### Benchmark real de modelos
-
-- [ ] `bash scripts/benchmark-runner.sh` — script listo, falta ejecutarlo
-- [ ] Rellenar `investigacion/comparativa-llms.md` con datos reales
-- [ ] Tiempo estimado: ~20 minutos
-
-### Documentación pendiente de esta sesión
-
-- [ ] `docs/errores-frecuentes.md` — añadir errores E1-E10 encontrados hoy
-- [ ] `ECOSISTEMA.md` — mencionar ai-menu.sh y fix colmena
+- [ ] **Fix health-check 401** — añadir `-H "Authorization: Bearer sk-litellm-local"` en `scripts/health-check.sh`
+- [ ] **Renovar keys** — Groq (console.groq.com), DeepSeek (platform.deepseek.com), Gemini (aistudio.google.com) — acción manual de Álvaro
+- [ ] **Ejecutar auditoría** — usar `prompts/auditoria-claude-code.md` con Claude Code + groq-fallback o qwen3-coder:free
 
 ---
 
-## 📅 Abril 2026 — Sistema base
+## 🟡 Alta prioridad — S17/S18
 
-- [ ] Agente revisor de código probado en THDORA
-- [ ] prompts/ — prompts que funcionan bien guardados para reutilizar
-- [ ] Alias en .bashrc: `aitoolkit` lanza el menú desde cualquier directorio
-- [ ] tmux config guardada en repo para reproducir setup de terminales
-- [ ] Limpiar historial git — eliminar .env~ con git filter-repo
-
----
-
-## 📅 Mayo 2026 — n8n + automatizaciones
-
-- [ ] Docker instalado en WSL
-- [ ] n8n arrancando en localhost:5678
-- [ ] Workflow 1: Brief diario 08:00 → Telegram
-- [ ] Workflow 2: Alerta hábitos 22:00 → Telegram
-- [ ] Workflow 3: Diario automático 23:00 → commit en repo
-- [ ] Workflow 4: Resumen semanal lunes → Telegram
-- [ ] Endpoints THDORA API para n8n
-- [ ] toki-bot repo público
+- [ ] **bootstrap.sh** — script que da el estado completo del ecosistema en 30 segundos
+  - Qué está corriendo, qué keys funcionan, en qué rama está cada repo, tareas pendientes
+  - Complejidad: media | Claude Code solo: sí
+- [ ] **Auto-diario mejorado** — verificar/mejorar `scripts/generar-diario.sh` con git log real
+  - Complejidad: media | Claude Code solo: sí
+- [ ] **Health-check con detección de keys caducadas** — distinguir entre "servicio caído" y "key caducada"
+  - Complejidad: media | Claude Code solo: sí
+- [ ] **Mover MDs a docs/** — reorganizar raíz, actualizar referencias internas
+  - Hacerlo DESPUÉS de actualizar CLAUDE.md como índice
+  - Complejidad: media | Claude Code solo: con revisión
 
 ---
 
-## 📅 Junio 2026 — Búsqueda web en THDORA
+## 🟢 Media prioridad — S18+
 
-- [ ] pip install duckduckgo-search
-- [ ] src/core/web_search.py en THDORA
-- [ ] Intent busqueda_web en NLP router
-- [ ] Tests para web_search.py
-- [ ] Key Tavily si DuckDuckGo no es suficiente
-- [ ] Agente de investigación web automático (OpenCode + Tavily)
-
----
-
-## 📅 Verano 2026 — Voz con Whisper + mem0
-
-- [ ] Handler mensajes de audio en aiogram
-- [ ] Transcripción con Groq Whisper API
-- [ ] Conectar transcripción con NLP existente
-- [ ] mem0 integrado en THDORA (memoria persistente entre sesiones)
+- [ ] **Primera sesión real Claude Code en THDORA**
+  - `bash scripts/start-colmena.sh --claude-thdora`
+  - Tarea: bugs documentados en `agentes/thdora-primera-sesion.md`
+- [ ] **benchmark-runner real** — ejecutar con datos reales, rellenar `investigacion/comparativa-llms.md`
+- [ ] **docs/errores-frecuentes.md** — documentar errores E1-E10 de sesión auditoría S16
 
 ---
 
-## 📅 Otoño 2026 — Multi-agente CrewAI
+## ❌ Descartado
 
-- [ ] pip install crewai crewai-tools
-- [ ] Agente revisor de código (DeepSeek R1)
-- [ ] Agente escritor de tests (Qwen3 Coder)
-- [ ] Agente generador de docs (Llama 3.3)
-- [ ] Integración: trigger desde n8n cuando hay PR nuevo
-- [ ] Arquitectura ensemble: misma tarea → varios LLMs → fusionar respuestas
+- **Dashboard MD auto-actualizable** — requiere cron/trigger, complejidad no justificada. Mejor invertir en health-check.
+- **Integración THDORA ↔ ai-toolkit** (endpoint /status) — complejo, para después de S17.
 
 ---
 
-## 🏁 Ecosistema completo (Fin 2026)
+## Proyectos relacionados
 
-Cuando todo esté montado, esto pasa solo cada día:
+| Repo | Estado | Rama activa |
+|------|--------|-------------|
+| ai-toolkit | ✅ Activo | main |
+| thdora | ✅ Activo | feature/ui-unificada (F9.4 en progreso) |
 
-```
-08:00  → Brief del día llega por Telegram
-día    → THDORA responde en lenguaje natural
-día    → OpenCode disponible en terminal con LiteLLM + Ollama
-22:00  → Alerta hábitos si quedan pendientes
-23:00  → generar-diario.sh → commit automático en ai-toolkit
-lunes  → Resumen de la semana llega por Telegram
-```
+---
 
-Consumo total: <1% CPU, ~370 MB RAM (+ Ollama si está activo), coste mínimo.
+_Actualizado: 23 abril 2026 — Perplexity + Álvaro_
