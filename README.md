@@ -12,6 +12,18 @@ Todo lo que hay aquí está probado y corriendo en producción.
 
 ---
 
+## Parte del ecosistema
+
+> ai-toolkit es el **motor** del tridente. Con este stack se construye `thdora` y se documenta todo en `personal`.
+
+| Repo | Rol |
+|------|-----|
+| 🏠 [personal](https://github.com/alvarofernandezmota-tech/personal) | OS personal — tracking, contexto, hoja de ruta |
+| 🤖 **ai-toolkit** (este repo) | El motor — stack IA coste cero |
+| 💬 [thdora](https://github.com/alvarofernandezmota-tech/thdora) | El producto — bot Telegram + FastAPI |
+
+---
+
 ## 🚀 Quick start
 
 ```bash
@@ -145,7 +157,6 @@ ollama serve &
 **Claude Code — modelo no encontrado en OpenRouter:**
 ```bash
 claude --model anthropic/claude-3.5-sonnet
-# o con modelo gratuito:
 claude --model openrouter/meta-llama/llama-4-maverick:free
 ```
 
@@ -162,9 +173,10 @@ Ver diagnóstico completo: [`docs/errores-frecuentes.md`](./docs/errores-frecuen
 
 ## 🗺️ Próximos pasos
 
+- [ ] 🔑 Renovar OpenRouter key — bloquea Claude Code y OpenCode
+- [ ] 🔑 Renovar Groq key — bloquea NLP de THDORA
 - [ ] Probar Claude Code sobre bugs THDORA (ver `agentes/thdora-primera-sesion.md`)
 - [ ] Ejecutar `bash scripts/benchmark-runner.sh` con nuevos modelos
-- [ ] Renovar key Groq si caduca → [console.groq.com/keys](https://console.groq.com/keys)
 
 Ver roadmap completo: [`ROADMAP.md`](./ROADMAP.md)
 
@@ -176,4 +188,4 @@ Toolkit personal construido en público. Si algo funciona para ti, abre un PR. S
 
 ---
 
-*Construido y mantenido por [Álvaro Fernández Mota](https://github.com/alvarofernandezmota-tech) · Actualizado 22 abril 2026*
+*Construido y mantenido por [Álvaro Fernández Mota](https://github.com/alvarofernandezmota-tech) · Actualizado 26 abril 2026*
