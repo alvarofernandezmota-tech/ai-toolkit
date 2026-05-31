@@ -1,7 +1,7 @@
 # 🤖 Ecosistema Personal de Agentes IA
 
 > Agentes que trabajan para ti: en tu código, en tu vida, en tu información. Coste = 0€.
-> Última actualización: **22 abril 2026**
+> Última actualización: **31 mayo 2026**
 
 ---
 
@@ -14,7 +14,7 @@ TÚ
  ├── Terminal (Claude Code)      → agente de código: edita repos, hace commits
  ├── Terminal (OpenCode)         → agente open source: investigación, docs, coding
  ├── n8n (self-hosted)            → orquestador: conecta todo con 400+ servicios
- └── ai-toolkit repo              → memoria: guias, diarios, contexto de todo
+ └── ai-toolkit repo              → cerebro: guias, diarios, contexto de todo
 
 Todo gratis. Todo tuyo. Todo conectado.
 ```
@@ -33,17 +33,48 @@ La infraestructura ya existe. El trabajo es conectarla bien y documentar lo que 
 
 ---
 
-## 📡 Estado actual del stack — 22 Abril 2026
+## 🗂️ Arquitectura de repos — Mayo 2026
+
+> **Decisión de diseño (31 mayo 2026):** cada dominio tiene su propia repo para que la IA pueda gestionarla con contexto limpio, sin ruido de otros proyectos.
+
+| Repo | Tipo | Qué contiene | Link |
+|------|------|--------------|------|
+| **ai-toolkit** | 🧠 Sistema | Cerebro IA, herramientas, stack, agentes, guías genéricas | [→](https://github.com/alvarofernandezmota-tech/ai-toolkit) |
+| **personal** | 📔 Vida personal | Diarios, tracking vida, contexto personal (no técnico) | [→](https://github.com/alvarofernandezmota-tech/personal) |
+| **thdora** | 🤖 Proyecto | Bot Telegram + FastAPI + asistente personal IA | [→](https://github.com/alvarofernandezmota-tech/thdora) |
+| **impresion-3d** | 🖨️ Proyecto | Anycubic Photon V1, resinas, modelos, diarios de sesión | [→](https://github.com/alvarofernandezmota-tech/impresion-3d) |
+| **python-snippets** | 📚 Formación | Posts Instagram Python — cada carpeta = un post | [→](https://github.com/alvarofernandezmota-tech/python-snippets) |
+| **unix** | 📚 Formación | Apuntes Sistemas Operativos II | [→](https://github.com/alvarofernandezmota-tech/unix) |
+| **ejerciciosbego** | 📚 Formación | Python desde cero para Bego | [→](https://github.com/alvarofernandezmota-tech/ejerciciosbego) |
+| **image-calculator** | 🛠️ Proyecto | OCR + operaciones matemáticas sobre imágenes | [→](https://github.com/alvarofernandezmota-tech/image-calculator) |
+| **AppointmentManager** | 🛠️ Proyecto | Gestor de citas (anterior a THDORA) | [→](https://github.com/alvarofernandezmota-tech/AppointmentManager) |
+
+### Regla de oro: ¿dónde va cada cosa?
+
+```
+¿Es una herramienta IA reutilizable?  → ai-toolkit
+¿Es tu vida, diario, tracking?        → personal
+¿Es un proyecto concreto?             → su propia repo
+¿Es formación/contenido educativo?    → su propia repo
+```
+
+**Por qué repos separadas:** la IA (Claude Code, OpenCode) carga el contexto de una repo entera al arrancar. Si todo está mezclado, pierde foco. Repo pequeña y cohesionada = IA más precisa y rápida.
+
+---
+
+## 📡 Estado actual del stack — 31 Mayo 2026
 
 ```
 ✅ Ollama local     → operativo (qwen2.5-coder:14b, deepseek-r1:14b, qwen3:8b)
-✅ LiteLLM proxy    → operativo en :8000 (fix puerto uvicorn aplicado)
+✅ LiteLLM proxy    → operativo en :8000
 ✅ OpenCode         → operativo
 ✅ Cerebras         → operativo (principal en LiteLLM)
 ✅ OpenRouter       → operativo (llama-4-maverick, qwen3-235b)
 ✅ Google Gemini    → operativo (rate limit ocasional)
 ⚠️ Groq             → key caducada → renovar en console.groq.com
 ⚠️ DeepSeek API     → key caducada → renovar en platform.deepseek.com
+✅ THDORA           → v0.14.0 en producción
+✅ n8n              → pendiente levantar en Docker/WSL
 ```
 
 | Bloque | Estado | Notas |
@@ -54,22 +85,22 @@ La infraestructura ya existe. El trabajo es conectarla bien y documentar lo que 
 | OpenCode + LiteLLM proxy | ✅ Funciona | Fix puerto uvicorn aplicado 22 abril |
 | Ollama modelos locales | ✅ Funciona | qwen2.5-coder:14b, deepseek-r1:14b, qwen3:8b |
 | Cerebras (LiteLLM) | ✅ Funciona | Principal para tareas rápidas |
-| **ai-menu.sh** | ✅ Nuevo | Menú interactivo 12 opciones — punto de entrada |
-| Scripts de rotación de modelos | ✅ Listo | model-rotate.sh, opencode-rotate.sh, aider-rotate.sh |
+| **ai-menu.sh** | ✅ Activo | Menú interactivo 12 opciones — punto de entrada |
+| Scripts rotación modelos | ✅ Listo | model-rotate.sh, opencode-rotate.sh, aider-rotate.sh |
 | health-check.sh | ✅ Listo | Diagnóstico completo de proveedores |
 | generar-diario.sh | ✅ Listo | Diario automático desde git log |
 | benchmark-runner.sh | ✅ Listo | Script listo — falta ejecutarlo con datos reales |
 | ensemble.sh | ✅ Listo | Mismo prompt a varios modelos en paralelo |
 | Agente revisor de código | 🛠 Borrador | Necesita prueba real en THDORA |
-| n8n self-hosted | ❌ Mayo 2026 | Docker ya documentado |
+| n8n self-hosted | ⚠️ Pendiente | Docker documentado, sin levantar aún |
 | Búsqueda web en THDORA | ❌ Junio 2026 | DuckDuckGo o Tavily |
 | Multi-agente CrewAI | ❌ Otoño 2026 | Diseño listo |
 
 ---
 
-## ⚡ Consumo de recursos — ¿pesa en el ordenador?
+## ⚡ Consumo de recursos
 
-### La respuesta corta: NO. Casi cero.
+### La respuesta corta: NO pesa. Casi cero.
 
 | Pieza | CPU en uso | RAM | Dónde corre la IA |
 |---|---|---|---|
@@ -105,7 +136,7 @@ La infraestructura ya existe. El trabajo es conectarla bien y documentar lo que 
 
 ---
 
-## 🧠 Modelos recomendados (abril 2026)
+## 🧠 Modelos recomendados (mayo 2026)
 
 | Tarea | Modelo | Proveedor |
 |---|---|---|
@@ -151,12 +182,12 @@ La infraestructura ya existe. El trabajo es conectarla bien y documentar lo que 
 
 | Agente | Herramienta | Estado | Qué hace |
 |---|---|---|---|
-| 🔧 **Coding THDORA** | Claude Code | 🔧 Siguiente | Edita código real, hace commits |
+| 🔧 **Coding THDORA** | Claude Code | 🔧 Activo | Edita código real, hace commits |
 | 🧠 **Investigación** | OpenCode + Ollama | ✅ Funciona | Investiga, genera docs en MD |
 | 📝 **Generador docs** | OpenCode | 🛠 Borrador | ARCHITECTURE.md, docstrings |
 | 🧪 **Tests** | CrewAI | ❌ Otoño | Crea tests automáticamente |
 
-### Agentes de orquestación (n8n — Mayo 2026)
+### Agentes de orquestación (n8n — pendiente)
 
 | Agente | Cuándo | Qué produce |
 |---|---|---|
@@ -169,7 +200,7 @@ La infraestructura ya existe. El trabajo es conectarla bien y documentar lo que 
 
 ## 🚀 Cómo arrancar en cada sesión
 
-### Punto de entrada principal (nuevo — 22 abril)
+### Punto de entrada principal
 ```bash
 cd ~/projects/ai-toolkit
 git pull
@@ -197,48 +228,6 @@ bash scripts/health-check.sh --fix    # muestra comandos de arreglo
 ### Ensemble (mismo prompt a varios modelos)
 ```bash
 bash scripts/ensemble.sh "¿Cuál es la mejor arquitectura para X?"
-```
-
----
-
-## 🗂️ Estructura de repos del ecosistema
-
-| Repo | Qué es | Regla |
-|---|---|---|
-| `thdora` | Tu asistente personal | Lo que **vives** y personalizas |
-| `ai-toolkit` | Caja de herramientas pública | Lo que **aprendes** y generalizas |
-| `personal` | Tu memoria escrita | Diarios, tracking, contexto de vida |
-
-**La diferencia clave:** THDORA tiene tus keys reales y tu BBDD. ai-toolkit tiene plantillas con `$TU_KEY` para que cualquier dev pueda usarlo.
-
----
-
-## 🗺️ Hoja de ruta
-
-```
-Abril 2026 (AHORA)
-  ├── ✅ Claude Code + OpenRouter funcionando
-  ├── ✅ OpenCode + LiteLLM proxy + Ollama funcionando
-  ├── ✅ Scripts rotación modelos listos
-  ├── ✅ health-check.sh operativo
-  ├── ✅ generar-diario.sh operativo
-  ├── ✅ ai-menu.sh — menú interactivo nuevo
-  ├── ✅ Fix puerto uvicorn en start-colmena.sh
-  ├── ⚠️ Renovar Groq key → console.groq.com
-  ├── ⚠️ Renovar DeepSeek key → platform.deepseek.com
-  ├── ❌ Ejecutar benchmark-runner.sh con datos reales
-  └── 🔧 Siguiente: primer uso real de Claude Code en THDORA
-
-Mayo 2026
-  ├── Docker en WSL
-  ├── n8n arrancando en localhost:5678
-  └── Workflows: brief diario + alerta hábitos + diario automático
-
-Junio 2026
-  └── Búsqueda web en THDORA (DuckDuckGo + Groq)
-
-Otoño 2026
-  └── CrewAI: revisor + tester automático
 ```
 
 ---
@@ -277,4 +266,31 @@ Consumo total: <1% CPU, ~370 MB RAM, 0€/mes
 
 ---
 
-*Última actualización: 22 abril 2026 — ai-menu.sh añadido, fix puerto uvicorn, estado APIs actualizado, Gemini operativo.*
+## 🗺️ Hoja de ruta
+
+```
+Abril 2026 ✅
+  ├── ✅ Claude Code + OpenRouter funcionando
+  ├── ✅ OpenCode + LiteLLM proxy + Ollama funcionando
+  ├── ✅ Scripts rotación modelos listos
+  ├── ✅ health-check.sh operativo
+  ├── ✅ generar-diario.sh operativo
+  └── ✅ ai-menu.sh — menú interactivo
+
+Mayo 2026 (AHORA)
+  ├── ✅ Arquitectura multi-repo definida (ai-toolkit / personal / proyectos / formación)
+  ├── ⚠️ Renovar Groq key → console.groq.com
+  ├── ⚠️ Renovar DeepSeek key → platform.deepseek.com
+  ├── ❌ n8n en Docker/WSL
+  └── ❌ Ejecutar benchmark-runner.sh con datos reales
+
+Junio 2026
+  └── Búsqueda web en THDORA (DuckDuckGo + Groq)
+
+Otoño 2026
+  └── CrewAI: revisor + tester automático
+```
+
+---
+
+*Última actualización: 31 mayo 2026 — arquitectura multi-repo definida, estado APIs actualizado.*
