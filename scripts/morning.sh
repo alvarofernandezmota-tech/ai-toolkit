@@ -13,6 +13,8 @@
 #   - Rama activa de repos principales
 # =============================================================================
 
+RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 set -euo pipefail
 
 GREEN='\033[0;32m'
@@ -95,7 +97,11 @@ echo ""
 # ─── 4. Rama activa repos ─────────────────────────────────────────────────────
 echo -e "${BOLD}  🌿 Repos${NC}"
 
-for repo_path in "$HOME/ai-toolkit" "$HOME/thdora" "$HOME/personal"; do
+# Los repos que se miran. thdora y personal se retiraron el 2026-09-10:
+# ninguno de los dos existe ya en la cuenta. Se puede sobreescribir con
+# REPOS_MORNING="ruta1 ruta2" sin tocar el script, porque cada maquina
+# los tiene en un sitio distinto.
+for repo_path in ${REPOS_MORNING:-"$RAIZ"}; do
   if [ -d "$repo_path/.git" ]; then
     REPO_NAME=$(basename "$repo_path")
     BRANCH=$(git -C "$repo_path" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "?")

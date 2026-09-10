@@ -4,6 +4,11 @@
 # Uso: bash scripts/agente-personal.sh
 # ============================================================
 
+# La raiz del repo, deducida de donde vive este script. Antes esto era una
+# ruta fija y habia dos distintas -~/ai-toolkit y ~/projects/ai-toolkit-, asi
+# que segun que script lanzaras buscaba el repo en un sitio o en otro.
+RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 set -e
 
 REPO_URL="https://github.com/alvarofernandezmota-tech/personal"
@@ -41,5 +46,5 @@ echo ""
 echo "$PROMPT"
 echo ""
 
-cd ~/projects/ai-toolkit
+cd "$RAIZ"
 opencode

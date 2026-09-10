@@ -5,11 +5,16 @@
 #
 # Uso: bash scripts/generar-diario.sh [repo]
 #   bash scripts/generar-diario.sh              # usa el directorio actual
-#   bash scripts/generar-diario.sh thdora       # usa ~/thdora
-#   bash scripts/generar-diario.sh ai-toolkit   # usa ~/ai-toolkit
+#   bash scripts/generar-diario.sh ai-toolkit   # usa este repo
+#   REPOS_DIARIO="/ruta/a/otro" bash scripts/generar-diario.sh
 #
 # Output: docs/diario/YYYY-MM-DD-sesion.md en el repo ai-toolkit
 # =============================================================================
+
+# La raiz del repo, deducida de donde vive este script. Antes esto era una
+# ruta fija y habia dos distintas -~/ai-toolkit y ~/projects/ai-toolkit-, asi
+# que segun que script lanzaras buscaba el repo en un sitio o en otro.
+RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 set -e
 
@@ -22,7 +27,7 @@ NC='\033[0m'
 
 # ─── Config ──────────────────────────────────────────────────────────────────
 
-TOOLKIT_PATH="$HOME/ai-toolkit"
+TOOLKIT_PATH="$RAIZ"
 DIARIO_DIR="$TOOLKIT_PATH/docs/diario"
 HOY=$(date '+%Y-%m-%d')
 HORA=$(date '+%H:%M')
@@ -30,9 +35,7 @@ OUTPUT_FILE="$DIARIO_DIR/$HOY-sesion.md"
 
 # Repos a revisar si no se pasa argumento
 REPOS_DEFAULT=(
-  "$HOME/thdora"
-  "$HOME/ai-toolkit"
-  "$HOME/personal"
+  "$RAIZ"
 )
 
 # ─── Funciones ───────────────────────────────────────────────────────────────
@@ -208,9 +211,9 @@ main() {
   if [ -n "$1" ]; then
     # Repo específica pasada como argumento
     case "$1" in
-      thdora)     repos=("$HOME/thdora") ;;
-      ai-toolkit) repos=("$HOME/ai-toolkit") ;;
-      personal)   repos=("$HOME/personal") ;;
+      # thdora y personal se retiraron el 2026-09-10: no existen en la cuenta
+      ai-toolkit) repos=("$RAIZ") ;;
+      *)          err "repo desconocido: $1" ;;
       *)
         if [ -d "$1/.git" ]; then
           repos=("$1")
