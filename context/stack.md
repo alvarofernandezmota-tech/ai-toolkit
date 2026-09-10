@@ -7,7 +7,7 @@
 | Máquina | Rol | Acceso |
 |---|---|---|
 | Ordenador grande | Servidor principal, GPU, Ollama | Local o SSH |
-| Acer portátil | Cliente ligero | SSH :2222 → 10.202.77.228 |
+| Acer portátil | Cliente ligero | SSH :2222 → IP_DE_TU_MAQUINA |
 
 ## Servicios activos
 

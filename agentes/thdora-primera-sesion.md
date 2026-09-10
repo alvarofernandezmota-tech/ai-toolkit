@@ -28,7 +28,7 @@ Primera sesión real de Claude Code trabajando sobre el repo `thdora`. No es exp
 
 ```bash
 # 1. SSH al servidor
-ssh -p 2222 alvaro@10.202.77.228
+ssh -p 2222 alvaro@IP_DE_TU_MAQUINA
 
 # 2. Verificar que OpenRouter key está activa
 echo $OPENROUTER_API_KEY   # debe mostrar sk-or-v1-...

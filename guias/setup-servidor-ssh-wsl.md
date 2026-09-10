@@ -12,7 +12,7 @@ PC Grande (Windows + WSL2 Ubuntu) — GTX 1060 6GB
 └── SSH Server     → acceso remoto desde Acer (puerto 2222)
 
         ↑ SSH (VSCode Remote-SSH, puerto 2222)
-        ↑ IP: 10.159.182.228 (Windows Wi-Fi)
+        ↑ IP: IP_DE_TU_MAQUINA (Windows Wi-Fi)
 
 Acer 15" (Windows)
 └── VSCode + Remote-SSH
@@ -26,7 +26,7 @@ Acer 15" (Windows)
 
 | Concepto | Valor |
 |---|---|
-| IP Windows (Wi-Fi) | `10.159.182.228` |
+| IP Windows (Wi-Fi) | `IP_DE_TU_MAQUINA` |
 | IP WSL interno | `172.25.139.192` |
 | Usuario SSH | `alvaro` |
 | Puerto SSH | `2222` |
@@ -124,12 +124,12 @@ ssh-keygen -t ed25519 -f "$env:USERPROFILE\.ssh\id_ed25519"
 ### 4.2 Copiar clave al servidor ❌ (pendiente — Acer se quedó sin batería)
 ```powershell
 # Ejecutar desde Acer — pedirá contraseña UNA ÚLTIMA VEZ
-type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh -p 2222 alvaro@10.159.182.228 "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh -p 2222 alvaro@IP_DE_TU_MAQUINA "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
 ```
 
 ### 4.3 Probar conexión sin contraseña
 ```powershell
-ssh -p 2222 alvaro@10.159.182.228
+ssh -p 2222 alvaro@IP_DE_TU_MAQUINA
 # Debe conectar directo, sin pedir contraseña
 ```
 
@@ -143,7 +143,7 @@ ssh -p 2222 alvaro@10.159.182.228
 ### 5.2 Config SSH (`C:\Users\Varo\.ssh\config`)
 ```
 Host servidor-pc
-  HostName 10.159.182.228
+  HostName IP_DE_TU_MAQUINA
   User alvaro
   Port 2222
   IdentityFile ~/.ssh/id_ed25519

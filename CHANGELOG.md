@@ -91,7 +91,7 @@ Sesión de 4h con Perplexity + Álvaro. Auditoría completa, estructura PARA imp
 ### Hecho
 - **Claude Code v2.1.117** — conflicto de auth corregido
 - **LiteLLM :8000** — arrancando correctamente con todos los modelos
-- **SSH :2222** — confirmado operativo (IP: 10.202.77.228)
+- **SSH :2222** — confirmado operativo (IP retirada del registro: repo público)
 - **Colmena tmux** — 3 paneles corriendo
 
 ### Problemas identificados

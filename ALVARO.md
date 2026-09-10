@@ -11,7 +11,7 @@ Desarrollador Python que está construyendo un ecosistema completo de IA persona
 
 Trabaja desde casa (Madrid) con dos máquinas que forman un solo ecosistema:
 - **Ordenador grande** — GPU 6GB VRAM, Ollama local, OpenCode + LiteLLM proxy
-- **Acer** — portátil ligero, accede al ordenador grande por SSH (:2222, IP: 10.202.77.228)
+- **Acer** — portátil Arch Linux. Llega al servidor por SSH sobre VPN mesh, desde cualquier red. Direcciones concretas en el repo privado, no aquí
 
 Las IAs no son herramientas aisladas — son un equipo que conoce sus proyectos, su forma de trabajar y sus decisiones pasadas, y que escala lo que él no puede hacer solo.
 

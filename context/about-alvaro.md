@@ -7,7 +7,7 @@
 Desarrollador Python construyendo un ecosistema de IA personal en producción real.
 Trabaja desde Madrid. Dos máquinas:
 - **Ordenador grande** — GPU 6GB VRAM, Ollama local, OpenCode + LiteLLM proxy en :8000
-- **Acer (portátil)** — accede al grande por SSH (:2222, IP: 10.202.77.228)
+- **Acer (portátil)** — accede al grande por SSH (:2222, IP: IP_DE_TU_MAQUINA)
 
 ## Proyectos activos
 
