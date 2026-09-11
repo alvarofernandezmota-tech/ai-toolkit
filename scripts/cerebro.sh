@@ -11,7 +11,7 @@ echo ""
 
 # Verificar que estamos en ai-toolkit
 if [ ! -f "CEREBRO.md" ]; then
-  echo "❌ Error: ejecuta este script desde ~/ai-toolkit/"
+  echo "❌ Error: ejecuta este script desde la raiz de ai-toolkit"
   exit 1
 fi
 
@@ -27,9 +27,9 @@ echo "✅ Contexto: $(pwd)"
 echo "✅ API Key: detectada"
 echo ""
 echo "📋 Repos disponibles:"
-echo "   ~/thdora/      → bot Telegram personal"
-echo "   ~/ai-toolkit/  → herramientas (AQUÍ)"
-echo "   ~/personal/    → memoria y diarios"
+echo "   bifrost      → bot de Telegram, en produccion (publico)"
+echo "   ai-toolkit   → herramientas y contexto de agentes (AQUI)"
+echo "   midgaror     → documentacion, infraestructura y diario (privado)"
 echo ""
 echo "📚 Lee CEREBRO.md para entender el protocolo"
 echo ""

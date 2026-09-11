@@ -4,7 +4,12 @@
 
 ---
 
-## Estado actual — 2026-04-23
+## Estado del stack — medido el 2026-04-23, **sin volver a comprobar**
+
+> Esta tabla es de abril y nadie la ha medido desde entonces. Se conserva
+> porque puede seguir siendo cierta, pero **no se da por buena**: lo de las
+> claves caducadas y las cuotas lleva cinco meses sin mirarse.
+> Se comprueba con `bash scripts/health-check.sh`, y lo que salga se escribe.
 
 | Componente | Estado | Notas |
 |---|---|---|
@@ -12,7 +17,7 @@
 | Claude Code v2.1.117 | ✅ Operativo | vía OpenRouter (Acer SSH) |
 | LiteLLM proxy :8000 | ⚠️ Arranca OK, health 401 | fix pendiente: header auth |
 | OpenRouter | ✅ Key en ~/.bashrc | qwen3-coder:free + llama-3.3-70b:free |
-| SSH :2222 | ✅ Operativo | IP: 10.202.77.228 |
+| SSH | ✅ Operativo | Desde el 2026-09-10 va por VPN mesh, puerto 22. Ver abajo |
 | Ollama local | ✅ qwen3:8b | 6GB VRAM — NO usar modelos 14B |
 | Kimi K2 | ✅ Añadido a opencode.json | vía LiteLLM proxy |
 | Groq | ⚠️ Key caducada | Renovar en console.groq.com |
@@ -67,8 +72,16 @@ Dentro de OpenCode usa `Ctrl+X` → cambiar modelo:
 
 ## 💻 ACER (vía SSH) — Claude Code + OpenRouter
 
-Claude Code es la herramienta en el Acer, conectado por SSH al ordenador grande.
-Se conecta directamente a OpenRouter, sin necesitar proxy local.
+Claude Code es la herramienta en el Acer. Se conecta directamente a
+OpenRouter, sin necesitar proxy local.
+
+> **La topología cambió el 2026-09-10.** Las dos máquinas están en una VPN
+> mesh (Tailscale), así que el Acer llega al servidor **desde cualquier red**
+> —incluso compartiendo datos del móvil, fuera de casa— sin abrir un puerto
+> en el router y sin depender de la IP que le toque a cada una ese día.
+>
+> Las direcciones concretas **no se escriben aquí**: este repo es público.
+> Están en el repo privado.
 
 ```
 ┌────────────────────┬─────────────────────┐
@@ -82,17 +95,21 @@ Se conecta directamente a OpenRouter, sin necesitar proxy local.
 ### Conexión SSH desde el Acer
 
 ```bash
-ssh alvaro@10.202.77.228 -p 2222
+ssh USUARIO@MAQUINA          # nombre de la máquina en la red mesh
 cd ~/projects/ai-toolkit
 source ~/.bashrc
 bash scripts/start-colmena.sh --claude-acer   # ← PRINCIPAL
 ```
 
+La línea anterior traía un usuario, una IP de LAN y un puerto fijos. Los tres
+dejaron de existir — y una IP de LAN no pinta nada en un repo público, así que
+tampoco se reproduce aquí para enseñar cómo estaba.
+
 ### Modos disponibles
 
 ```bash
 bash scripts/start-colmena.sh --claude-acer     # 2 paneles: Claude Code + bash ← PRINCIPAL
-bash scripts/start-colmena.sh --claude-thdora   # Claude Code en ~/projects/thdora
+bash scripts/start-colmena.sh --claude-thdora   # ⚠️ el repo thdora ya no existe (2026-09-10)
 ```
 
 ### Variables necesarias en ~/.bashrc
@@ -119,10 +136,15 @@ Dentro de Claude Code: `/model openrouter/qwen/qwen3-coder:free`
 
 ## Lo más urgente
 
-1. **Arreglar health-check 401** — añadir `-H "Authorization: Bearer sk-litellm-local"` al curl en scripts/health-check.sh
-2. **Renovar keys** — Groq, DeepSeek, Gemini
-3. **Añadir kimi-k2 a litellm-config.yaml** — ya está en opencode.json, falta el proxy
-4. **Primera sesión THDORA** — `bash scripts/start-colmena.sh --claude-thdora`
+**Pendiente de comprobar si sigue siéndolo.** Esta lista es del 23 de abril:
+
+1. **Arreglar health-check 401** — añadir `-H "Authorization: Bearer sk-litellm-local"` al curl en `scripts/health-check.sh`
+2. **Renovar keys** — Groq, DeepSeek, Gemini. Cinco meses sin mirarlo
+3. **Añadir kimi-k2 a `litellm-config.yaml`** — ya está en `opencode.json`, falta el proxy
+4. ~~Primera sesión THDORA~~ — **el repo `thdora` ya no existe.** Retirado el 2026-09-10
+
+Lo primero de todo, en realidad, es correr `bash scripts/health-check.sh` y
+escribir lo que salga. Los tres primeros puntos puede que ya no existan.
 
 ---
 
@@ -160,4 +182,9 @@ Dentro de Claude Code: `/model openrouter/qwen/qwen3-coder:free`
 - Rama principal: `main`
 - Ruta local: `~/projects/ai-toolkit`
 
-_Actualizado: 23 abril 2026, ~16:54 CEST — OpenCode y Claude Code separados, Kimi K2 añadido, modelos 14B eliminados_
+_Actualizado: 2026-09-10 — corregidos el acceso SSH (usuario, IP y puerto
+que ya no existen), la topología de red y los pendientes que apuntaban a un
+repo borrado. Lo verificado se dejó intacto: los 8 ficheros clave, los 5
+scripts y los 6 modos de arranque existen todos._
+
+_Anterior: 23 abril 2026 — OpenCode y Claude Code separados, Kimi K2 añadido, modelos 14B eliminados_

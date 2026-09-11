@@ -30,7 +30,7 @@ sudo systemctl edit ollama
 ```
 
 ### 2. Setup SSH Acer → PC grande (WSL2)
-- IP Windows (WiFi): `10.202.77.228`
+- IP Windows (WiFi): `IP_DE_TU_MAQUINA`
 - IP WSL interna: `172.25.139.192`
 - Puerto SSH WSL: `2222` (el 22 lo intercepta Windows)
 
@@ -45,7 +45,7 @@ netsh interface portproxy add v4tov4 listenport=2222 listenaddress=0.0.0.0 conne
 netsh advfirewall firewall add rule name="SSH2222" dir=in action=allow protocol=TCP localport=2222
 
 # Desde el Acer:
-ssh -p 2222 alvaro@10.202.77.228
+ssh -p 2222 alvaro@IP_DE_TU_MAQUINA
 ```
 
 ### 3. Claude Code no aceptaba modelos gratuitos de OpenRouter
@@ -120,7 +120,7 @@ claude --model qwen2.5-coder:14b
 
 ```bash
 # Desde el Acer:
-ssh -p 2222 alvaro@10.202.77.228
+ssh -p 2222 alvaro@IP_DE_TU_MAQUINA
 
 # Si la sesión tmux sigue viva:
 tmux attach -t colmena

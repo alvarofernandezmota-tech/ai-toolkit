@@ -1,72 +1,78 @@
 # CLAUDE.md — Contexto para Claude Code
 
 > Este archivo lo lee Claude Code automáticamente al arrancar en este directorio.
-> Última actualización: 23 abril 2026.
+> **Última actualización: 2026-09-10.** Antes ponía 23 abril 2026, y entre
+> medias el ecosistema cambió entero: ver «Qué cambió desde abril» al final.
 
 ---
 
-## Las 4 entidades del ecosistema
+## Antes de nada: este repo es PÚBLICO
 
-| Entidad | Tipo | Rol |
-|---|---|---|
-| **Álvaro** | Humano | Director, decisiones, contexto |
-| **Perplexity** | IA web con MCP GitHub | Planificación, diarios, commits, auditorías |
-| **Claude Code (tú)** | Agente CLI terminal | Ejecutas tareas autónomas, lees/escribes archivos, commits técnicos |
-| **Claude IA** | Modelo lenguaje web | Razonamiento y código puntual sin acceso al repo |
+No se escriben aquí IP, nombres de máquina, nombres de usuario, rutas de
+claves ni contenido de repos privados. Si un dato solo sirve estando dentro
+de la red de Álvaro, no pinta nada en un repositorio que lee cualquiera.
 
-**Dinámica:** Perplexity + Álvaro planifican y preparan prompts → tú ejecutas → Álvaro supervisa.
+La versión anterior de este fichero publicaba una IP de LAN. Ya no está.
 
 ---
 
 ## Quién soy
 
-Soy Álvaro Fernández. Desarrollador Python. Construyo un ecosistema de IAs que trabajan para mí.
-Madrid. Dos máquinas: ordenador grande (GPU 6GB, Ollama, LiteLLM :8000) + Acer (SSH :2222, IP: 10.202.77.228).
+Álvaro Fernández. Desarrollador Python, Madrid. Construyo un ecosistema de
+IAs que trabajan para mí.
+
+**Dos máquinas**, las dos Arch Linux, unidas por una VPN mesh (Tailscale):
+
+- Un **sobremesa que hace de servidor** — corre el bot de Telegram bajo
+  systemd. Es la máquina que no se toca a la ligera.
+- Un **portátil** — trabajo y experimentación.
+
+Los detalles de red viven en el repo privado, no aquí.
 
 ---
 
 ## Este repo: ai-toolkit
 
-El **cerebro compartido del ecosistema** — configuración, scripts, documentación y prompts.
-**No es el código de THDORA.** El código de THDORA está en `~/projects/thdora`.
+El **cerebro compartido del ecosistema**: configuración, scripts,
+documentación y prompts para operar agentes IA. **No es código de producto.**
 
-### Estructura PARA (desde 23 abril 2026)
+### Estructura (comprobada el 2026-09-10, existe entera)
 
 ```
 ai-toolkit/
 ├── CLAUDE.md              ← tú lees esto al arrancar
 ├── AGENTS.md              ← OpenCode lee esto
 ├── context/               ← quién eres y cómo funciona el stack
-│   ├── about-alvaro.md    ← perfil maestro, proyectos, reglas
-│   └── stack.md           ← servicios, modelos, puertos, variables
-├── projects/              ← proyectos activos con deadline
-│   ├── thdora.md          ← F9.4, issues, próximos pasos
-│   └── ai-toolkit.md      ← estado actual, roadmap
+├── projects/              ← proyectos activos
 ├── areas/                 ← responsabilidades continuas
-│   └── ia-desarrollo.md   ← KPIs, hábitos, horizonte
-├── diario/                ← memoria de sesiones (YYYY-MM-DD[-momento].md)
+├── diario/                ← memoria de sesiones
 ├── agentes/               ← fichas de agentes
 ├── docs/                  ← documentación técnica
-├── prompts/               ← prompts/commands para tareas
-├── scripts/               ← automatización
-└── herramientas/          ← tus herramientas para operar el repo
+├── prompts/               ← prompts para tareas
+├── scripts/               ← 22 scripts de automatización
+└── herramientas/          ← utilidades para operar el repo
 ```
 
-**Lee siempre al inicio de sesión:**
-1. `context/about-alvaro.md` — quién es Álvaro, proyectos activos, reglas
-2. `context/stack.md` — servicios, modelos, variables de entorno
-3. `projects/thdora.md` o `projects/ai-toolkit.md` según la tarea
+**Lee al inicio de sesión:**
+1. `context/about-alvaro.md` — perfil, proyectos, reglas
+2. `context/stack.md` — servicios, modelos, variables
+3. El fichero de `projects/` que corresponda a la tarea
 
 ---
 
-## Stack actual (23 abril 2026)
+## Los proyectos de verdad, a 2026-09-10
 
-| Herramienta | Modelo | Cómo arranca |
+| Proyecto | Qué es | Dónde |
 |---|---|---|
-| Claude Code v2.1.117 | OpenRouter directo | `start-colmena.sh --claude-thdora` |
-| OpenCode | Devstral 2 via OpenRouter | `start-colmena.sh --opencode` |
-| LiteLLM proxy | Puerto 8000, 18+ modelos | `start-colmena.sh --solo-proxy` |
-| Ollama local | qwen3:8b (6GB VRAM — NO 14B+) | `ollama serve` |
+| **bifrost** | Bot de Telegram **en producción**. Servicio systemd, 179 pruebas, ADRs propios. Es la pieza más presentable del ecosistema | [público](https://github.com/alvarofernandezmota-tech/bifrost) |
+| **midgaror** | El repo personal: documentación de trabajo, infraestructura, diario. **Privado desde el 2026-09-10.** bifrost importa sus módulos de diario | privado |
+| **ai-toolkit** | Este repo | público |
+
+> **THDORA ya no es el proyecto principal.** Lo era cuando se escribió la
+> versión anterior de este fichero. Hoy el repo `thdora` **no existe** en la
+> cuenta, y `~/projects/thdora` no es una ruta válida. Queda `THDORA-PERSONAL`,
+> privado y sin tocar desde julio. Su auditoría concluyó que se quedó
+> bloqueada, y esa conclusión ya está aplicada a las decisiones nuevas.
 
 ---
 
@@ -77,7 +83,7 @@ export OPENROUTER_API_KEY="sk-or-v1-..."
 unset ANTHROPIC_API_KEY   # CRÍTICO: sin esto hay conflicto de auth
 ```
 
-**IMPORTANTE**: Nunca setear `ANTHROPIC_API_KEY` y `ANTHROPIC_AUTH_TOKEN` a la vez.
+**Nunca** setear `ANTHROPIC_API_KEY` y `ANTHROPIC_AUTH_TOKEN` a la vez.
 
 ---
 
@@ -90,54 +96,67 @@ bash scripts/morning.sh                         # contexto del día en 30s
 bash scripts/start-colmena.sh --colmena-full    # arrancar todo
 ```
 
----
-
-## Proyecto principal: THDORA
-
-- Ruta: `~/projects/thdora`
-- Stack: Python 3.13 + FastAPI (puerto 8001) + SQLite + python-telegram-bot 21+
-- Rama activa: `feature/ui-unificada` — tarea **F9.4** en progreso
-- Para trabajar: `bash scripts/start-colmena.sh --claude-thdora`
-- Estado detallado: `projects/thdora.md`
-- Bugs documentados: `agentes/thdora-primera-sesion.md`
-
----
-
 ## Scripts de rutina
 
 ```bash
-bash scripts/morning.sh           # inicio de sesión — servicios + diario + urgentes
-bash scripts/day-close.sh         # fin del día — 3 logros + error + prioridad + commit auto
-bash scripts/weekly-planning.sh   # cada lunes — plan desde ROADMAP
-bash scripts/health-check.sh      # diagnóstico APIs (auth fix incluido)
-bash scripts/bootstrap.sh         # estado ecosistema en 30s
+bash scripts/morning.sh           # inicio de sesión
+bash scripts/day-close.sh         # fin del día
+bash scripts/weekly-planning.sh   # cada lunes
+bash scripts/health-check.sh      # diagnóstico de APIs
+bash scripts/bootstrap.sh         # estado del ecosistema en 30s
 ```
+
+Los seis existen, comprobado el 2026-09-10. Hay 22 en total: `ls scripts/`.
 
 ---
 
 ## Cómo trabajo
 
-- Commits pequeños y frecuentes con mensajes descriptivos
-- Documenta cambios en `CHANGELOG.md` y `diario/`
-- Si algo no funciona → `docs/errores-frecuentes.md`
-- Commits en inglés: `feat/fix/refactor/docs: descripción corta`
-- Antes de marcar tarea completada: verificar que el archivo existe en disco
+- Commits pequeños y frecuentes, con mensaje que explique **por qué**.
+- Conventional Commits: `feat/fix/docs/chore: descripción`.
+- Un commit por tarea. No acumular ficheros sin commitear.
+- Documentar el resultado en `diario/` y `CHANGELOG.md`.
+- **Nunca dar por hecha una tarea que solo se planeó.** Comprobar que el
+  fichero está en disco y que el commit existe.
+- Si algo no funciona → `docs/errores-frecuentes.md`.
+
+### Y una regla que este repo aprendió a base de golpes
+
+**Comprobar antes de afirmar.** Este fichero llevaba cinco meses mandando
+leer `projects/thdora.md` de un proyecto muerto y dando una IP que ya no
+existía. Un documento de contexto que miente es peor que no tenerlo: hace que
+cada sesión empiece con un mapa falso.
+
+Antes de escribir un dato, medirlo. Antes de citar una ruta, comprobar que
+existe.
 
 ---
 
-## Pendientes urgentes (23 abril 2026)
+## Qué cambió desde abril, y por qué este fichero estaba tan desfasado
 
-1. **Primera sesión real en THDORA** — ejecutar `prompts/auditoria-claude-code.md`
-2. **Renovar keys caducadas**: Groq (console.groq.com), DeepSeek, Gemini
-3. **Cerrar F9.4** — UI unificada en THDORA
-4. **Cerrar los 10 issues** de THDORA con ayuda de Claude Code
+Entre la versión anterior (23 abril) y hoy:
+
+- **Nació bifrost** y llegó a producción con servicio systemd.
+- **Nació midgaror** como repo personal, y el 2026-09-10 pasó a privado.
+- **Se archivaron 13 repos**; `thdora` y otros siete desaparecieron.
+- El ecosistema pasó de «OpenCode + LiteLLM en un sobremesa» a dos máquinas
+  Arch unidas por VPN mesh.
+
+Nada de eso estaba aquí: `midgaror` y `bifrost` aparecían **cero veces** en
+los 158 ficheros del repo, mientras `thdora` salía en 80.
+
+Inventario medido y actualizado en [`REPOS-ECOSISTEMA.md`](REPOS-ECOSISTEMA.md).
 
 ---
 
-## Hitos confirmados
+## Sin verificar
 
-- ✅ 17 abril 2026: OpenCode end-to-end confirmado
-- ✅ 22 abril 2026: Claude Code via OpenRouter + Devstral 2 operativo
-- ✅ 22 abril 2026: LiteLLM + OpenCode + Claude Code colmena corriendo
-- ✅ 23 abril 2026: Ecosistema 4 entidades documentado, estructura PARA implementada
-- ✅ 23 abril 2026: scripts morning/day-close/weekly-planning creados
+Lo que la versión anterior daba por cierto y **nadie ha comprobado desde
+abril**. No se borra —puede seguir siendo verdad— pero no se da por bueno:
+
+- Estado de las claves de Groq, DeepSeek y Gemini («caducadas» en abril).
+- Que el proxy LiteLLM siga en el puerto 8000 y con 18+ modelos.
+- Las versiones de Claude Code y OpenCode que citaba `INICIO-AQUI.md`.
+- Si los alias de modelos (`principal`, `gemini-flash`…) siguen existiendo.
+
+Se comprueba con `bash scripts/health-check.sh`, y lo que salga se escribe.

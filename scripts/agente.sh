@@ -4,6 +4,11 @@
 #      bash ~/ai-toolkit/scripts/agente.sh ai-toolkit
 #      bash ~/ai-toolkit/scripts/agente.sh personal
 
+# La raiz del repo, deducida de donde vive este script. Antes esto era una
+# ruta fija y habia dos distintas -~/ai-toolkit y ~/projects/ai-toolkit-, asi
+# que segun que script lanzaras buscaba el repo en un sitio o en otro.
+RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 set -e
 
 REPO="$1"
@@ -17,16 +22,21 @@ fi
 # Mapear nombre a ruta
 case "$REPO" in
   thdora)
-    REPO_PATH="$HOME/thdora"
-    CONTEXT_FILE="$HOME/ai-toolkit/agentes/agente-thdora.md"
+    # thdora ya no existe en la cuenta (comprobado el 2026-09-10). Se deja el
+    # caso porque su ficha de agente sigue siendo util, pero la ruta hay que
+    # darla: THDORA_PATH=/ruta bash scripts/agente.sh thdora
+    REPO_PATH="${THDORA_PATH:-}"
+    CONTEXT_FILE="$RAIZ/agentes/agente-thdora.md"
     ;;
   ai-toolkit)
-    REPO_PATH="$HOME/ai-toolkit"
-    CONTEXT_FILE="$HOME/ai-toolkit/agentes/agente-ai-toolkit.md"
+    REPO_PATH="$RAIZ"
+    CONTEXT_FILE="$RAIZ/agentes/agente-ai-toolkit.md"
     ;;
   personal)
-    REPO_PATH="$HOME/personal"
-    CONTEXT_FILE="$HOME/ai-toolkit/agentes/agente-personal.md"
+    # El repo "personal" se retiro; hoy su papel lo hace midgaror, que es
+    # privado. Ruta por variable: PERSONAL_PATH=/ruta bash scripts/agente.sh personal
+    REPO_PATH="${PERSONAL_PATH:-}"
+    CONTEXT_FILE="$RAIZ/agentes/agente-personal.md"
     ;;
   *)
     echo "❌ Repo desconocida: $REPO"
@@ -34,6 +44,14 @@ case "$REPO" in
     exit 1
     ;;
 esac
+
+# Las rutas de thdora y personal salen de variable porque esos repos ya no
+# estan en la cuenta. Sin ella, mejor fallar aqui que a mitad del agente.
+if [ -z "${REPO_PATH:-}" ] || [ ! -d "$REPO_PATH" ]; then
+  echo "❌ No hay ruta valida para '$REPO'."
+  echo "   Dala por variable, p.ej.: THDORA_PATH=/ruta bash $0 $REPO"
+  exit 1
+fi
 
 # Verificar que la repo existe
 if [ ! -d "$REPO_PATH" ]; then

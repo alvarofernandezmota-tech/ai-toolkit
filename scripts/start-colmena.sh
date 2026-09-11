@@ -39,6 +39,11 @@
 # Navegar entre paneles: Ctrl+B luego flecha
 # Salir sin matar sesión: Ctrl+B D
 
+# La raiz del repo, deducida de donde vive este script. Antes esto era una
+# ruta fija y habia dos distintas -~/ai-toolkit y ~/projects/ai-toolkit-, asi
+# que segun que script lanzaras buscaba el repo en un sitio o en otro.
+RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 DIR="$(cd "$(dirname "$0")/.." && pwd)"
 CONFIG="$DIR/litellm-config.yaml"
 PUERTO=8000
@@ -220,10 +225,8 @@ find_litellm() {
   command -v litellm 2>/dev/null && return
   for p in \
     "$HOME/.local/bin/litellm" \
-    "$HOME/ai-toolkit/.venv/bin/litellm" \
-    "$HOME/projects/ai-toolkit/.venv/bin/litellm" \
-    "$HOME/projects/thdora/.venv/bin/litellm" \
-    "$HOME/thdora/.venv/bin/litellm"; do
+    "$RAIZ/.venv/bin/litellm" \
+    "$HOME/projects/ai-toolkit/.venv/bin/litellm"; do
     [ -f "$p" ] && echo "$p" && return
   done
 }

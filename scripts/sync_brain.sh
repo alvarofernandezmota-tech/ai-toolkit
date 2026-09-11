@@ -1,14 +1,29 @@
 #!/usr/bin/env bash
 # sync_brain.sh — Pipeline de sincronización Git-first para yggdrasil-dew
-# Cron recomendado: 0 4 * * * /bin/bash /home/alvaro/services/ai-stack/sync_brain.sh >> /var/log/sync_brain.log 2>&1
 # Autor: Álvaro Fernández Mota · 16 junio 2026
 # Doc: ai-toolkit/docs/ARQUITECTURA-PIPELINE.md
+#
+# ⚠️  AVISO (2026-09-10): el repo que sincroniza, yggdrasil-dew, está
+#     ARCHIVADO desde julio de 2026. Este script no se ha retirado porque el
+#     pipeline puede volver a servir, pero hoy apunta a un repo congelado.
+#     Antes de usarlo, decidir si sigue teniendo sentido.
+#
+#     La ruta era fija: /home/alvaro/yggdrasil-dew. Ese usuario no existe en
+#     ninguna de las dos máquinas actuales, así que el script fallaba en la
+#     primera línea. Ahora sale de YGGDRASIL_DEW_PATH y avisa si no está.
+#
+# Cron: 0 4 * * * YGGDRASIL_DEW_PATH=/ruta/al/repo /bin/bash /ruta/a/sync_brain.sh >> /var/log/sync_brain.log 2>&1
 set -euo pipefail
 
 # ─────────────────────────────────────────────
-# CONFIGURACIÓN — ajustar antes de usar
+# CONFIGURACIÓN — todo por variable de entorno
 # ─────────────────────────────────────────────
-REPO_PATH="/home/alvaro/yggdrasil-dew"
+REPO_PATH="${YGGDRASIL_DEW_PATH:-}"
+if [ -z "$REPO_PATH" ] || [ ! -d "$REPO_PATH" ]; then
+    echo "[sync_brain] YGGDRASIL_DEW_PATH sin definir o no es un directorio." >&2
+    echo "[sync_brain] Uso: YGGDRASIL_DEW_PATH=/ruta/al/repo bash $0" >&2
+    exit 1
+fi
 API_URL="http://localhost:3000/api/v1"
 API_KEY="${OPEN_WEBUI_API_KEY:-TU_API_KEY_AQUI}"   # exportar como variable de entorno
 KNOWLEDGE_ID="${OPEN_WEBUI_KNOWLEDGE_ID:-yggdrasil-dew-uuid}" # ID de la knowledge base en Open WebUI
