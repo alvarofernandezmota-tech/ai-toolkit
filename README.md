@@ -8,19 +8,31 @@ Stack probado y documentado para developers que quieren:
 - Construir agentes que trabajan en codebases reales y automatizan tareas
 - Documentar todo para no perder trabajo entre sesiones
 
-Todo lo que hay aquí está probado y corriendo en producción.
+Esto es **documentación y utilidades**, no un producto: 21 scripts de bash y
+121 ficheros de markdown. No hay código Python ni pruebas automáticas — lo que
+sí está probado es el uso diario en dos máquinas, que es otra cosa y conviene
+no confundirla.
+
+Antes aquí ponía «todo lo que hay aquí está probado y corriendo en
+producción», con cero pruebas en el repo. Medido y corregido el 2026-09-18.
 
 ---
 
 ## Parte del ecosistema
 
-> ai-toolkit es el **motor** del tridente. Con este stack se construye `thdora` y se documenta todo en `personal`.
+Los proyectos de verdad de la cuenta, medidos el 2026-09-18. El inventario
+completo está en [REPOS-ECOSISTEMA.md](REPOS-ECOSISTEMA.md).
 
 | Repo | Rol |
 |------|-----|
-| 🏠 [personal](https://github.com/alvarofernandezmota-tech/personal) | OS personal — tracking, contexto, hoja de ruta |
-| 🤖 **ai-toolkit** (este repo) | El motor — stack IA coste cero |
-| 💬 [thdora](https://github.com/alvarofernandezmota-tech/thdora) | El producto — bot Telegram + FastAPI |
+| 🔔 [gjallarhorn](https://github.com/alvarofernandezmota-tech/gjallarhorn) | Recepcionista telefónico para negocios — 426 pruebas |
+| 📔 [bifrost](https://github.com/alvarofernandezmota-tech/bifrost) | Bot de Telegram del diario, en producción — 225 pruebas |
+| 🤖 **ai-toolkit** (este repo) | Cómo se operan los agentes IA en las dos máquinas |
+
+> Antes esta tabla enlazaba a `personal` y `thdora`. **Ninguno de los dos
+> existe en la cuenta**, y este mismo repo ya lo documentaba en
+> `REPOS-ECOSISTEMA.md` desde el 2026-09-10: el README seguía ofreciendo dos
+> enlaces muertos que el inventario de al lado daba por muertos.
 
 ---
 
